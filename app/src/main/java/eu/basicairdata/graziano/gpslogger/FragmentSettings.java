@@ -67,20 +67,9 @@ public class FragmentSettings extends PreferenceFragmentCompat {
 
         addPreferencesFromResource(R.xml.app_preferences);
 
-        File tsd = new File(Environment.getExternalStorageDirectory() + "/GPSLogger");
-        boolean isGPSLoggerFolder = true;
-        if (!tsd.exists()) {
-            isGPSLoggerFolder = tsd.mkdir();
-        }
-        tsd = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
-        if (!tsd.exists()) {
-            isGPSLoggerFolder = tsd.mkdir();
-        }
-        Log.w("myApp", "[#] FragmentSettings.java - " + (isGPSLoggerFolder ? "Folder /GPSLogger/AppData OK" : "Unable to create folder /GPSLogger/AppData"));
-
         prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 
-        // Chech if EGM96 file is downloaded and complete;
+        // Check if EGM96 file is downloaded and complete;
         File sd = new File(getActivity().getApplicationContext().getFilesDir() + "/WW15MGH.DAC");
         File sd_old = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/WW15MGH.DAC");
         if ((sd.exists() && (sd.length() == 2076480)) || (sd_old.exists() && (sd_old.length() == 2076480))) {
@@ -103,68 +92,53 @@ public class FragmentSettings extends PreferenceFragmentCompat {
 
         prefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                if (key.equals("prefUM")) {
-                    altcorm = Double.valueOf(prefs.getString("prefAltitudeCorrection", "0"));
-                    altcor = prefs.getString("prefUM", "0").equals("0") ? altcorm : altcorm * M_TO_FT;
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putString("prefAltitudeCorrectionRaw", String.valueOf(altcor));
-                    editor.commit();
-                    EditTextPreference pAltitudeCorrection = (EditTextPreference) findPreference("prefAltitudeCorrectionRaw");
-                    pAltitudeCorrection.setText(prefs.getString("prefAltitudeCorrectionRaw", "0"));
+            if (key.equals("prefUM")) {
+                altcorm = Double.valueOf(prefs.getString("prefAltitudeCorrection", "0"));
+                altcor = prefs.getString("prefUM", "0").equals("0") ? altcorm : altcorm * M_TO_FT;
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("prefAltitudeCorrectionRaw", String.valueOf(altcor));
+                editor.commit();
+                EditTextPreference pAltitudeCorrection = (EditTextPreference) findPreference("prefAltitudeCorrectionRaw");
+                pAltitudeCorrection.setText(prefs.getString("prefAltitudeCorrectionRaw", "0"));
+            }
+
+            if (key.equals("prefAltitudeCorrectionRaw")) {
+                try {
+                    double d = Double.parseDouble(sharedPreferences.getString("prefAltitudeCorrectionRaw", "0"));
+                    altcor = d;
+                }
+                catch(NumberFormatException nfe)
+                {
+                    altcor = 0;
+                    EditTextPreference Alt = (EditTextPreference) findPreference("prefAltitudeCorrectionRaw");
+                    Alt.setText("0");
                 }
 
-                if (key.equals("prefAltitudeCorrectionRaw")) {
-                    try {
-                        double d = Double.parseDouble(sharedPreferences.getString("prefAltitudeCorrectionRaw", "0"));
-                        altcor = d;
-                    }
-                    catch(NumberFormatException nfe)
-                    {
-                        altcor = 0;
-                        EditTextPreference Alt = (EditTextPreference) findPreference("prefAltitudeCorrectionRaw");
-                        Alt.setText("0");
-                    }
+                altcorm = prefs.getString("prefUM", "0").equals("0") ? altcor : altcor / M_TO_FT;
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("prefAltitudeCorrection", String.valueOf(altcorm));
+                editor.commit();
+            }
 
-                    altcorm = prefs.getString("prefUM", "0").equals("0") ? altcor : altcor / M_TO_FT;
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putString("prefAltitudeCorrection", String.valueOf(altcorm));
-                    editor.commit();
-                }
+            if (key.equals("prefEGM96AltitudeCorrection")) {
+                if (sharedPreferences.getBoolean(key, false)) {
+                    if (!Downloaded) {
+                        // execute this when the downloader must be fired
+                        final DownloadTask downloadTask = new DownloadTask(getActivity());
+                        downloadTask.execute("http://earth-info.nga.mil/GandG/wgs84/gravitymod/egm96/binary/WW15MGH.DAC");
 
-                if (key.equals("prefEGM96AltitudeCorrection")) {
-                    if (sharedPreferences.getBoolean(key, false)) {
-                        if (!Downloaded) {
+                        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                downloadTask.cancel(true);
+                            }
+                        });
 
-                        /* new AlertDialog.Builder(this)                         // Confirmation dialog for file download
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setTitle("Question")
-                            .setMessage("Download EGM96 coefficients (file size 2 MB)?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Start Download
-                                }
-
-                            })
-                            .setNegativeButton("No", null)
-                            .show();         */
-
-                            // execute this when the downloader must be fired
-                            final DownloadTask downloadTask = new DownloadTask(getActivity());
-                            downloadTask.execute("http://earth-info.nga.mil/GandG/wgs84/gravitymod/egm96/binary/WW15MGH.DAC");
-
-                            mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialog) {
-                                    downloadTask.cancel(true);
-                                }
-                            });
-
-                            PrefEGM96SetToFalse();
-                        }
+                        PrefEGM96SetToFalse();
                     }
                 }
-                SetupPreferences();
+            }
+            SetupPreferences();
             }
         };
     }
@@ -259,7 +233,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
     }
 
 
-    // ----------------------------------------------------------------.----- EGM96 - Download file
+    // ---------------------------------------------------------------------- EGM96 - Download file
 
     // usually, subclasses of AsyncTask are declared inside the activity class.
     // that way, you can easily modify the UI thread from here

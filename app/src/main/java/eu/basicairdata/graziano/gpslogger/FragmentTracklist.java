@@ -20,15 +20,19 @@ package eu.basicairdata.graziano.gpslogger;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
@@ -127,11 +131,7 @@ public class FragmentTracklist extends Fragment {
         //Log.w("myApp", "[#] FragmentTracklist.java - delete");
         if (selectedtrackID == gpsApplication.getCurrentTrack().getId()) menu.findItem(R.id.cardmenu_delete).setVisible(false);
 
-        if (!gpsApplication.isContextMenuEnabled()) {
-            menu.findItem(R.id.cardmenu_share).setEnabled(false);
-            menu.findItem(R.id.cardmenu_view).setEnabled(false);
-            menu.findItem(R.id.cardmenu_export).setEnabled(false);
-        }
+        if (!gpsApplication.isContextMenuExportEnabled()) menu.findItem(R.id.cardmenu_export).setEnabled(false);
     }
 
 
@@ -183,9 +183,9 @@ public class FragmentTracklist extends Fragment {
                                     DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/" + name + ".kml");
                                     DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/" + name + ".gpx");
                                     // Delete track files
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".txt");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".kml");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".gpx");
+                                    DeleteFile(getContext().getFilesDir() + "/SharedTracks/" + name + ".txt");
+                                    DeleteFile(getContext().getFilesDir() + "/SharedTracks/" + name + ".kml");
+                                    DeleteFile(getContext().getFilesDir() + "/SharedTracks/" + name + ".gpx");
                                     DeleteFile(getContext().getFilesDir() + "/Thumbnails/" + nameID + ".png");
 
                                     dialog.dismiss();
@@ -219,9 +219,9 @@ public class FragmentTracklist extends Fragment {
                                     });
 
                                     // Delete track files
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".txt");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".kml");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".gpx");
+                                    DeleteFile(getContext().getFilesDir() + "/SharedTracks/" + name + ".txt");
+                                    DeleteFile(getContext().getFilesDir() + "/SharedTracks/" + name + ".kml");
+                                    DeleteFile(getContext().getFilesDir() + "/SharedTracks/" + name + ".gpx");
                                     DeleteFile(getContext().getFilesDir() + "/Thumbnails/" + nameID + ".png");
 
                                     dialog.dismiss();
@@ -266,9 +266,9 @@ public class FragmentTracklist extends Fragment {
                                     });
 
                                     // Delete track files
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".txt");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".kml");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".gpx");
+                                    DeleteFile(getContext().getFilesDir() + "/SharedTracks/" + name + ".txt");
+                                    DeleteFile(getContext().getFilesDir() + "/SharedTracks/" + name + ".kml");
+                                    DeleteFile(getContext().getFilesDir() + "/SharedTracks/" + name + ".gpx");
                                     DeleteFile(getContext().getFilesDir() + "/Thumbnails/" + nameID + ".png");
 
                                     dialog.dismiss();
@@ -404,6 +404,7 @@ public class FragmentTracklist extends Fragment {
 
                 Intent intent = new Intent();
                 intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra(Intent.EXTRA_SUBJECT, "GPS Logger - Track " + track.getName());
 
@@ -439,34 +440,60 @@ public class FragmentTracklist extends Fragment {
                 }
                 intent.setType("text/xml");
 
-                ArrayList<Uri> files = new ArrayList<>();
-                String fname = track.getName() + ".kml";
-                File file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
+
+                ArrayList<Uri> uris = new ArrayList<>();
+
+                File file = new File(getContext().getFilesDir() + "/SharedTracks/", track.getName() + ".kml");
                 if (file.exists () && GPSApplication.getInstance().getPrefExportKML()) {
-                    Uri uri = Uri.fromFile(file);
-                    files.add(uri);
+                    // Use the FileProvider to get a content URI
+                    try {
+                        Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "eu.basicairdata.graziano.gpslogger.fileprovider", file);
+                        uris.add(uri);
+                    } catch (IllegalArgumentException e) {
+                        Log.e("File Selector", "The selected file can't be shared: " + track.getName() + ".kml");
+                        return;
+                    }
                 }
-                fname = track.getName() + ".gpx";
-                file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
+                file = new File(getContext().getFilesDir() + "/SharedTracks/", track.getName() + ".gpx");
                 if (file.exists ()  && GPSApplication.getInstance().getPrefExportGPX()) {
-                    Uri uri = Uri.fromFile(file);
-                    files.add(uri);
+                    // Use the FileProvider to get a content URI
+                    try {
+                        Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "eu.basicairdata.graziano.gpslogger.fileprovider", file);
+                        uris.add(uri);
+                    } catch (IllegalArgumentException e) {
+                        Log.e("File Selector", "The selected file can't be shared: " + track.getName() + ".gpx");
+                        return;
+                    }
                 }
-                fname = track.getName() + ".txt";
-                file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
+                file = new File(getContext().getFilesDir() + "/SharedTracks/", track.getName() + ".txt");
                 if (file.exists ()  && GPSApplication.getInstance().getPrefExportTXT()) {
-                    Uri uri = Uri.fromFile(file);
-                    files.add(uri);
+                    // Use the FileProvider to get a content URI
+                    try {
+                        Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "eu.basicairdata.graziano.gpslogger.fileprovider", file);
+                        uris.add(uri);
+                    } catch (IllegalArgumentException e) {
+                        Log.e("File Selector", "The selected file can't be shared: " + track.getName() + ".txt");
+                        return;
+                    }
                 }
 
-                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
+                // Grant URI permissions (legacy)
+                final PackageManager packageManager = getContext().getPackageManager();
+                final List<ResolveInfo> activities = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                for (ResolveInfo resolvedIntentInfo : activities) {
+                    final String packageName = resolvedIntentInfo.activityInfo.packageName;
+                    for (Uri uri : uris) {
+                        getContext().grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    }
+                }
 
-                String title = getString(R.string.card_menu_share);
+                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+
                 // Create intent to show chooser
-                Intent chooser = Intent.createChooser(intent, title);
+                Intent chooser = Intent.createChooser(intent, getString(R.string.card_menu_share));
 
                 // Verify the intent will resolve to at least one activity
-                if ((intent.resolveActivity(getContext().getPackageManager()) != null) && (!files.isEmpty())) {
+                if ((intent.resolveActivity(getContext().getPackageManager()) != null) && (!uris.isEmpty())) {
                     startActivity(chooser);
                 }
             }

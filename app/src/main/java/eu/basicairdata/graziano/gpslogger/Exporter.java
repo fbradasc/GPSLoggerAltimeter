@@ -18,7 +18,6 @@
 
 package eu.basicairdata.graziano.gpslogger;
 
-import android.os.Environment;
 import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
@@ -76,16 +75,12 @@ class Exporter extends Thread {
         elements_total = track.getNumberOfLocations() + track.getNumberOfPlacemarks();
         long start_Time = System.currentTimeMillis();
 
-        // ------------------------------------------------- Create the Directory tree if not exist
-        File sd = new File(Environment.getExternalStorageDirectory() + "/GPSLogger");
+        // ------------------------------------------------- Create the Directory if not exist
+        File sd = new File(SaveIntoFolder);
         if (!sd.exists()) {
             sd.mkdir();
         }
-        sd = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
-        if (!sd.exists()) {
-            sd.mkdir();
-        }
-        // ----------------------------------------------------------------------------------------
+        // -----------------------------------------------------------------------------------
 
         if (track == null) {
             //Log.w("myApp", "[#] Exporter.java - Track = null!!");

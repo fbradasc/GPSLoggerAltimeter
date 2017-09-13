@@ -46,6 +46,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 import android.util.SparseArray;
@@ -110,7 +111,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private boolean isCurrentTrackVisible = false;
     private boolean isContextMenuShareVisible = false;          // True if "Share with ..." menu is visible
     private boolean isContextMenuViewVisible = false;           // True if "View in *" menu is visible
-    private boolean isContextMenuEnabled = false;               // True if the Share + View + Export menus are enabled (Permission to write storage)
+    private boolean isContextMenuExportEnabled = false;         // True if the Export menus is enabled (Permission to write storage)
     private String ViewInApp = "";                              // The string of default app name for "View"
                                                                 // "" in case of selector
 
@@ -386,8 +387,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         isCurrentTrackVisible = currentTrackVisible;
     }
 
-    public boolean isContextMenuEnabled() {
-        return isContextMenuEnabled;
+    public boolean isContextMenuExportEnabled() {
+        return isContextMenuExportEnabled;
     }
 
     // --------------------------------------------------------------------------------------------
@@ -403,12 +404,12 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
 
         mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);     // Location Manager
 
-        File sd = new File(Environment.getExternalStorageDirectory() + "/GPSLogger");   // Create the Directories if not exist
-        if (!sd.exists()) {
-            sd.mkdir();
-            Log.w("myApp", "[#] GPSApplication.java - Folder created: " + sd.getAbsolutePath());
-        }
-        sd = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+        //File sd = new File(Environment.getExternalStorageDirectory() + "/GPSLogger");   // Create the Directories if not exist
+        //if (!sd.exists()) {
+        //    sd.mkdir();
+        //    Log.w("myApp", "[#] GPSApplication.java - Folder created: " + sd.getAbsolutePath());
+        //}
+        File sd = new File(getApplicationContext().getFilesDir() + "/SharedTracks");
         if (!sd.exists()) {
             sd.mkdir();
             Log.w("myApp", "[#] GPSApplication.java - Folder created: " + sd.getAbsolutePath());
@@ -482,10 +483,27 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                             EventBus.getDefault().post(EventBusMSG.UPDATE_TRACKLIST);
                             if (trackid == OpenInViewer) {
                                 OpenInViewer = -1;
-                                File file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", T.getName() + ".kml");
+                                File file = new File(getApplicationContext().getFilesDir() + "/SharedTracks/", T.getName() + ".kml");
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                intent.setDataAndType(Uri.fromFile(file), "application/vnd.google-earth.kml+xml");
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                                // Use the FileProvider to get a content URI
+                                try {
+                                    Uri uri = FileProvider.getUriForFile(this, "eu.basicairdata.graziano.gpslogger.fileprovider", file);
+                                    intent.setDataAndType(uri, "application/vnd.google-earth.kml+xml");
+
+                                    // Grant URI permissions (legacy)
+                                    final PackageManager packageManager = getPackageManager();
+                                    final List<ResolveInfo> activities = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                                    for (ResolveInfo resolvedIntentInfo : activities) {
+                                        final String packageName = resolvedIntentInfo.activityInfo.packageName;
+                                        grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                    }
+                                } catch (IllegalArgumentException e) {
+                                    Log.e("File Selector", "The selected file can't be shared: " + T.getName());
+                                    return;
+                                }
+
                                 startActivity(intent);
                             }
                             if (trackid == Share) {
@@ -506,13 +524,13 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
         if (msg.MSGType == EventBusMSG.SHARE_TRACK) {
             setShare(msg.id);
-            Ex = new Exporter(Share, prefExportKML, prefExportGPX, prefExportTXT, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+            Ex = new Exporter(Share, prefExportKML, prefExportGPX, prefExportTXT, getApplicationContext().getFilesDir() + "/SharedTracks");
             Ex.start();
             return;
         }
         if (msg.MSGType == EventBusMSG.VIEW_TRACK) {
             setOpenInViewer(msg.id);
-            Ex = new Exporter(OpenInViewer, true, false, false, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+            Ex = new Exporter(OpenInViewer, true, false, false, getApplicationContext().getFilesDir() + "/SharedTracks");
             Ex.start();
             return;
         }
@@ -644,20 +662,20 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
 
     private class AsyncPrepareTracklistContextMenu extends Thread {
 
-        public AsyncPrepareTracklistContextMenu() {
+        AsyncPrepareTracklistContextMenu() {
         }
 
         public void run() {
             isContextMenuShareVisible = false;
             isContextMenuViewVisible = false;
-            isContextMenuEnabled = false;
+            isContextMenuExportEnabled = false;
             ViewInApp = "";
 
             final PackageManager pm = getPackageManager();
 
             // Check permissions
             if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-                isContextMenuEnabled = true;
+                isContextMenuExportEnabled = true;
 
 
             // ----- menu share
