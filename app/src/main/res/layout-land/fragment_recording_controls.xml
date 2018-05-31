@@ -57,17 +57,57 @@
             android:text="0"
             android:gravity="center_horizontal"/>
     </TableLayout>
-
+<!--
     <TableLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:id="@+id/id_TableLayout_Empty"
+        android:id="@+id/id_TableLayout_Empty_Left"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp">
+
+    </TableLayout>
+-->
+    <TableLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:id="@+id/id_TableLayout_Steps"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:clickable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/steps"
+            android:id="@+id/id_textView_StepsLabel"
+            android:textSize="13sp"
+            android:gravity="center_horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:id="@+id/id_textView_Steps"
+            android:freezesText="true"
+            android:textStyle="bold"
+            android:text="0"
+            android:gravity="center_horizontal"/>
+
+    </TableLayout>
+<!--
+    <TableLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:id="@+id/id_TableLayout_Empty_Right"
         android:paddingTop="3dp"
         android:paddingBottom="3dp">
         
     </TableLayout>
-
+-->
     <TableLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"

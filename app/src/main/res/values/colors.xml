@@ -19,9 +19,9 @@
   -->
 
 <resources>
-    <color name="colorPrimary">#880000</color>
-    <color name="colorPrimaryDark">#550000</color>
-    <color name="colorPrimaryLight">#b51111</color>
+    <color name="colorPrimary">#000088</color>
+    <color name="colorPrimaryDark">#000055</color>
+    <color name="colorPrimaryLight">#1111b5</color>
     <color name="textColorPrimary">#ffffff</color>
     <color name="textColorSecondary">#888888</color>
     <color name="colorBackground">#111111</color>
@@ -38,6 +38,6 @@
     <color name="colorThumbnailLineBackground">#161616</color>
 
     <color name="colorAccent">#dddddd</color>
-    <color name="preference_accent">#ca2222</color>
-    <color name="preference_fallback_accent_color">#ca2222</color>
+    <color name="preference_accent">#2222ca</color>
+    <color name="preference_fallback_accent_color">#2222ca</color>
 </resources>

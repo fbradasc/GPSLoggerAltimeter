@@ -47,14 +47,26 @@
 
     <!-- GPS Update Frequency -->
     <string-array name="GPSupdatefrequency">
-        <item>@string/pref_GPS_update_frequency_1s</item>
-        <item>@string/pref_GPS_update_frequency_2s</item>
-        <item>@string/pref_GPS_update_frequency_3s</item>
+        <item>@string/pref_GPS_update_frequency_1stp</item>
+        <item>@string/pref_GPS_update_frequency_5stp</item>
+        <item>@string/pref_GPS_update_frequency_10stp</item>
+        <item>@string/pref_GPS_update_frequency_1sec</item>
+        <item>@string/pref_GPS_update_frequency_5sec</item>
+        <item>@string/pref_GPS_update_frequency_10sec</item>
+        <item>@string/pref_GPS_update_frequency_1min</item>
+        <item>@string/pref_GPS_update_frequency_5min</item>
+        <item>@string/pref_GPS_update_frequency_10min</item>
     </string-array>
     <string-array name="GPSupdatefrequencyValues">
+        <item>1</item>
+        <item>5</item>
+        <item>10</item>
         <item>1000</item>
-        <item>2000</item>
-        <item>3000</item>
+        <item>5000</item>
+        <item>10000</item>
+        <item>60000</item>
+        <item>300000</item>
+        <item>600000</item>
     </string-array>
 
     <!-- Units of Measurement -->

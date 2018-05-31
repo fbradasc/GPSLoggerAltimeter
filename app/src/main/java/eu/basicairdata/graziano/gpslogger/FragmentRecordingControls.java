@@ -38,6 +38,7 @@ public class FragmentRecordingControls extends Fragment{
     }
 
     TableLayout tableLayoutGeoPoints;
+    TableLayout tableLayoutSteps;
     TableLayout tableLayoutPlacemarks;
 
     private TextView TVGeoPoints;
@@ -61,6 +62,14 @@ public class FragmentRecordingControls extends Fragment{
             @Override
             public void onClick(View v) {
                 ontoggleRecordGeoPoint(v);
+            }
+        });
+
+        tableLayoutSteps = (TableLayout) view.findViewById(R.id.id_TableLayout_Steps);
+        tableLayoutSteps.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ontoggleRecordSteps(v);
             }
         });
 
@@ -96,6 +105,17 @@ public class FragmentRecordingControls extends Fragment{
             final Boolean grs = gpsApplication.getRecording();
             boolean newRecordingState = !grs;
             gpsApplication.setRecording(newRecordingState);
+            tableLayoutGeoPoints.setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
+            tableLayoutSteps    .setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
+        }
+    }
+
+    public void ontoggleRecordSteps(View view) {
+        if (isAdded()) {
+            final Boolean grs = gpsApplication.getRecording();
+            boolean newRecordingState = !grs;
+            gpsApplication.setRecording(newRecordingState);
+            tableLayoutSteps    .setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
             tableLayoutGeoPoints.setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
         }
     }
@@ -133,6 +153,8 @@ public class FragmentRecordingControls extends Fragment{
                     TVPlacemarks.setText(String.valueOf(track.getNumberOfPlacemarks()));
                 if (tableLayoutGeoPoints != null)
                     tableLayoutGeoPoints.setBackgroundColor(grs ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
+                if (tableLayoutSteps != null)
+                    tableLayoutSteps.setBackgroundColor(grs ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
                 if (tableLayoutPlacemarks != null)
                     tableLayoutPlacemarks.setBackgroundColor(pr ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
             }
