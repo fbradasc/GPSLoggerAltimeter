@@ -627,11 +627,10 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
         if (state && !isGPSLocationUpdatesActive
                 && (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-            long updateFrequency = (prefGPSupdatefrequency < 1000) ? prefGPSupdatefrequency * 1000 : prefGPSupdatefrequency;
-            StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / updateFrequency);
             mlocManager.addGpsStatusListener(this);
-            mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, updateFrequency, 0, this); // Requires Location update
+            mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, prefGPSupdatefrequency, 0, this); // Requires Location update
             isGPSLocationUpdatesActive = true;
+            StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
         }
     }
 
@@ -641,10 +640,9 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 && (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             mlocManager.removeGpsStatusListener(this);
             mlocManager.removeUpdates(this);
-            long updateFrequency = (prefGPSupdatefrequency < 1000) ? prefGPSupdatefrequency * 1000 : prefGPSupdatefrequency;
-            StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / updateFrequency);
+            StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
             mlocManager.addGpsStatusListener(this);
-            mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, updateFrequency, 0, this);
+            mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, prefGPSupdatefrequency, 0, this);
         }
     }
 

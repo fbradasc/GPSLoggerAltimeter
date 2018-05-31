@@ -115,9 +115,9 @@
   <string name="pref_GPS_distance_33ft">33 pieds</string>
   <string name="pref_GPS_distance_66ft">66 pieds</string>
   <string name="pref_GPS_update_frequency">Intervalle de mise à jour du GPS</string>
-  <string name="pref_GPS_update_frequency_1sec">1 seconde (meilleure précision)</string>
-  <string name="pref_GPS_update_frequency_5sec">5 secondes</string>
-  <string name="pref_GPS_update_frequency_10sec">10 secondes</string>
+  <string name="pref_GPS_update_frequency_1s">1 seconde (meilleure précision)</string>
+  <string name="pref_GPS_update_frequency_2s">2 secondes</string>
+  <string name="pref_GPS_update_frequency_3s">3 secondes (précision moindre)</string>
   <string name="pref_category_altitude_corrections">CORRECTIONS D’ALTITUDE</string>
   <string name="pref_EGM96AltitudeCorrection">Correction EGM96</string>
   <string name="pref_EGM96AltitudeCorrection_summary">Correction d’altitude automatique, basée sur le modèle NGA Earth Geoid</string>

@@ -713,7 +713,7 @@ public class Track {
         }
         if (SpeedMax < (50.0f / 3.6f)) {
             if (SpeedAverageMoving > 20.0f / 3.6f) return TRACK_TYPE_CAR;
-            if (SpeedAverageMoving > 12.0f / 3.6) return TRACK_TYPE_BICYCLE;
+            if (SpeedAverageMoving > 12.0f / 3.6f) return TRACK_TYPE_BICYCLE;
             else if (SpeedAverageMoving > 8.0f / 3.6f) return TRACK_TYPE_RUN;
             else {
                 if ((Altitude_Up != NOT_AVAILABLE) && (Altitude_Down != NOT_AVAILABLE))
