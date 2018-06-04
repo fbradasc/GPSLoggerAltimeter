@@ -296,6 +296,7 @@ public class GPSActivity extends AppCompatActivity {
     private void ShutdownApp()
     {
         if ((GPSApplication.getInstance().getCurrentTrack().getNumberOfLocations() > 0)
+                || (GPSApplication.getInstance().getCurrentTrack().getNumberOfSteps() > 0)
                 || (GPSApplication.getInstance().getCurrentTrack().getNumberOfPlacemarks() > 0)
                 || (GPSApplication.getInstance().getRecording())
                 || (GPSApplication.getInstance().getPlacemarkRequest())) {

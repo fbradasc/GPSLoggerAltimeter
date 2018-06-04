@@ -87,6 +87,7 @@
     <string name="card_trackinfo_max_speed">Max spd</string>
     <string name="card_trackinfo_average_speed">Avg spd</string>
     <string name="card_trackinfo_geopoints">Points</string>
+    <string name="card_trackinfo_steps">Steps</string>
     <string name="card_trackinfo_placemarks">Places</string>
 
     <!-- Context menu of Tracklist -->

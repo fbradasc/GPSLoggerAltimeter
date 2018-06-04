@@ -93,7 +93,7 @@ class Exporter extends Thread {
             //Log.w("myApp", "[#] Exporter.java - Track = null!!");
             return;
         }
-        if (track.getNumberOfLocations() + track.getNumberOfPlacemarks() == 0) return;
+        if (track.getNumberOfLocations() + track.getNumberOfSteps() + track.getNumberOfPlacemarks() == 0) return;
 
         EventBus.getDefault().post(new EventBusMSGLong(EventBusMSG.TRACK_SETPROGRESS, track.getId(), 1));
 
@@ -195,7 +195,8 @@ class Exporter extends Thread {
                 KMLbw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + newLine);
                 KMLbw.write("<!-- Created with BasicAirData GPS Logger for Android - ver. " + versionName + " -->" + newLine);
                 KMLbw.write("<!-- Track " + String.valueOf(track.getId()) + " = " + String.valueOf(track.getNumberOfLocations())
-                        + " TrackPoints + " + String.valueOf(track.getNumberOfPlacemarks()) + " Placemarks -->" + newLine);
+                        + " TrackPoints + " + String.valueOf(track.getNumberOfPlacemarks())
+                        + " Placemarks + " + String.valueOf(track.getNumberOfSteps()) + " Steps -->" + newLine);
                 KMLbw.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">" + newLine);
                 KMLbw.write(" <Document>" + newLine);
                 KMLbw.write("  <name>Paths</name>" + newLine);
@@ -225,7 +226,8 @@ class Exporter extends Thread {
                 GPXbw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + newLine);
                 GPXbw.write("<!-- Created with BasicAirData GPS Logger for Android - ver. " + versionName + " -->" + newLine);
                 GPXbw.write("<!-- Track " + String.valueOf(track.getId()) + " = " + String.valueOf(track.getNumberOfLocations())
-                        + " TrackPoints + " + String.valueOf(track.getNumberOfPlacemarks()) + " Placemarks -->" + newLine);
+                        + " TrackPoints + " + String.valueOf(track.getNumberOfPlacemarks())
+                        + " Placemarks + " + String.valueOf(track.getNumberOfSteps()) + " Steps -->" + newLine);
                 if (getPrefGPXVersion == 100)     // GPX 1.0
                     GPXbw.write("<gpx version=\"1.0\" creator=\"BasicAirData GPS Logger " + versionName + "\" xmlns=\"http://www.topografix.com/GPX/1/0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">" + newLine + newLine);
                 if (getPrefGPXVersion == 110)     // GPX 1.1

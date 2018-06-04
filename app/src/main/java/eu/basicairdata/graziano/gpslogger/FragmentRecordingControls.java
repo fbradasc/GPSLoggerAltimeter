@@ -42,6 +42,7 @@ public class FragmentRecordingControls extends Fragment{
     TableLayout tableLayoutPlacemarks;
 
     private TextView TVGeoPoints;
+    private TextView TVSteps;
     private TextView TVPlacemarks;
 
     final GPSApplication gpsApplication = GPSApplication.getInstance();
@@ -82,6 +83,7 @@ public class FragmentRecordingControls extends Fragment{
         });
 
         TVGeoPoints = (TextView) view.findViewById(R.id.id_textView_GeoPoints);
+        TVSteps = (TextView) view.findViewById(R.id.id_textView_Steps);
         TVPlacemarks = (TextView) view.findViewById(R.id.id_textView_Placemarks);
 
         return view;
@@ -149,6 +151,8 @@ public class FragmentRecordingControls extends Fragment{
             if (track != null) {
                 if (TVGeoPoints != null)
                     TVGeoPoints.setText(String.valueOf(track.getNumberOfLocations()));
+                if (TVSteps != null)
+                    TVSteps.setText(String.valueOf(track.getNumberOfSteps()));
                 if (TVPlacemarks != null)
                     TVPlacemarks.setText(String.valueOf(track.getNumberOfPlacemarks()));
                 if (tableLayoutGeoPoints != null)

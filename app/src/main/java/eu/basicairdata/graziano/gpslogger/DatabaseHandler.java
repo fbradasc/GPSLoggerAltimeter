@@ -33,7 +33,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
     // All Static variables
     // Database Version
-    private static final int DATABASE_VERSION = 2;          // Updated to 2 in v2.1.3 (code 14)
+    private static final int DATABASE_VERSION = 3;          // Updated to 2 in v2.1.3 (code 14)
     private static final int LOCATION_TYPE_LOCATION = 1;
     private static final int LOCATION_TYPE_PLACEMARK = 2;
 
@@ -116,6 +116,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_TRACK_SPEED_AVERAGEMOVING = "speed_average_moving";
 
     private static final String KEY_TRACK_NUMBEROFLOCATIONS = "number_of_locations";
+    private static final String KEY_TRACK_NUMBEROFSTEPS = "number_of_steps";
     private static final String KEY_TRACK_NUMBEROFPLACEMARKS = "number_of_placemarks";
     private static final String KEY_TRACK_TYPE = "type";
 
@@ -171,7 +172,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
                 + KEY_TRACK_NUMBEROFLOCATIONS + " INTEGER,"         // 37
                 + KEY_TRACK_NUMBEROFPLACEMARKS + " INTEGER,"        // 38
                 + KEY_TRACK_VALIDMAP + " INTEGER,"                  // 39
-                + KEY_TRACK_TYPE + " INTEGER " + ")";               // 40
+                + KEY_TRACK_TYPE + " INTEGER,"                      // 40
+                + KEY_TRACK_NUMBEROFSTEPS + " INTEGER " + ")";      // 41
         db.execSQL(CREATE_TRACKS_TABLE);
 
         String CREATE_LOCATIONS_TABLE = "CREATE TABLE " + TABLE_LOCATIONS + "("
@@ -215,7 +217,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
             + TABLE_LOCATIONS + " ADD COLUMN " + KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX + " INTEGER DEFAULT " +  NOT_AVAILABLE + ";";
     private static final String DATABASE_ALTER_TABLE_PLACEMARKS_TO_V2 = "ALTER TABLE "
             + TABLE_PLACEMARKS + " ADD COLUMN " + KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX + " INTEGER DEFAULT " +  NOT_AVAILABLE + ";";
-
+    private static final String DATABASE_ALTER_TABLE_TRACKS_TO_V3 = "ALTER TABLE "
+            + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_NUMBEROFSTEPS + " INTEGER DEFAULT " +  NOT_AVAILABLE + ";";
     // Upgrading database
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -237,9 +240,9 @@ class DatabaseHandler extends SQLiteOpenHelper {
                 //Log.w("myApp", "[#] DatabaseHandler.java - onUpgrade: from version 1 to 2 ...");
                 db.execSQL(DATABASE_ALTER_TABLE_LOCATIONS_TO_V2);
                 db.execSQL(DATABASE_ALTER_TABLE_PLACEMARKS_TO_V2);
-            //case 2:
+            case 2:
                 //upgrade from version 2 to 3
-            //    db.execSQL(DATABASE_ALTER_TEAM_TO_V3);
+                db.execSQL(DATABASE_ALTER_TABLE_TRACKS_TO_V3);
 
                 //and so on.. do not add breaks so that switch will
                 //start at oldVersion, and run straight through to the latest
@@ -319,6 +322,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         trkvalues.put(KEY_TRACK_SPEED_AVERAGEMOVING, track.getSpeedAverageMoving());
 
         trkvalues.put(KEY_TRACK_NUMBEROFLOCATIONS, track.getNumberOfLocations());
+        trkvalues.put(KEY_TRACK_NUMBEROFSTEPS, track.getNumberOfSteps());
         trkvalues.put(KEY_TRACK_NUMBEROFPLACEMARKS, track.getNumberOfPlacemarks());
         trkvalues.put(KEY_TRACK_TYPE, track.getType());
 
@@ -406,6 +410,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         trkvalues.put(KEY_TRACK_SPEED_AVERAGEMOVING, track.getSpeedAverageMoving());
 
         trkvalues.put(KEY_TRACK_NUMBEROFLOCATIONS, track.getNumberOfLocations());
+        trkvalues.put(KEY_TRACK_NUMBEROFSTEPS, track.getNumberOfSteps());
         trkvalues.put(KEY_TRACK_NUMBEROFPLACEMARKS, track.getNumberOfPlacemarks());
         trkvalues.put(KEY_TRACK_TYPE, track.getType());
 
@@ -748,6 +753,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         trkvalues.put(KEY_TRACK_SPEED_AVERAGEMOVING, track.getSpeedAverageMoving());
 
         trkvalues.put(KEY_TRACK_NUMBEROFLOCATIONS, track.getNumberOfLocations());
+        trkvalues.put(KEY_TRACK_NUMBEROFSTEPS, track.getNumberOfSteps());
         trkvalues.put(KEY_TRACK_NUMBEROFPLACEMARKS, track.getNumberOfPlacemarks());
         trkvalues.put(KEY_TRACK_TYPE, track.getType());
 
@@ -831,6 +837,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
                         cursor.getLong(37),
                         cursor.getLong(38),
+                        cursor.getLong(41),
 
                         cursor.getInt(39),
                         cursor.getInt(40));
@@ -941,6 +948,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
                             cursor.getLong(37),
                             cursor.getLong(38),
+                            cursor.getLong(41),
 
                             cursor.getInt(39),
                             cursor.getInt(40));
@@ -1023,6 +1031,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
                             cursor.getLong(37),
                             cursor.getLong(38),
+                            cursor.getLong(41),
 
                             cursor.getInt(39),
                             cursor.getInt(40));

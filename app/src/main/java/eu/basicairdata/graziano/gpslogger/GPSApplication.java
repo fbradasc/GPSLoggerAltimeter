@@ -762,8 +762,15 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             }
 
             // Save fix in case this is a STOP or a START (the speed is "old>0 and new=0" or "old=0 and new>0")
-            if ((PrevFix != null) && (PrevFix.getLocation().hasSpeed()) && (eloc.getLocation().hasSpeed()) && (GPSStatus == GPS_OK) && (Recording)
-                    && (((eloc.getLocation().getSpeed() == 0) && (PrevFix.getLocation().getSpeed() != 0)) || ((eloc.getLocation().getSpeed() != 0) && (PrevFix.getLocation().getSpeed() == 0)))) {
+            if ((PrevFix != null)
+                && (PrevFix.getLocation().hasSpeed())
+                    && (eloc.getLocation().hasSpeed())
+                    && (GPSStatus == GPS_OK)
+                    && (Recording)
+                    && (((eloc.getLocation().getSpeed() == 0)
+                        && (PrevFix.getLocation().getSpeed() != 0))
+                        || ((eloc.getLocation().getSpeed() != 0)
+                            && (PrevFix.getLocation().getSpeed() == 0)))) {
                 if (!isPrevFixRecorded) {                   // Record the old sample if not already recorded
                     AsyncTODO ast = new AsyncTODO();
                     ast.TaskType = "TASK_ADDLOCATION";
@@ -778,7 +785,11 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
 
             if (GPSStatus == GPS_OK) {
                 AsyncTODO ast = new AsyncTODO();
-                if ((Recording) && ((prefGPSdistance == 0) || (PrevRecordedFix == null) || (ForceRecord) || (loc.distanceTo(PrevRecordedFix.getLocation()) >= prefGPSdistance))) {
+                if ((Recording)
+                        && ((prefGPSdistance == 0)
+                            || (PrevRecordedFix == null)
+                            || (ForceRecord)
+                            || (loc.distanceTo(PrevRecordedFix.getLocation()) >= prefGPSdistance))) {
                     PrevRecordedFix = eloc;
                     ast.TaskType = "TASK_ADDLOCATION";
                     ast.location = eloc;
@@ -854,7 +865,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     File file = new File(getApplicationContext().getFilesDir() + "/Thumbnails/", fname);
                     if (!file.exists()) Th = new Thumbnailer(ID - 1);
                 }
-                if (_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfPlacemarks() > 0) {
+                if (_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks() > 0) {
                     Log.w("myApp", "[#] GPSApplication.java - Update Tracklist: current track (" + _currentTrack.getId() + ") visible into the tracklist");
                     _ArrayListTracks.add(0, _currentTrack);
                 } else
@@ -954,7 +965,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
 
                 // Task: Create new track (if needed)
                 if (asyncTODO.TaskType.equals("TASK_NEWTRACK")) {
-                    if ((track.getNumberOfLocations() != 0) || (track.getNumberOfPlacemarks() != 0)) {
+                    if ((track.getNumberOfLocations() != 0) || (track.getNumberOfSteps() != 0) || (track.getNumberOfPlacemarks() != 0)) {
                         // ---- Delete 2 thumbs files forward - in case of user deleted DB in App manager (pngs could be already presents for the new IDS)
                         String fname = (track.getId() + 1) +".png";
                         File file = new File(getApplicationContext().getFilesDir() + "/Thumbnails/", fname);
@@ -984,7 +995,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     GPSDataBase.addLocationToTrack(locationExtended, track);
                     _currentTrack = track;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
-                    if (_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfPlacemarks() == 1) UpdateTrackList();
+                    if (_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks() == 1) UpdateTrackList();
                 }
 
                 // Task: Add a placemark to current track
@@ -997,7 +1008,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     GPSDataBase.addPlacemarkToTrack(locationExtended, track);
                     _currentTrack = track;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
-                    if (_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfPlacemarks() == 1) UpdateTrackList();
+                    if (_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks() == 1) UpdateTrackList();
                 }
 
                 // Task: Update current Fix

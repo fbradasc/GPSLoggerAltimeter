@@ -460,11 +460,13 @@ public class FragmentTracklist extends Fragment {
                 if (track.getNumberOfLocations() <= 1) {
                     intent.putExtra(Intent.EXTRA_TEXT, (CharSequence) ("GPS Logger - Track " + track.getName()
                             + "\n" + track.getNumberOfLocations() + " " + getString(R.string.trackpoints)
-                            + "\n" + track.getNumberOfPlacemarks() + " " + getString(R.string.placemarks)));
+                            + "\n" + track.getNumberOfPlacemarks() + " " + getString(R.string.placemarks)
+                            + "\n" + track.getNumberOfSteps() + " " + getString(R.string.steps)));
                 } else {
                     intent.putExtra(Intent.EXTRA_TEXT, (CharSequence) ("GPS Logger - Track " + track.getName()
                             + "\n" + track.getNumberOfLocations() + " " + getString(R.string.trackpoints)
                             + "\n" + track.getNumberOfPlacemarks() + " " + getString(R.string.placemarks)
+                            + "\n" + track.getNumberOfSteps() + " " + "Steps"
                             + "\n"
                             + "\n" + getString(R.string.pref_track_stats) + " " + (GPSApplication.getInstance().getPrefShowTrackStatsType() == 0 ? getString(R.string.pref_track_stats_totaltime) : getString(R.string.pref_track_stats_movingtime)) + ":"
                             + "\n" + getString(R.string.distance) + " = " + phdDistance.Value + " " + phdDistance.UM

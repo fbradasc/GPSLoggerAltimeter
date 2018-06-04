@@ -76,6 +76,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
         private final TextView textViewTrackMaxSpeed;
         private final TextView textViewTrackAverageSpeed;
         private final TextView textViewTrackGeopoints;
+        private final TextView textViewTrackSteps;
         private final TextView textViewTrackPlacemarks;
         private final ImageView imageViewThumbnail;
         private final ImageView imageViewIcon;
@@ -104,6 +105,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             textViewTrackMaxSpeed       = (TextView) itemView.findViewById(R.id.id_textView_card_maxspeed);
             textViewTrackAverageSpeed   = (TextView) itemView.findViewById(R.id.id_textView_card_averagespeed);
             textViewTrackGeopoints      = (TextView) itemView.findViewById(R.id.id_textView_card_geopoints);
+            textViewTrackSteps          = (TextView) itemView.findViewById(R.id.id_textView_card_steps);
             textViewTrackPlacemarks     = (TextView) itemView.findViewById(R.id.id_textView_card_placemarks);
             imageViewThumbnail          = (ImageView) itemView.findViewById(R.id.id_imageView_card_minimap);
             imageViewIcon               = (ImageView) itemView.findViewById(R.id.id_imageView_card_tracktype);
@@ -119,7 +121,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
         void UpdateTrackStats(Track trk) {
             textViewTrackName.setText(trk.getName());
             //textViewTrackName.setText(track.getId() + " - " + track.getName());
-            if (trk.getNumberOfLocations() > 1) {
+            if (trk.getNumberOfLocations() + trk.getNumberOfSteps() > 1) {
                 phd = phdformatter.format(trk.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 textViewTrackLength.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(trk.getPrefTime(),PhysicalDataFormatter.FORMAT_DURATION);
@@ -138,6 +140,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
                 textViewTrackAverageSpeed.setText("");
             }
             textViewTrackGeopoints.setText(String.valueOf(trk.getNumberOfLocations()));
+            textViewTrackSteps.setText(String.valueOf(trk.getNumberOfSteps()));
             textViewTrackPlacemarks.setText(String.valueOf(trk.getNumberOfPlacemarks()));
 
             TT = trk.getTrackType();
@@ -151,7 +154,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             id = trk.getId();
             textViewTrackName.setText(trk.getName());
             //textViewTrackName.setText(track.getId() + " - " + track.getName());
-            if (trk.getNumberOfLocations() > 1) {
+            if (trk.getNumberOfLocations() + trk.getNumberOfSteps() > 1) {
                 phd = phdformatter.format(trk.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 textViewTrackLength.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(trk.getPrefTime(),PhysicalDataFormatter.FORMAT_DURATION);
@@ -170,6 +173,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
                 textViewTrackAverageSpeed.setText("");
             }
             textViewTrackGeopoints.setText(String.valueOf(trk.getNumberOfLocations()));
+            textViewTrackSteps.setText(String.valueOf(trk.getNumberOfSteps()));
             textViewTrackPlacemarks.setText(String.valueOf(trk.getNumberOfPlacemarks()));
 
             // ----- This is a Workaround of an Android bug (https://issuetracker.google.com/issues/36923384)

@@ -90,6 +90,7 @@ public class Track {
     private float   SpeedAverageMoving          = NOT_AVAILABLE;    // Saved in DB
 
     private long    NumberOfLocations           = 0;                // Saved in DB
+    private long    NumberOfSteps               = 0;                // Saved in DB
     private long    NumberOfPlacemarks          = 0;                // Saved in DB
 
     private int ValidMap                        = 1;                // Saved in DB
@@ -282,7 +283,7 @@ public class Track {
                        long Duration, long Duration_Moving, float Distance, float DistanceInProgress,
                        long DistanceLastAltitude, double Altitude_Up, double Altitude_Down,
                        double Altitude_InProgress, float SpeedMax, float   SpeedAverage,
-                       float SpeedAverageMoving, long NumberOfLocations, long NumberOfPlacemarks,
+                       float SpeedAverageMoving, long NumberOfLocations, long NumberOfPlacemarks, long NumberOfSteps,
                        int ValidMap, int Type) {
         this.id = id;
         this.Name = Name;
@@ -332,6 +333,7 @@ public class Track {
         this.SpeedAverageMoving = SpeedAverageMoving;
 
         this.NumberOfLocations = NumberOfLocations;
+        this.NumberOfSteps = NumberOfSteps;
         this.NumberOfPlacemarks = NumberOfPlacemarks;
 
         this.ValidMap = ValidMap;
@@ -526,6 +528,10 @@ public class Track {
 
     public long getNumberOfLocations() {
         return NumberOfLocations;
+    }
+
+    public long getNumberOfSteps() {
+        return NumberOfSteps;
     }
 
     public long getNumberOfPlacemarks() {
