@@ -154,7 +154,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             id = trk.getId();
             textViewTrackName.setText(trk.getName());
             //textViewTrackName.setText(track.getId() + " - " + track.getName());
-            if (trk.getNumberOfLocations() + trk.getNumberOfSteps() > 1) {
+            if ((trk.getNumberOfLocations() + trk.getNumberOfSteps()) > 1) {
                 phd = phdformatter.format(trk.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 textViewTrackLength.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(trk.getPrefTime(),PhysicalDataFormatter.FORMAT_DURATION);

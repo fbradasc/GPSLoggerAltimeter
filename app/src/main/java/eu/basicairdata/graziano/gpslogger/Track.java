@@ -254,6 +254,8 @@ public class Track {
 
         }
 
+        setNumberOfSteps(location.getNumberOfSteps());
+
         // --------------------------------------------------------------------------------- Speeds
 
         if ((End_Speed != NOT_AVAILABLE) && (End_Speed > SpeedMax)) SpeedMax = End_Speed;
@@ -568,7 +570,13 @@ public class Track {
             Name = df2.format(location.getLocation().getTime());
         }
 
+        setNumberOfSteps(location.getNumberOfSteps());
+
         return NumberOfPlacemarks;
+    }
+
+    public void setNumberOfSteps(int numberOfSteps) {
+        this.NumberOfSteps = numberOfSteps;
     }
 
     public float getEstimatedDistance(){

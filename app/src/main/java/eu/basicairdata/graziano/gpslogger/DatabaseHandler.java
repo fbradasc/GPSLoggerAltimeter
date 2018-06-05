@@ -61,6 +61,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_LOCATION_NUMBEROFSATELLITES = "number_of_satellites";
     private static final String KEY_LOCATION_TYPE = "type";
     private static final String KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX = "number_of_satellites_used_in_fix";
+    private static final String KEY_LOCATION_NUMBEROFSTEPS = "number_of_steps";
 
     // ---------------------------------------------------------------------------- Placemarks adds
     private static final String KEY_LOCATION_NAME = "name";
@@ -189,7 +190,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
                 + KEY_LOCATION_TIME + " REAL,"                                  // 9
                 + KEY_LOCATION_NUMBEROFSATELLITES + " INTEGER,"                 // 10
                 + KEY_LOCATION_TYPE + " INTEGER,"                               // 11
-                + KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX + " INTEGER" + ")";  // 12
+                + KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX + " INTEGER,"        // 12
+                + KEY_LOCATION_NUMBEROFSTEPS + " INTEGER " + ")";               // 13
         db.execSQL(CREATE_LOCATIONS_TABLE);
 
         String CREATE_PLACEMARKS_TABLE = "CREATE TABLE " + TABLE_PLACEMARKS + "("
@@ -206,19 +208,25 @@ class DatabaseHandler extends SQLiteOpenHelper {
                 + KEY_LOCATION_NUMBEROFSATELLITES + " INTEGER,"                 // 10
                 + KEY_LOCATION_TYPE + " INTEGER,"                               // 11
                 + KEY_LOCATION_NAME + " TEXT,"                                  // 12
-                + KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX + " INTEGER" + ")";  // 13
+                + KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX + " INTEGER,"        // 13
+                + KEY_LOCATION_NUMBEROFSTEPS + " INTEGER" + ")";                // 14
         db.execSQL(CREATE_PLACEMARKS_TABLE);
     }
 
 
     private static final int NOT_AVAILABLE = -100000;
+    private static final int NONE = 0;
 
     private static final String DATABASE_ALTER_TABLE_LOCATIONS_TO_V2 = "ALTER TABLE "
             + TABLE_LOCATIONS + " ADD COLUMN " + KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX + " INTEGER DEFAULT " +  NOT_AVAILABLE + ";";
     private static final String DATABASE_ALTER_TABLE_PLACEMARKS_TO_V2 = "ALTER TABLE "
             + TABLE_PLACEMARKS + " ADD COLUMN " + KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX + " INTEGER DEFAULT " +  NOT_AVAILABLE + ";";
     private static final String DATABASE_ALTER_TABLE_TRACKS_TO_V3 = "ALTER TABLE "
-            + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_NUMBEROFSTEPS + " INTEGER DEFAULT " +  NOT_AVAILABLE + ";";
+            + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_NUMBEROFSTEPS + " INTEGER DEFAULT " +  NONE + ";";
+    private static final String DATABASE_ALTER_TABLE_LOCATIONS_TO_V3 = "ALTER TABLE "
+            + TABLE_LOCATIONS + " ADD COLUMN " + KEY_LOCATION_NUMBEROFSTEPS + " INTEGER DEFAULT " +  NONE + ";";
+    private static final String DATABASE_ALTER_TABLE_PLACEMARKS_TO_V3 = "ALTER TABLE "
+            + TABLE_PLACEMARKS + " ADD COLUMN " + KEY_LOCATION_NUMBEROFSTEPS + " INTEGER DEFAULT " +  NONE + ";";
     // Upgrading database
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -243,6 +251,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
             case 2:
                 //upgrade from version 2 to 3
                 db.execSQL(DATABASE_ALTER_TABLE_TRACKS_TO_V3);
+                db.execSQL(DATABASE_ALTER_TABLE_LOCATIONS_TO_V3);
+                db.execSQL(DATABASE_ALTER_TABLE_PLACEMARKS_TO_V3);
 
                 //and so on.. do not add breaks so that switch will
                 //start at oldVersion, and run straight through to the latest
@@ -271,6 +281,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         locvalues.put(KEY_LOCATION_NUMBEROFSATELLITES, location.getNumberOfSatellites());
         locvalues.put(KEY_LOCATION_TYPE, LOCATION_TYPE_LOCATION);
         locvalues.put(KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX, location.getNumberOfSatellitesUsedInFix());
+        locvalues.put(KEY_LOCATION_NUMBEROFSTEPS, location.getNumberOfSteps());
 
         ContentValues trkvalues = new ContentValues();
         trkvalues.put(KEY_TRACK_NAME, track.getName());
@@ -359,6 +370,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         locvalues.put(KEY_LOCATION_TYPE, LOCATION_TYPE_PLACEMARK);
         locvalues.put(KEY_LOCATION_NAME, placemark.getDescription());
         locvalues.put(KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX, placemark.getNumberOfSatellitesUsedInFix());
+        locvalues.put(KEY_LOCATION_NUMBEROFSTEPS, placemark.getNumberOfSteps());
 
         ContentValues trkvalues = new ContentValues();
         trkvalues.put(KEY_TRACK_NAME, track.getName());
@@ -443,7 +455,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
                         KEY_LOCATION_BEARING,
                         KEY_LOCATION_TIME,
                         KEY_LOCATION_NUMBEROFSATELLITES,
-                        KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX}, KEY_ID + "=?",
+                        KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX,
+                        KEY_LOCATION_NUMBEROFSTEPS,}, KEY_ID + "=?",
                 new String[] { String.valueOf(id) }, null, null, null, null);
         if (cursor != null) {
             cursor.moveToFirst();
@@ -474,6 +487,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
             extdloc = new LocationExtended(lc);
             extdloc.setNumberOfSatellites(cursor.getInt(8));
             extdloc.setNumberOfSatellitesUsedInFix(cursor.getInt(9));
+            extdloc.setNumberOfSteps(cursor.getInt(10));
 
             cursor.close();
         }
@@ -529,6 +543,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
                     LocationExtended extdloc = new LocationExtended(lc);
                     extdloc.setNumberOfSatellites(cursor.getInt(10));
                     extdloc.setNumberOfSatellitesUsedInFix(cursor.getInt(12));
+                    extdloc.setNumberOfSteps(cursor.getInt(13));
 
                     locationList.add(extdloc); // Add Location to list
                 } while (cursor.moveToNext());
@@ -585,6 +600,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
                     LocationExtended extdloc = new LocationExtended(lc);
                     extdloc.setNumberOfSatellites(cursor.getInt(10));
                     extdloc.setNumberOfSatellitesUsedInFix(cursor.getInt(13));
+                    extdloc.setNumberOfSteps(cursor.getInt(14));
                     extdloc.setDescription(cursor.getString(12));
 
                     placemarkList.add(extdloc); // Add Location to list

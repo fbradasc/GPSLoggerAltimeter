@@ -23,12 +23,14 @@ import android.location.Location;
 public class LocationExtended {
 
     private final int NOT_AVAILABLE = -100000;
+    private final int NONE = 0;
 
     private Location _Location;
     private String _Description = "";
     private double _AltitudeEGM96Correction = NOT_AVAILABLE;
     private int _NumberOfSatellites = NOT_AVAILABLE;
     private int _NumberOfSatellitesUsedInFix = NOT_AVAILABLE;
+    private int _NumberOfSteps = NONE;
 
 
     // Constructor
@@ -76,6 +78,14 @@ public class LocationExtended {
 
     public int getNumberOfSatellitesUsedInFix() {
         return _NumberOfSatellitesUsedInFix;
+    }
+
+    public void setNumberOfSteps(int numberOfSteps) {
+        _NumberOfSteps = numberOfSteps;
+    }
+
+    public int getNumberOfSteps() {
+        return _NumberOfSteps;
     }
 
     public double getAltitudeEGM96Correction(){

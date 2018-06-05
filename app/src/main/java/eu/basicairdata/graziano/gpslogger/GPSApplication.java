@@ -20,6 +20,7 @@
 package eu.basicairdata.graziano.gpslogger;
 
 import android.Manifest;
+import android.app.AlarmManager;
 import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
@@ -58,11 +59,18 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
-public class GPSApplication extends Application implements GpsStatus.Listener, LocationListener {
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+
+public class GPSApplication extends Application implements GpsStatus.Listener, LocationListener, SensorEventListener {
 
     //private static final float M_TO_FT = 3.280839895f;
     private static final int NOT_AVAILABLE = -100000;
@@ -83,6 +91,10 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private static final int GPS_SEARCHING = 3;
     private static final int GPS_STABILIZING = 4;
     private static final int GPS_OK = 5;
+
+    private static final long MICROSECONDS_IN_ONE_MINUTE = 60000000;
+    private static final long SAVE_OFFSET_TIME = AlarmManager.INTERVAL_HOUR;
+    private static final int SAVE_OFFSET_STEPS = 500;
 
     // Preferences Variables
     // private boolean prefKeepScreenOn = true;                 // DONE in GPSActivity
@@ -145,6 +157,10 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private LocationManager mlocManager = null;             // GPS LocationManager
     private int _NumberOfSatellites = 0;
     private int _NumberOfSatellitesUsedInFix = 0;
+    private int _NumberOfStepsOnBoot = 0;
+    private int _NumberOfSteps = 0;
+    private int _LastSaveSteps = Integer.MIN_VALUE;
+    private long _LastSaveTime = 0;
 
     private int _Stabilizer = StabilizingSamples;
     private int HandlerTimer = DEFAULTHANDLERTIMER;
@@ -388,6 +404,10 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         return _NumberOfSatellitesUsedInFix;
     }
 
+    public int getNumberOfSteps() {
+        return _NumberOfSteps;
+    }
+
     public boolean getRecording() {
         return Recording;
     }
@@ -423,6 +443,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         StartAndBindGPSService();
 
         EventBus.getDefault().register(this);
+
+        reRegisterSensor(true);
 
         mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);     // Location Manager
 
@@ -479,6 +501,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         EventBus.getDefault().unregister(this);
         StopAndUnbindGPSService();
         super.onTerminate();
+        reRegisterSensor(false);
     }
 
     @Subscribe
@@ -593,6 +616,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             handler.postDelayed(r, getHandlerTimer());  // Starts the switch-off handler (delayed by HandlerTimer)
             System.gc();                                // Clear mem from released objects with Garbage Collector
             //UnbindGPSService();
+            reRegisterSensor(false);
             return;
         }
         if (msg == EventBusMSG.APP_RESUME) {
@@ -606,6 +630,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 MustUpdatePrefs = false;
                 LoadPreferences();
             }
+            reRegisterSensor(true);
             StartAndBindGPSService();
             return;
         }
@@ -743,6 +768,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             LocationExtended eloc = new LocationExtended(loc);
             eloc.setNumberOfSatellites(getNumberOfSatellites());
             eloc.setNumberOfSatellitesUsedInFix(getNumberOfSatellitesUsedInFix());
+            eloc.setNumberOfSteps(getNumberOfSteps());
             boolean ForceRecord = false;
 
             gpsunavailablehandler.removeCallbacks(unavailr);                            // Cancel the previous unavail countdown handler
@@ -791,9 +817,11 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                             || (ForceRecord)
                             || (loc.distanceTo(PrevRecordedFix.getLocation()) >= prefGPSdistance))) {
                     PrevRecordedFix = eloc;
+/*
                     ast.TaskType = "TASK_ADDLOCATION";
                     ast.location = eloc;
                     AsyncTODOQueue.add(ast);
+*/
                     isPrevFixRecorded = true;
                 } else {
                     ast.TaskType = "TASK_UPDATEFIX";
@@ -806,6 +834,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     _currentPlacemark = new LocationExtended(loc);
                     _currentPlacemark.setNumberOfSatellites(getNumberOfSatellites());
                     _currentPlacemark.setNumberOfSatellitesUsedInFix(getNumberOfSatellitesUsedInFix());
+                    _currentPlacemark.setNumberOfSteps(getNumberOfSteps());
                     PlacemarkRequest = false;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
                     EventBus.getDefault().post(EventBusMSG.REQUEST_ADD_PLACEMARK);
@@ -865,7 +894,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     File file = new File(getApplicationContext().getFilesDir() + "/Thumbnails/", fname);
                     if (!file.exists()) Th = new Thumbnailer(ID - 1);
                 }
-                if (_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks() > 0) {
+                if ((_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks()) > 0) {
                     Log.w("myApp", "[#] GPSApplication.java - Update Tracklist: current track (" + _currentTrack.getId() + ") visible into the tracklist");
                     _ArrayListTracks.add(0, _currentTrack);
                 } else
@@ -989,13 +1018,14 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     locationExtended = new LocationExtended(asyncTODO.location.getLocation());
                     locationExtended.setNumberOfSatellites(asyncTODO.location.getNumberOfSatellites());
                     locationExtended.setNumberOfSatellitesUsedInFix(asyncTODO.location.getNumberOfSatellitesUsedInFix());
+                    locationExtended.setNumberOfSteps(asyncTODO.location.getNumberOfSteps());
                     _currentLocationExtended = locationExtended;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_FIX);
                     track.add(locationExtended);
                     GPSDataBase.addLocationToTrack(locationExtended, track);
                     _currentTrack = track;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
-                    if (_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks() == 1) UpdateTrackList();
+                    if ((_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks()) == 1) UpdateTrackList();
                 }
 
                 // Task: Add a placemark to current track
@@ -1004,11 +1034,12 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     locationExtended.setDescription(asyncTODO.location.getDescription());
                     locationExtended.setNumberOfSatellites(asyncTODO.location.getNumberOfSatellites());
                     locationExtended.setNumberOfSatellitesUsedInFix(asyncTODO.location.getNumberOfSatellitesUsedInFix());
+                    locationExtended.setNumberOfSteps(asyncTODO.location.getNumberOfSteps());
                     track.addPlacemark(locationExtended);
                     GPSDataBase.addPlacemarkToTrack(locationExtended, track);
                     _currentTrack = track;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
-                    if (_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks() == 1) UpdateTrackList();
+                    if ((_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks()) == 1) UpdateTrackList();
                 }
 
                 // Task: Update current Fix
@@ -1016,6 +1047,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     _currentLocationExtended = new LocationExtended(asyncTODO.location.getLocation());
                     _currentLocationExtended.setNumberOfSatellites(asyncTODO.location.getNumberOfSatellites());
                     _currentLocationExtended.setNumberOfSatellitesUsedInFix(asyncTODO.location.getNumberOfSatellitesUsedInFix());
+                    _currentLocationExtended.setNumberOfSteps(asyncTODO.location.getNumberOfSteps());
                     EventBus.getDefault().post(EventBusMSG.UPDATE_FIX);
                 }
 
@@ -1207,4 +1239,94 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
     }
 
+    private void reRegisterSensor(boolean start) {
+        if (BuildConfig.DEBUG) Log.d("myApp", "re-register sensor listener");
+        SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        try {
+            sm.unregisterListener(this);
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) Log.d("myApp", e.toString());
+            e.printStackTrace();
+        }
+
+        if (start) {
+            if (BuildConfig.DEBUG) {
+                Log.d("myApp", "step sensors: " + sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size());
+                if (sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size() < 1) return; // emulator
+                Log.d("myApp", "default: " + sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER).getName());
+            }
+
+            if (_NumberOfStepsOnBoot == Integer.MIN_VALUE) {
+                // enable batching with delay of max 5 min
+                sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER),
+                        SensorManager.SENSOR_DELAY_NORMAL, (int) (5 * MICROSECONDS_IN_ONE_MINUTE));
+            } else {
+                sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER),
+                        SensorManager.SENSOR_DELAY_UI, 0);
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(final Sensor sensor, int accuracy) {
+        // nobody knows what happens here: step value might magically decrease
+        // when this method is called...
+        if (BuildConfig.DEBUG) Log.d("myApp", sensor.getName() + " accuracy changed: " + accuracy);
+    }
+
+    @Override
+    public void onSensorChanged(final SensorEvent event) {
+        if (event.values[0] > Integer.MAX_VALUE) {
+            if (BuildConfig.DEBUG) Log.d("myApp", "probably not a real value: " + event.values[0]);
+            return;
+        } else {
+            int steps = (int) event.values[0];
+            if (Recording) {
+                _NumberOfSteps = steps - _NumberOfStepsOnBoot;
+                if (BuildConfig.DEBUG) Log.d("myApp", "number of steps: " + _NumberOfSteps);
+
+                updateIfNecessary();
+            } else if (_LastSaveSteps == Integer.MIN_VALUE) {
+                _NumberOfStepsOnBoot = steps;
+                if (BuildConfig.DEBUG)
+                    Log.d("myApp", "number of steps on boot: " + _NumberOfStepsOnBoot);
+            }
+        }
+    }
+
+    private void updateIfNecessary() {
+        if (_NumberOfSteps > _LastSaveSteps /* + SAVE_OFFSET_STEPS ||
+                (_NumberOfSteps > 0 && System.currentTimeMillis() > _LastSaveTime + SAVE_OFFSET_TIME) */ ) {
+            if (BuildConfig.DEBUG) Log.d("myApp",
+                    "saving steps: steps=" + _NumberOfSteps + " lastSave=" + _LastSaveSteps +
+                            " lastSaveTime=" + new Date(_LastSaveTime));
+/*
+            Database db = Database.getInstance(this);
+            if (db.getSteps(Util.getToday()) == Integer.MIN_VALUE) {
+                int pauseDifference = _NumberOfSteps -
+                        getSharedPreferences("pedometer", Context.MODE_PRIVATE)
+                                .getInt("pauseCount", _NumberOfSteps);
+                db.insertNewDay(Util.getToday(), _NumberOfSteps - pauseDifference);
+                if (pauseDifference > 0) {
+                    // update pauseCount for the new day
+                    getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit()
+                            .putInt("pauseCount", _NumberOfSteps).commit();
+                }
+            }
+            db.saveCurrentSteps(_NumberOfSteps);
+            db.close();
+*/
+            _LastSaveSteps = _NumberOfSteps;
+            _LastSaveTime = System.currentTimeMillis();
+            // startService(new Intent(this, WidgetUpdateService.class));
+            if (PrevFix != null) {
+                AsyncTODO ast = new AsyncTODO();
+                ast.TaskType = "TASK_ADDLOCATION";
+                ast.location = PrevFix;
+                ast.location.setNumberOfSteps(_NumberOfSteps);
+                AsyncTODOQueue.add(ast);
+            }
+        }
+    }
 }
