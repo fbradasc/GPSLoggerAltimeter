@@ -415,6 +415,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     public void setRecording(boolean recordingState) {
         PrevRecordedFix = null;
         Recording = recordingState;
+        reRegisterSensor(recordingState);
     }
 
     public boolean getPlacemarkRequest() { return PlacemarkRequest; }
@@ -616,7 +617,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             handler.postDelayed(r, getHandlerTimer());  // Starts the switch-off handler (delayed by HandlerTimer)
             System.gc();                                // Clear mem from released objects with Garbage Collector
             //UnbindGPSService();
-            reRegisterSensor(false);
+            // reRegisterSensor(false);
             return;
         }
         if (msg == EventBusMSG.APP_RESUME) {
@@ -630,7 +631,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 MustUpdatePrefs = false;
                 LoadPreferences();
             }
-            reRegisterSensor(true);
+            // reRegisterSensor(true);
             StartAndBindGPSService();
             return;
         }
@@ -1240,7 +1241,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     }
 
     private void reRegisterSensor(boolean start) {
-        if (BuildConfig.DEBUG) Log.d("myApp", "re-register sensor listener");
+        if (BuildConfig.DEBUG) Log.d("myApp", "re-register sensor listener - start: " + start);
         SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         try {

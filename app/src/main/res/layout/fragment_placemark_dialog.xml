@@ -19,6 +19,7 @@
   -->
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <LinearLayout
@@ -26,20 +27,215 @@
         android:layout_height="wrap_content"
         android:orientation="vertical" >
 
-        <EditText
-            android:id="@+id/placemark_description"
-            android:inputType="textCapSentences"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
+        <TableLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="4dp"
-            android:layout_marginBottom="4dp"
-            android:hint="@string/dlg_placemark_description" >
+            android:layout_height="match_parent"
+            android:layout_margin="4dp">
 
-            <requestFocus />
-        </EditText>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:descendantFocusability="beforeDescendants">
+
+                <requestFocus />
+
+                <EditText
+                    android:id="@+id/film_data"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:selectAllOnFocus="true"
+                    android:hint="@string/film_data_hint"
+                    android:inputType="textCapSentences"
+                    android:nextFocusDown="@id/pdata_ev"
+                    android:nextFocusForward="@id/pdata_ev"
+                    android:nextFocusLeft="@id/pdata_ev">
+
+                    <requestFocus />
+                </EditText>
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:descendantFocusability="beforeDescendants">
+
+                <requestFocus />
+
+                <TextView
+                    android:id="@+id/textView17"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:text="@string/dphoto_ev" />
+
+                <EditText
+                    android:id="@+id/pdata_ev"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="4"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:selectAllOnFocus="true"
+                    android:hint="@string/dphoto_av_hint"
+                    android:inputType="number"
+                    android:nextFocusLeft="@id/pdata_fv"
+                    android:nextFocusForward="@id/pdata_fv"
+                    android:nextFocusDown="@id/pdata_fv">
+
+                    <requestFocus />
+                </EditText>
+
+                <TextView
+                    android:id="@+id/textView20"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:text="@string/dphoto_fv" />
+
+                <EditText
+                    android:id="@+id/pdata_fv"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="4"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:selectAllOnFocus="true"
+                    android:hint="@string/dphoto_fv_hint"
+                    android:inputType="number|numberDecimal"
+                    android:nextFocusDown="@id/pdata_tv"
+                    android:nextFocusForward="@id/pdata_tv"
+                    android:nextFocusLeft="@id/pdata_tv">
+
+                    <requestFocus />
+                </EditText>
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:descendantFocusability="beforeDescendants">
+
+                <requestFocus />
+
+                <TextView
+                    android:id="@+id/textView18"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:text="@string/dphoto_tv" />
+
+                <EditText
+                    android:id="@+id/pdata_tv"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="4"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:selectAllOnFocus="true"
+                    android:hint="@string/dphoto_tv_hint"
+                    android:inputType="number|phone"
+                    android:nextFocusDown="@id/pdata_av"
+                    android:nextFocusForward="@id/pdata_av"
+                    android:nextFocusLeft="@id/pdata_av">
+
+                    <requestFocus />
+                </EditText>
+
+                <TextView
+                    android:id="@+id/textView19"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:text="@string/dphoto_av" />
+
+                <EditText
+                    android:id="@+id/pdata_av"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="4"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:selectAllOnFocus="true"
+                    android:hint="@string/dphoto_ev_hint"
+                    android:inputType="number|numberDecimal"
+                    android:nextFocusDown="@id/placemark_description"
+                    android:nextFocusForward="@id/placemark_description"
+                    android:nextFocusLeft="@id/placemark_description">
+
+                    <requestFocus />
+                </EditText>
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:descendantFocusability="beforeDescendants">
+
+                <requestFocus />
+
+                <EditText
+                    android:id="@+id/placemark_description"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:selectAllOnFocus="true"
+                    android:hint="@string/dlg_placemark_description"
+                    android:inputType="textCapSentences"
+                    android:nextFocusLeft="@id/pdata_ev"
+                    android:nextFocusForward="@id/pdata_ev"
+                    android:nextFocusDown="@id/pdata_ev">
+
+                    <requestFocus />
+                </EditText>
+            </TableRow>
+
+        </TableLayout>
+
     </LinearLayout>
 </RelativeLayout>

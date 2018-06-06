@@ -37,6 +37,18 @@ import org.greenrobot.eventbus.EventBus;
 public class FragmentPlacemarkDialog extends DialogFragment {
 
     EditText DescEditText;
+    EditText Film_Data_EditText;
+    EditText P_Data_Ev_EditText;
+    EditText P_Data_Fv_EditText;
+    EditText P_Data_Tv_EditText;
+    EditText P_Data_Av_EditText;
+
+    static String mDesc      = "";
+    static String mFilm_Data = "";
+    static String mP_Data_Ev = "";
+    static String mP_Data_Fv = "";
+    static String mP_Data_Tv = "";
+    static String mP_Data_Av = "";
 
     //@SuppressLint("InflateParams")
     @Override
@@ -49,15 +61,28 @@ public class FragmentPlacemarkDialog extends DialogFragment {
         LayoutInflater inflater = getActivity().getLayoutInflater();
         final View view = (View) inflater.inflate(R.layout.fragment_placemark_dialog, null);
 
-        DescEditText = (EditText) view.findViewById(R.id.placemark_description);
-        DescEditText.postDelayed(new Runnable()
+        DescEditText       = (EditText) view.findViewById(R.id.placemark_description);
+        Film_Data_EditText = (EditText) view.findViewById(R.id.film_data);
+        P_Data_Ev_EditText = (EditText) view.findViewById(R.id.pdata_ev);
+        P_Data_Fv_EditText = (EditText) view.findViewById(R.id.pdata_fv);
+        P_Data_Tv_EditText = (EditText) view.findViewById(R.id.pdata_tv);
+        P_Data_Av_EditText = (EditText) view.findViewById(R.id.pdata_av);
+
+        P_Data_Ev_EditText.postDelayed(new Runnable()
         {
             public void run()
             {
                 if (isAdded()) {
-                    DescEditText.requestFocus();
+                    if (!mFilm_Data.isEmpty()) Film_Data_EditText.setText(mFilm_Data);
+                    if (!mP_Data_Ev.isEmpty()) P_Data_Ev_EditText.setText(mP_Data_Ev);
+                    if (!mP_Data_Tv.isEmpty()) P_Data_Tv_EditText.setText(mP_Data_Tv);
+                    if (!mP_Data_Av.isEmpty()) P_Data_Av_EditText.setText(mP_Data_Av);
+                    if (!mP_Data_Fv.isEmpty()) P_Data_Fv_EditText.setText(mP_Data_Fv);
+                    if (!mDesc     .isEmpty()) DescEditText      .setText(mDesc     );
+
+                    P_Data_Ev_EditText.requestFocus();
                     InputMethodManager mgr = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    mgr.showSoftInput(DescEditText, InputMethodManager.SHOW_IMPLICIT);
+                    mgr.showSoftInput(P_Data_Ev_EditText, InputMethodManager.SHOW_IMPLICIT);
                 }
             }
         }, 200);
@@ -70,7 +95,19 @@ public class FragmentPlacemarkDialog extends DialogFragment {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         if (isAdded()) {
-                            String PlacemarkDescription = DescEditText.getText().toString();
+                            mFilm_Data = Film_Data_EditText.getText().toString().trim();
+                            mP_Data_Ev = P_Data_Ev_EditText.getText().toString().trim();
+                            mP_Data_Tv = P_Data_Tv_EditText.getText().toString().trim();
+                            mP_Data_Av = P_Data_Av_EditText.getText().toString().trim();
+                            mP_Data_Fv = P_Data_Fv_EditText.getText().toString().trim();
+                            mDesc      = DescEditText      .getText().toString().trim();
+                            String PlacemarkDescription =
+                                    mFilm_Data + "\n" +
+                                    mP_Data_Ev + "/" +
+                                    mP_Data_Tv + "/" +
+                                    mP_Data_Av + "/" +
+                                    mP_Data_Fv + "\n" +
+                                    mDesc;
                             final GPSApplication GlobalVariables = (GPSApplication) getActivity().getApplicationContext();
                             GlobalVariables.setPlacemarkDescription(PlacemarkDescription.trim());
                             EventBus.getDefault().post(EventBusMSG.ADD_PLACEMARK);
@@ -99,5 +136,15 @@ public class FragmentPlacemarkDialog extends DialogFragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+    }
+
+    @Override
+    public void onDestroyView() {
+        Dialog dialog = getDialog();
+        // handles https://code.google.com/p/android/issues/detail?id=17423
+        if (dialog != null && getRetainInstance()) {
+            dialog.setDismissMessage(null);
+        }
+        super.onDestroyView();
     }
 }

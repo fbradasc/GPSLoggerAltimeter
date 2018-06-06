@@ -109,6 +109,7 @@ class Exporter extends Thread {
             }
         }
 
+        SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss");  // date and time formatter for GPX timestamp
         SimpleDateFormat dfdtGPX = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");  // date and time formatter for GPX timestamp
         dfdtGPX.setTimeZone(TimeZone.getTimeZone("GMT"));
         SimpleDateFormat dfdtTXT = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss");  // date and time formatter for TXT timestamp
@@ -271,13 +272,16 @@ class Exporter extends Thread {
                             if (ExportKML) {
                                 KMLbw.write("  <Placemark>" + newLine);
                                 KMLbw.write("   <name>");
+                                KMLbw.write(timestamp.format(loc.getLocation().getTime()));
+                                KMLbw.write("   </name>");
+                                KMLbw.write("   <description>");
                                 KMLbw.write(loc.getDescription()
                                         .replace("<","&lt;")
                                         .replace("&","&amp;")
                                         .replace(">","&gt;")
                                         .replace("\"","&quot;")
                                         .replace("'","&apos;"));
-                                KMLbw.write("</name>" + newLine);
+                                KMLbw.write("</description>" + newLine);
                                 KMLbw.write("   <styleUrl>#Bookmark_Style</styleUrl>" + newLine);
                                 KMLbw.write("   <Point>" + newLine);
                                 KMLbw.write("    <altitudeMode>" + (getPrefKMLAltitudeMode == 1 ? "clampToGround" : "absolute") + "</altitudeMode>" + newLine);
@@ -305,13 +309,16 @@ class Exporter extends Thread {
                                 GPXbw.write(dfdtGPX.format(loc.getLocation().getTime()));
                                 GPXbw.write("</time>");
                                 GPXbw.write("<name>");     // Name
+                                GPXbw.write(timestamp.format(loc.getLocation().getTime()));
+                                GPXbw.write("</name>");
+                                GPXbw.write("<desc>");     // Name
                                 GPXbw.write(loc.getDescription()
                                         .replace("<","&lt;")
                                         .replace("&","&amp;")
                                         .replace(">","&gt;")
                                         .replace("\"","&quot;")
                                         .replace("'","&apos;"));
-                                GPXbw.write("</name>");
+                                GPXbw.write("</desc>");
                                 if (loc.getNumberOfSatellitesUsedInFix() > 0) {     // Satellites used in fix
                                     GPXbw.write("<sat>");
                                     GPXbw.write(String.valueOf(loc.getNumberOfSatellitesUsedInFix()));

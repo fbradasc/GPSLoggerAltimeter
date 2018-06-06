@@ -198,5 +198,14 @@
     <string name="UM_mph">mph</string>
     <string name="UM_nm">NM</string>
     <string name="UM_kn">kn</string>
+    <string name="dphoto_ev">EV</string>
+    <string name="dphoto_tv">TV</string>
+    <string name="dphoto_av">AV</string>
+    <string name="dphoto_fv">FV</string>
+    <string name="dphoto_av_hint">3...18</string>
+    <string name="dphoto_fv_hint">0,5...4</string>
+    <string name="dphoto_tv_hint">+#, 1...500</string>
+    <string name="dphoto_ev_hint">3,5...22</string>
+    <string name="film_data_hint">Enter the film data</string>
 
 </resources>
