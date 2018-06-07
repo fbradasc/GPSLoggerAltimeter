@@ -24,7 +24,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/id_coordinatorlayout"
-    tools:context="eu.basicairdata.graziano.gpslogger.GPSActivity">
+    tools:context="org.fbradasc.trekking.gpslogger.GPSActivity">
 
 <android.support.design.widget.AppBarLayout
     android:id="@+id/id_appbarlayout"
@@ -69,7 +69,7 @@
             android:layout_width="fill_parent"
             app:behavior_hideable="false"
             android:layout_height="wrap_content"
-            android:name="eu.basicairdata.graziano.gpslogger.FragmentRecordingControls"
+            android:name="org.fbradasc.trekking.gpslogger.FragmentRecordingControls"
             android:id="@+id/fragment_FragmentRecordingControls"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"

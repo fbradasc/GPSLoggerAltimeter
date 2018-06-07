@@ -19,7 +19,7 @@
   -->
 
 <resources>
-    <string name="app_name">GPS Logger</string>
+    <string name="app_name">Walking Logger</string>
 
     <!-- Tabs -->
     <string name="tab_gpsfix">GPS Fix</string>
