@@ -30,7 +30,7 @@ import android.util.Log;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.ActivityRecognitionResult;
-import com.google.android.gms.location.DetectedActivity;
+// import com.google.android.gms.location.DetectedActivity;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -38,7 +38,7 @@ public class GPSService extends Service {
     // Singleton instance
     private static GPSService singleton;
     PendingIntent activityRecognitionPendingIntent = null;
-    private long _UserStillSinceTimeStamp = 0;
+//    private long _UserStillSinceTimeStamp = 0;
 
     public static GPSService getInstance(){
         return singleton;
@@ -123,7 +123,6 @@ public class GPSService extends Service {
 
     private void requestActivityRecognitionUpdates() {
         if (activityRecognitionPendingIntent == null) {
-            _UserStillSinceTimeStamp = System.currentTimeMillis();
             Log.d("myApp", "Requesting activity recognition updates");
             Intent intent = new Intent(getApplicationContext(), GPSService.class);
             activityRecognitionPendingIntent = PendingIntent.getService(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -152,6 +151,8 @@ public class GPSService extends Service {
         if(arr != null){
             Log.d("myApp", "handleIntent: Activity: " + arr.getMostProbableActivity().toString());
 
+            EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.ACTIVITY_DETECTED, arr.getMostProbableActivity().getType()));
+/*
             switch (arr.getMostProbableActivity().getType()) {
                 case DetectedActivity.STILL:
                 case DetectedActivity.IN_VEHICLE:
@@ -179,7 +180,7 @@ public class GPSService extends Service {
                     EventBus.getDefault().post(EventBusMSG.GPS_RESUME);
                     break;
             }
-
+*/
             return true;
         }
 

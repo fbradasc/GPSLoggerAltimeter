@@ -26,7 +26,7 @@
     android:id="@+id/id_fragmentrecordingcontrols"
     android:background="@color/colorTrackBackground"
     android:orientation="horizontal"
-    android:weightSum="3"
+    android:weightSum="4"
     android:baselineAligned="false">
 
 
@@ -118,4 +118,22 @@
 
     </TableLayout>
 
+    <TableLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:id="@+id/id_TableLayout_DetectedActivity"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:clickable="true">
+
+        <ImageView
+            android:layout_width="@dimen/controls_grid_iconwidth"
+            android:layout_height="@dimen/controls_grid_iconheight"
+            android:id="@+id/id_imageView_DetectedActivity"
+            android:layout_gravity="center|center"
+            android:src="@drawable/speed"
+            />
+
+    </TableLayout>
 </LinearLayout>

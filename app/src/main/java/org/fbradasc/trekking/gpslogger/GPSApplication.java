@@ -70,6 +70,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
+import com.google.android.gms.location.DetectedActivity;
+
 public class GPSApplication extends Application implements GpsStatus.Listener, LocationListener, SensorEventListener {
 
     //private static final float M_TO_FT = 3.280839895f;
@@ -120,6 +122,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private boolean isPrevFixRecorded = false;
 
     private LocationExtended PrevRecordedFix = null;
+    private LocationExtended ToBeRecordedFix = null;
 
     private boolean MustUpdatePrefs = true;                     // True if preferences needs to be updated
 
@@ -128,6 +131,10 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private boolean isContextMenuViewVisible = false;           // True if "View in *" menu is visible
     private String ViewInApp = "";                              // The string of default app name for "View"
                                                                 // "" in case of selector
+
+    private int detectedActivity = DetectedActivity.UNKNOWN;
+
+    private long userStillSinceTimeStamp = 0;
 
     // Singleton instance
     private static GPSApplication singleton;
@@ -139,6 +146,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     DatabaseHandler GPSDataBase;
     private String PlacemarkDescription = "";
     private boolean Recording = false;
+    private boolean CanRecord = true;
     private boolean PlacemarkRequest = false;
     private long OpenInViewer = -1;                    // The index to be opened in viewer
     private long Share = -1;                                // The index to be Shared
@@ -212,6 +220,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             GPSService.LocalBinder binder = (GPSService.LocalBinder) service;
             GPSLoggerService = binder.getServiceInstance();                     //Get instance of your service!
             Log.w("myApp", "[#] GPSApplication.java - GPSSERVICE CONNECTED - onServiceConnected event");
+            userStillSinceTimeStamp = System.currentTimeMillis();
             isGPSServiceBound = true;
         }
 
@@ -413,6 +422,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     }
 
     public void setRecording(boolean recordingState) {
+        ToBeRecordedFix = null;
         PrevRecordedFix = null;
         Recording = recordingState;
         reRegisterSensor(recordingState);
@@ -432,6 +442,16 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
 
     public void setisCurrentTrackVisible(boolean currentTrackVisible) {
         isCurrentTrackVisible = currentTrackVisible;
+    }
+
+    public void setDetectedActivity(int _detectedActivity)
+    {
+        detectedActivity = _detectedActivity;
+    }
+
+    public int getDetectedActivity()
+    {
+        return detectedActivity;
     }
 
     // --------------------------------------------------------------------------------------------
@@ -594,6 +614,41 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             }
             return;
         }
+        if (msg.MSGType == EventBusMSG.ACTIVITY_DETECTED) {
+            setDetectedActivity((int)msg.id);
+
+            switch (getDetectedActivity()) {
+                case DetectedActivity.STILL:
+                case DetectedActivity.IN_VEHICLE:
+                case DetectedActivity.TILTING:
+                    // case DetectedActivity.UNKNOWN:
+                    if(userStillSinceTimeStamp == 0){
+                        Log.d("myApp", "handleIntent: Just entered still state, attempt to log");
+                        setGPSLocationUpdates(true);
+                        userStillSinceTimeStamp = System.currentTimeMillis();
+                    } else {
+                        Log.d("myApp", "handleIntent: Not walking stop logging");
+                        setGPSLocationUpdates(false);
+                    }
+                    break;
+
+                case DetectedActivity.UNKNOWN:
+                case DetectedActivity.ON_BICYCLE:
+                case DetectedActivity.ON_FOOT:
+                case DetectedActivity.WALKING:
+                case DetectedActivity.RUNNING:
+                default:
+                    //Reset the still-since timestamp
+                    userStillSinceTimeStamp = 0;
+                    Log.d("myApp", "handleIntent: Just exited still state, attempt to log");
+                    setGPSLocationUpdates(true);
+                    break;
+            }
+
+            EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
+
+            return;
+        }
     }
 
     @Subscribe
@@ -634,14 +689,6 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             StartAndBindGPSService();
             return;
         }
-        if (msg == EventBusMSG.GPS_PAUSE) {
-            setGPSLocationUpdates(false);
-            return;
-        }
-        if (msg == EventBusMSG.GPS_RESUME) {
-            setGPSLocationUpdates(true);
-            return;
-        }
         if (msg == EventBusMSG.UPDATE_SETTINGS) {
             MustUpdatePrefs = true;
             return;
@@ -651,15 +698,22 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     public void setGPSLocationUpdates (boolean state) {
         // Request permissions = https://developer.android.com/training/permissions/requesting.html
 
-        if (!state && !getRecording() && isGPSLocationUpdatesActive
-                && (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-            GPSStatus = GPS_SEARCHING;
-            mlocManager.removeGpsStatusListener(this);
-            mlocManager.removeUpdates(this);
-            isGPSLocationUpdatesActive = false;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
         }
-        if (state && !isGPSLocationUpdatesActive
-                && (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+
+        CanRecord = true;
+
+        if (isGPSLocationUpdatesActive) {
+            if (getRecording()) {
+                CanRecord = state;
+            } else if (!state) {
+                GPSStatus = GPS_SEARCHING;
+                mlocManager.removeGpsStatusListener(this);
+                mlocManager.removeUpdates(this);
+                isGPSLocationUpdatesActive = false;
+            }
+        } else if (state) {
             mlocManager.addGpsStatusListener(this);
             mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, prefGPSupdatefrequency, 0, this); // Requires Location update
             isGPSLocationUpdatesActive = true;
@@ -782,6 +836,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             gpsunavailablehandler.removeCallbacks(unavailr);                            // Cancel the previous unavail countdown handler
             gpsunavailablehandler.postDelayed(unavailr, GPSUNAVAILABLEHANDLERTIMER);    // starts the unavailability timeout (in 7 sec.)
 
+            ToBeRecordedFix = null;
+
             if (GPSStatus != GPS_OK) {
                 if (GPSStatus != GPS_STABILIZING) {
                     GPSStatus = GPS_STABILIZING;
@@ -800,6 +856,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 && (PrevFix.getLocation().hasSpeed())
                     && (eloc.getLocation().hasSpeed())
                     && (GPSStatus == GPS_OK)
+                    && (CanRecord)
                     && (Recording)
                     && (((eloc.getLocation().getSpeed() == 0)
                         && (PrevFix.getLocation().getSpeed() != 0))
@@ -819,19 +876,30 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
 
             if (GPSStatus == GPS_OK) {
                 AsyncTODO ast = new AsyncTODO();
+/*
                 if ((Recording)
                         && ((prefGPSdistance == 0)
                             || (PrevRecordedFix == null)
                             || (ForceRecord)
                             || (loc.distanceTo(PrevRecordedFix.getLocation()) >= prefGPSdistance))) {
                     PrevRecordedFix = eloc;
-/*
                     ast.TaskType = "TASK_ADDLOCATION";
                     ast.location = eloc;
                     AsyncTODOQueue.add(ast);
+                    isPrevFixRecorded = true;
 */
+                if ((CanRecord) && (Recording) && ((PrevRecordedFix == null) || (ForceRecord))) {
+                    PrevRecordedFix = eloc;
+                    ast.TaskType = "TASK_ADDLOCATION";
+                    ast.location = eloc;
+                    AsyncTODOQueue.add(ast);
                     isPrevFixRecorded = true;
                 } else {
+                    if ((CanRecord) && (Recording)
+                            && ((prefGPSdistance == 0)
+                            || (loc.distanceTo(PrevRecordedFix.getLocation()) >= prefGPSdistance))) {
+                        ToBeRecordedFix = eloc;
+                    }
                     ast.TaskType = "TASK_UPDATEFIX";
                     ast.location = eloc;
                     AsyncTODOQueue.add(ast);
@@ -1259,6 +1327,10 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
 
         if (start) {
+            if ((null == getCurrentTrack()) || (null == getCurrentTrack().getName()) || getCurrentTrack().getName().equals("")) {
+                _LastSaveSteps = Integer.MIN_VALUE;
+            }
+
             if (BuildConfig.DEBUG) {
                 Log.d("myApp", "step sensors: " + sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size());
                 if (sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size() < 1) return; // emulator
@@ -1290,15 +1362,15 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             return;
         } else {
             int steps = (int) event.values[0];
+            if (!Recording || (_LastSaveSteps == Integer.MIN_VALUE)) {
+                _NumberOfStepsOnBoot = steps;
+                if (BuildConfig.DEBUG) Log.d("myApp", "number of steps on boot: " + _NumberOfStepsOnBoot);
+            }
             if (Recording) {
                 _NumberOfSteps = steps - _NumberOfStepsOnBoot;
                 if (BuildConfig.DEBUG) Log.d("myApp", "number of steps: " + _NumberOfSteps);
 
                 updateIfNecessary();
-            } else if (_LastSaveSteps == Integer.MIN_VALUE) {
-                _NumberOfStepsOnBoot = steps;
-                if (BuildConfig.DEBUG)
-                    Log.d("myApp", "number of steps on boot: " + _NumberOfStepsOnBoot);
             }
         }
     }
@@ -1328,12 +1400,24 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             _LastSaveSteps = _NumberOfSteps;
             _LastSaveTime = System.currentTimeMillis();
             // startService(new Intent(this, WidgetUpdateService.class));
+/*
             if (PrevFix != null) {
                 AsyncTODO ast = new AsyncTODO();
                 ast.TaskType = "TASK_ADDLOCATION";
                 ast.location = PrevFix;
                 ast.location.setNumberOfSteps(_NumberOfSteps);
                 AsyncTODOQueue.add(ast);
+            }
+*/
+            if (ToBeRecordedFix != null) {                   // Record the old sample if not already recorded
+                AsyncTODO ast = new AsyncTODO();
+                ast.TaskType = "TASK_ADDLOCATION";
+                ast.location = ToBeRecordedFix;
+                ast.location.setNumberOfSteps(_NumberOfSteps);
+                AsyncTODOQueue.add(ast);
+                PrevRecordedFix = ToBeRecordedFix;
+                isPrevFixRecorded = true;
+                ToBeRecordedFix = null;
             }
         }
     }

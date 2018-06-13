@@ -42,6 +42,5 @@ public class EventBusMSG {
 
     static final short TRACK_SETPROGRESS                =  30;  // Change the progress value of the Track (given id)
 
-    static final short GPS_RESUME                       =  31;  // Sent to components on app resume
-    static final short GPS_PAUSE                        =  32;  // Sent to components on app pause
+    static final short ACTIVITY_DETECTED                =  31;  // Sent to components on activity change detection
 }

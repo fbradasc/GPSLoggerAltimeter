@@ -25,6 +25,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TextView;
 
@@ -44,6 +45,7 @@ public class FragmentRecordingControls extends Fragment{
     private TextView TVGeoPoints;
     private TextView TVSteps;
     private TextView TVPlacemarks;
+    private ImageView IVDetectedActivity;
 
     final GPSApplication gpsApplication = GPSApplication.getInstance();
 
@@ -85,6 +87,7 @@ public class FragmentRecordingControls extends Fragment{
         TVGeoPoints = (TextView) view.findViewById(R.id.id_textView_GeoPoints);
         TVSteps = (TextView) view.findViewById(R.id.id_textView_Steps);
         TVPlacemarks = (TextView) view.findViewById(R.id.id_textView_Placemarks);
+        IVDetectedActivity = (ImageView) view.findViewById(R.id.id_imageView_DetectedActivity);
 
         return view;
     }
@@ -145,9 +148,10 @@ public class FragmentRecordingControls extends Fragment{
 
     public void Update() {
         if (isAdded()) {
-            final Track track = gpsApplication.getCurrentTrack();
-            final Boolean grs = gpsApplication.getRecording();
-            final Boolean pr = gpsApplication.getPlacemarkRequest();
+            final Track   track = gpsApplication.getCurrentTrack    ();
+            final Boolean grs   = gpsApplication.getRecording       ();
+            final Boolean pr    = gpsApplication.getPlacemarkRequest();
+            final int     da    = gpsApplication.getDetectedActivity();
             if (track != null) {
                 if (TVGeoPoints != null)
                     TVGeoPoints.setText(String.valueOf(track.getNumberOfLocations()));
@@ -161,6 +165,8 @@ public class FragmentRecordingControls extends Fragment{
                     tableLayoutSteps.setBackgroundColor(grs ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
                 if (tableLayoutPlacemarks != null)
                     tableLayoutPlacemarks.setBackgroundColor(pr ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
+                if (IVDetectedActivity != null)
+                    IVDetectedActivity.setImageLevel(da);
             }
         }
     }
