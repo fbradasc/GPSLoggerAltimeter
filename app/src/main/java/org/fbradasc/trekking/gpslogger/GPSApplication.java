@@ -146,11 +146,11 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     DatabaseHandler GPSDataBase;
     private String PlacemarkDescription = "";
     private boolean Recording = false;
-    private boolean CanRecord = true;
     private boolean PlacemarkRequest = false;
     private long OpenInViewer = -1;                    // The index to be opened in viewer
     private long Share = -1;                                // The index to be Shared
     private boolean isGPSLocationUpdatesActive = false;
+    private boolean isGPSPlacemarkLocationUpdatesActive = false;
     private int GPSStatus = GPS_SEARCHING;
 
     private boolean NewTrackFlag = false;                   // The variable that handle the double-click on "Track Finished"
@@ -430,7 +430,13 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
 
     public boolean getPlacemarkRequest() { return PlacemarkRequest; }
 
-    public void setPlacemarkRequest(boolean placemarkRequest) { PlacemarkRequest = placemarkRequest; }
+    public void setPlacemarkRequest(boolean placemarkRequest) {
+        PlacemarkRequest = placemarkRequest;
+        if (PlacemarkRequest && !isGPSLocationUpdatesActive) {
+            isGPSPlacemarkLocationUpdatesActive = true;
+            setGPSLocationUpdates(isGPSPlacemarkLocationUpdatesActive);
+        }
+    }
 
     public List<Track> getTrackList() {
         return _ArrayListTracks;
@@ -632,16 +638,18 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     }
                     break;
 
-                case DetectedActivity.UNKNOWN:
                 case DetectedActivity.ON_BICYCLE:
                 case DetectedActivity.ON_FOOT:
                 case DetectedActivity.WALKING:
                 case DetectedActivity.RUNNING:
-                default:
                     //Reset the still-since timestamp
                     userStillSinceTimeStamp = 0;
                     Log.d("myApp", "handleIntent: Just exited still state, attempt to log");
                     setGPSLocationUpdates(true);
+                    break;
+
+                case DetectedActivity.UNKNOWN:
+                default:
                     break;
             }
 
@@ -669,7 +677,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             return;
         }
         if (msg == EventBusMSG.APP_PAUSE) {
-            handler.postDelayed(r, getHandlerTimer());  // Starts the switch-off handler (delayed by HandlerTimer)
+//            handler.postDelayed(r, getHandlerTimer());  // Starts the switch-off handler (delayed by HandlerTimer)
             System.gc();                                // Clear mem from released objects with Garbage Collector
             //UnbindGPSService();
             return;
@@ -680,7 +688,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             asyncPrepareTracklistContextMenu.start();
             handler.removeCallbacks(r);                 // Cancel the switch-off handler
             setHandlerTimer(DEFAULTHANDLERTIMER);
-            setGPSLocationUpdates(true);
+//            setGPSLocationUpdates(true);
             if (MustUpdatePrefs) {
                 MustUpdatePrefs = false;
                 LoadPreferences();
@@ -695,29 +703,27 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
     }
 
-    public void setGPSLocationUpdates (boolean state) {
+    public void setGPSLocationUpdates (boolean update) {
         // Request permissions = https://developer.android.com/training/permissions/requesting.html
+
+        if (isGPSLocationUpdatesActive == update) {
+            return;
+        }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
 
-        CanRecord = true;
+        isGPSLocationUpdatesActive = update;
 
         if (isGPSLocationUpdatesActive) {
-            if (getRecording()) {
-                CanRecord = state;
-            } else if (!state) {
-                GPSStatus = GPS_SEARCHING;
-                mlocManager.removeGpsStatusListener(this);
-                mlocManager.removeUpdates(this);
-                isGPSLocationUpdatesActive = false;
-            }
-        } else if (state) {
             mlocManager.addGpsStatusListener(this);
             mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, prefGPSupdatefrequency, 0, this); // Requires Location update
-            isGPSLocationUpdatesActive = true;
             StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
+        } else {
+            GPSStatus = GPS_SEARCHING;
+            mlocManager.removeGpsStatusListener(this);
+            mlocManager.removeUpdates(this);
         }
     }
 
@@ -825,7 +831,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     public void onLocationChanged(Location loc) {
         //if ((loc != null) && (loc.getProvider().equals(LocationManager.GPS_PROVIDER)) {
         if (loc != null) {      // Location data is valid
-            //Log.w("myApp", "[#] GPSApplication.java - onLocationChanged: provider=" + loc.getProvider());
+            Log.w("myApp", "[#] GPSApplication.java - onLocationChanged: provider=" + loc.getProvider());
             if (loc.hasSpeed() && (loc.getSpeed() == 0)) loc.removeBearing();           // Removes bearing if the speed is zero
             LocationExtended eloc = new LocationExtended(loc);
             eloc.setNumberOfSatellites(getNumberOfSatellites());
@@ -856,7 +862,6 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 && (PrevFix.getLocation().hasSpeed())
                     && (eloc.getLocation().hasSpeed())
                     && (GPSStatus == GPS_OK)
-                    && (CanRecord)
                     && (Recording)
                     && (((eloc.getLocation().getSpeed() == 0)
                         && (PrevFix.getLocation().getSpeed() != 0))
@@ -888,14 +893,14 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     AsyncTODOQueue.add(ast);
                     isPrevFixRecorded = true;
 */
-                if ((CanRecord) && (Recording) && ((PrevRecordedFix == null) || (ForceRecord))) {
+                if ((Recording) && ((PrevRecordedFix == null) || (ForceRecord))) {
                     PrevRecordedFix = eloc;
                     ast.TaskType = "TASK_ADDLOCATION";
                     ast.location = eloc;
                     AsyncTODOQueue.add(ast);
                     isPrevFixRecorded = true;
                 } else {
-                    if ((CanRecord) && (Recording)
+                    if ((Recording)
                             && ((prefGPSdistance == 0)
                             || (loc.distanceTo(PrevRecordedFix.getLocation()) >= prefGPSdistance))) {
                         ToBeRecordedFix = eloc;
@@ -907,6 +912,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 }
 
                 if (PlacemarkRequest) {
+                    // Log.w("myApp", "[#] GPSApplication.java - onLocationChanged: placemark");
                     _currentPlacemark = new LocationExtended(loc);
                     _currentPlacemark.setNumberOfSatellites(getNumberOfSatellites());
                     _currentPlacemark.setNumberOfSatellitesUsedInFix(getNumberOfSatellitesUsedInFix());
@@ -914,6 +920,11 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     PlacemarkRequest = false;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
                     EventBus.getDefault().post(EventBusMSG.REQUEST_ADD_PLACEMARK);
+                    if (isGPSPlacemarkLocationUpdatesActive) {
+                        // Log.w("myApp", "[#] GPSApplication.java - onLocationChanged: disable after placemark");
+                        isGPSPlacemarkLocationUpdatesActive = false;
+                        setGPSLocationUpdates(isGPSPlacemarkLocationUpdatesActive);
+                    }
                 }
                 PrevFix = eloc;
             }
