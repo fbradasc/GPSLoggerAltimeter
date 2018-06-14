@@ -150,37 +150,9 @@ public class GPSService extends Service {
         ActivityRecognitionResult arr = ActivityRecognitionResult.extractResult(intent);
         if(arr != null){
             Log.d("myApp", "handleIntent: Activity: " + arr.getMostProbableActivity().toString());
-
-            EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.ACTIVITY_DETECTED, arr.getMostProbableActivity().getType()));
-/*
-            switch (arr.getMostProbableActivity().getType()) {
-                case DetectedActivity.STILL:
-                case DetectedActivity.IN_VEHICLE:
-                case DetectedActivity.TILTING:
-                    // case DetectedActivity.UNKNOWN:
-                    if(_UserStillSinceTimeStamp == 0){
-                        Log.d("myApp", "handleIntent: Just entered still state, attempt to log");
-                        EventBus.getDefault().post(EventBusMSG.GPS_RESUME);
-                        _UserStillSinceTimeStamp = System.currentTimeMillis();
-                    } else {
-                        Log.d("myApp", "handleIntent: Not walking stop logging");
-                        EventBus.getDefault().post(EventBusMSG.GPS_PAUSE);
-                    }
-                    break;
-
-                case DetectedActivity.UNKNOWN:
-                case DetectedActivity.ON_BICYCLE:
-                case DetectedActivity.ON_FOOT:
-                case DetectedActivity.WALKING:
-                case DetectedActivity.RUNNING:
-                default:
-                    //Reset the still-since timestamp
-                    _UserStillSinceTimeStamp = 0;
-                    Log.d("myApp", "handleIntent: Just exited still state, attempt to log");
-                    EventBus.getDefault().post(EventBusMSG.GPS_RESUME);
-                    break;
-            }
-*/
+            EventBus.getDefault().post(new EventBusMSGLong(EventBusMSG.ACTIVITY_DETECTED,
+                    arr.getMostProbableActivity().getType(),
+                    arr.getMostProbableActivity().getConfidence()));
             return true;
         }
 
