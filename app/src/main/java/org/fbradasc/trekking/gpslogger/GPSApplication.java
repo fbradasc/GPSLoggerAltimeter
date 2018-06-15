@@ -622,7 +622,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
         if (msg.MSGType == EventBusMSG.ACTIVITY_DETECTED) {
             setDetectedActivity((int)msg.id);
-
+/*
             switch (getDetectedActivity()) {
                 case DetectedActivity.STILL:
                 case DetectedActivity.IN_VEHICLE:
@@ -652,7 +652,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 default:
                     break;
             }
-
+*/
             EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
 
             return;
@@ -686,8 +686,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             //Log.w("myApp", "[#] GPSApplication.java - Received EventBusMSG.APP_RESUME");
             AsyncPrepareTracklistContextMenu asyncPrepareTracklistContextMenu = new AsyncPrepareTracklistContextMenu();
             asyncPrepareTracklistContextMenu.start();
-            handler.removeCallbacks(r);                 // Cancel the switch-off handler
-            setHandlerTimer(DEFAULTHANDLERTIMER);
+//            handler.removeCallbacks(r);                 // Cancel the switch-off handler
+//            setHandlerTimer(DEFAULTHANDLERTIMER);
 //            setGPSLocationUpdates(true);
             if (MustUpdatePrefs) {
                 MustUpdatePrefs = false;
@@ -1372,6 +1372,12 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             if (BuildConfig.DEBUG) Log.d("myApp", "probably not a real value: " + event.values[0]);
             return;
         } else {
+            isGPSPlacemarkLocationUpdatesActive = false;
+            handler.removeCallbacks(r);                 // Cancel the switch-off handler
+            setHandlerTimer(DEFAULTHANDLERTIMER);
+            setGPSLocationUpdates(true);
+            handler.postDelayed(r, getHandlerTimer());  // Starts the switch-off handler (delayed by HandlerTimer)
+
             int steps = (int) event.values[0];
             if (!Recording || (_LastSaveSteps == Integer.MIN_VALUE)) {
                 _NumberOfStepsOnBoot = steps;

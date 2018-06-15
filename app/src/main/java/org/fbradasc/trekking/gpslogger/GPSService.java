@@ -127,7 +127,7 @@ public class GPSService extends Service {
             Intent intent = new Intent(getApplicationContext(), GPSService.class);
             activityRecognitionPendingIntent = PendingIntent.getService(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             ActivityRecognitionClient arClient = ActivityRecognition.getClient(getApplicationContext());
-            arClient.requestActivityUpdates(/*TODO: 60 * 1000*/ 0, activityRecognitionPendingIntent);
+            arClient.requestActivityUpdates(60 * 1000, activityRecognitionPendingIntent);
         }
     }
 
