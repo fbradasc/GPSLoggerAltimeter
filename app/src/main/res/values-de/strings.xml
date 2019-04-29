@@ -79,6 +79,7 @@
   <string name="card_menu_view">In %1$s anzeigen</string>
   <string name="card_menu_delete">Löschen</string>
   <string name="card_menu_share">Teilen mit ...</string>
+  <string name="casd_menu_placemarks">Ortsmarker</string>
   <!-- Tracklist toasts and messagebox -->
   <string name="card_message_delete_also_exported">Möchten Sie die exportierten Dateien dieses Tracks löschen?</string>
   <string name="card_message_delete_confirmation">Möchten Sie diesen Track wirklich löschen?</string>
@@ -127,6 +128,8 @@
   <string name="pref_category_exporting">EXPORT</string>
   <string name="pref_export_TXT">Tracks in TXT exportieren</string>
   <string name="pref_export_TXT_summary">Klartext, durch Komma getrennte Werte</string>
+  <string name="pref_export_PMK">Ortsmarker exportieren</string>
+  <string name="pref_export_PMK_summary">Klartext, durch Komma getrennte Werte</string>
   <string name="pref_TXT_system_of_measurement">Einheitensystem für Export in TXT</string>
   <string name="pref_TXT_system_of_measurement_follows_app_settings">Folge den Schnittstelleneinstellungen</string>
   <string name="pref_export_KML">Tracks in KML exportieren</string>

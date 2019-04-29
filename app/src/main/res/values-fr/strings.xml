@@ -79,6 +79,7 @@
   <string name="card_menu_view">Ouvrir avec %1$s</string>
   <string name="card_menu_delete">Supprimer</string>
   <string name="card_menu_share">Partager avec ...</string>
+  <string name="card_menu_placemarks">Repères</string>
   <!-- Tracklist toasts and messagebox -->
   <string name="card_message_delete_also_exported">Voulez-vous également supprimer tous les fichiers exportés de ce tracé?</string>
   <string name="card_message_delete_confirmation">Voulez-vous vraiment supprimer ce tracé?</string>
@@ -127,6 +128,8 @@
   <string name="pref_category_exporting">EXPORTATION</string>
   <string name="pref_export_TXT">Exporter les Tracés en TXT</string>
   <string name="pref_export_TXT_summary">Texte brut, valeurs séparées par des virgules</string>
+  <string name="pref_export_PMK">Exporter les Repères</string>
+  <string name="pref_export_PMK_summary">Texte brut, valeurs séparées par des virgules</string>
   <string name="pref_TXT_system_of_measurement">Unités de mesure pour le format TXT</string>
   <string name="pref_TXT_system_of_measurement_follows_app_settings">Suivre les paramètres de l’interface</string>
   <string name="pref_export_KML">Exporter les Tracés en KML</string>

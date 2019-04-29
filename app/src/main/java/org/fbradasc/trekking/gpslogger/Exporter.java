@@ -42,6 +42,7 @@ class Exporter extends Thread {
     private boolean ExportKML = true;
     private boolean ExportGPX = true;
     private boolean ExportTXT = true;
+    private boolean ExportPMK = true;
     private String SaveIntoFolder = "/";
     private double AltitudeManualCorrection = 0;
     private boolean EGMAltitudeCorrection = false;
@@ -56,13 +57,14 @@ class Exporter extends Thread {
     private AsyncGeopointsLoader asyncGeopointsLoader = new AsyncGeopointsLoader();
 
 
-    public Exporter(long ID, boolean ExportKML, boolean ExportGPX, boolean ExportTXT, String SaveIntoFolder) {
+    public Exporter(long ID, boolean ExportKML, boolean ExportGPX, boolean ExportTXT, boolean ExportPMK, String SaveIntoFolder) {
         track = GPSApplication.getInstance().GPSDataBase.getTrack(ID);
         AltitudeManualCorrection = GPSApplication.getInstance().getPrefAltitudeCorrection();
         EGMAltitudeCorrection = GPSApplication.getInstance().getPrefEGM96AltitudeCorrection();
         getPrefKMLAltitudeMode = GPSApplication.getInstance().getPrefKMLAltitudeMode();
         getPrefGPXVersion = GPSApplication.getInstance().getPrefGPXVersion();
 
+        this.ExportPMK = ExportPMK;
         this.ExportTXT = ExportTXT;
         this.ExportGPX = ExportGPX;
         this.ExportKML = ExportKML;
@@ -118,6 +120,7 @@ class Exporter extends Thread {
         File KMLfile = null;
         File GPXfile = null;
         File TXTfile = null;
+        File PMKfile = null;
         //final String newLine = System.getProperty("line.separator"); //\n\r
         final String newLine = "\r\n";
 
@@ -142,6 +145,10 @@ class Exporter extends Thread {
             TXTfile = new File(sd, (track.getName() + ".txt"));
             if (TXTfile.exists()) TXTfile.delete();
         }
+        if (ExportPMK) {
+            PMKfile = new File(sd, (track.getName() + "_placemarks.txt"));
+            if (PMKfile.exists()) PMKfile.delete();
+        }
 
         // Create buffers for Write operations
         PrintWriter KMLfw = null;
@@ -150,10 +157,15 @@ class Exporter extends Thread {
         BufferedWriter GPXbw = null;
         PrintWriter TXTfw = null;
         BufferedWriter TXTbw = null;
+        PrintWriter PMKfw = null;
+        BufferedWriter PMKbw = null;
 
         // Check if all the files are writable:
         try {
-            if ((ExportGPX && !(GPXfile.createNewFile())) || (ExportKML && !(KMLfile.createNewFile())) || (ExportTXT && !(TXTfile.createNewFile()))) {
+            if ((ExportGPX && !(GPXfile.createNewFile())) ||
+                (ExportKML && !(KMLfile.createNewFile())) ||
+                (ExportTXT && !(TXTfile.createNewFile())) ||
+                (ExportPMK && !(PMKfile.createNewFile()))) {
                 UnableToWriteFile = true;
                 Log.w("myApp", "[#] Exporter.java - Unable to write the file");
             }
@@ -185,6 +197,10 @@ class Exporter extends Thread {
             if (ExportTXT) {
                 TXTfw = new PrintWriter(TXTfile);
                 TXTbw = new BufferedWriter(TXTfw);
+            }
+            if (ExportPMK) {
+                PMKfw = new PrintWriter(PMKfile);
+                PMKbw = new BufferedWriter(PMKfw);
             }
 
             // ---------------------------------------------------------------------- Writing Heads
@@ -239,6 +255,10 @@ class Exporter extends Thread {
             if (ExportTXT) {
                 // Writing head of TXT file
                 TXTbw.write("type,time,latitude,longitude,accuracy (m),altitude (m),geoid_height (m),speed (m/s),bearing (deg),sat_used,sat_inview,name,desc" + newLine);
+            }
+
+            if (ExportPMK) {
+                PMKbw.write("# ID#,Timestamp,Time,Film,EV/TV/AV/FV,Description" + newLine);
             }
 
             String formattedLatitude = "";
@@ -356,6 +376,16 @@ class Exporter extends Thread {
                                 TXTbw.write(",");
                                 TXTbw.write(loc.getDescription().replace(",","_"));
                                 TXTbw.write(newLine);
+                            }
+
+                            // Placemarks alone
+                            if (ExportPMK) {
+                                //timestamp,human readable time,film,EV/TV/AV/FV,description
+                                PMKbw.write(String.valueOf(i + 1) + ",");
+                                PMKbw.write(timestamp.format(loc.getLocation().getTime()) + ",");
+                                PMKbw.write(dfdtTXT.format(loc.getLocation().getTime()) + ",");
+                                PMKbw.write(loc.getDescription().replace("\n",","));
+                                PMKbw.write(newLine);
                             }
                         }
                         placemarkList.clear();
@@ -520,6 +550,10 @@ class Exporter extends Thread {
             if (ExportTXT) {
                 TXTbw.close();
                 TXTfw.close();
+            }
+            if (ExportPMK) {
+                PMKbw.close();
+                PMKfw.close();
             }
 
             Log.w("myApp", "[#] Exporter.java - Track "+ track.getId() +" exported in " + (System.currentTimeMillis() - start_Time) + " ms (" + elements_total + " pts @ " + ((1000L * elements_total) / (System.currentTimeMillis() - start_Time)) + " pts/s)");

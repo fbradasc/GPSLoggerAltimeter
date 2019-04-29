@@ -96,6 +96,7 @@
     <string name="card_menu_view">View in %1$s</string>
     <string name="card_menu_delete">Delete</string>
     <string name="card_menu_share">Share with ...</string>
+    <string name="card_menu_placemarks">Placemarks</string>
 
     <!-- Tracklist toasts and messagebox -->
     <string name="card_message_delete_also_exported">Do you also want to delete all exported files of this track?</string>
@@ -150,6 +151,8 @@
     <string name="pref_category_exporting">EXPORTATION</string>
     <string name="pref_export_TXT">Export Tracks in TXT</string>
     <string name="pref_export_TXT_summary">Plain text, comma-separated values</string>
+    <string name="pref_export_PMK">Export Placemarks</string>
+    <string name="pref_export_PMK_summary">Plain text, comma-separated values</string>
     <string name="pref_TXT_system_of_measurement">TXT Units of measurement</string>
     <string name="pref_TXT_system_of_measurement_follows_app_settings">Follow interface settings</string>
     <string name="pref_export_KML">Export Tracks in KML</string>

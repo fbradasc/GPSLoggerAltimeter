@@ -113,6 +113,12 @@
         android:title="@string/pref_category_exporting">
 
         <android.support.v7.preference.SwitchPreferenceCompat
+            android:key="prefExportPMK"
+            android:title="@string/pref_export_PMK"
+            android:summary="@string/pref_export_PMK_summary"
+            android:defaultValue="true"/>
+
+        <android.support.v7.preference.SwitchPreferenceCompat
             android:key="prefExportTXT"
             android:title="@string/pref_export_TXT"
             android:summary="@string/pref_export_TXT_summary"

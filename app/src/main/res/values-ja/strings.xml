@@ -79,6 +79,7 @@
   <string name="card_menu_view">%1$s で表示</string>
   <string name="card_menu_delete">削除</string>
   <string name="card_menu_share">共有 ...</string>
+  <string name="card_menu_placemarks">目印</string>
   <!-- Tracklist toasts and messagebox -->
   <string name="card_message_delete_also_exported">この追跡のエクスポートされたファイルもすべて削除しますか?</string>
   <string name="card_message_delete_confirmation">この追跡を削除してもよろしいですか?</string>
@@ -127,6 +128,8 @@
   <string name="pref_category_exporting">エクスポート</string>
   <string name="pref_export_TXT">TXT で追跡をエクスポート</string>
   <string name="pref_export_TXT_summary">テキスト形式、カンマ区切りの値</string>
+  <string name="pref_export_PMK">目印をエクスポート</string>
+  <string name="pref_export_PMK_summary">テキスト形式、カンマ区切りの値</string>
   <string name="pref_TXT_system_of_measurement">TXT 測定単位</string>
   <string name="pref_TXT_system_of_measurement_follows_app_settings">インターフェイス設定に従う</string>
   <string name="pref_export_KML">KML で追跡をエクスポート</string>

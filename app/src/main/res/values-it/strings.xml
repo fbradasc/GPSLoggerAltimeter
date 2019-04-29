@@ -79,6 +79,7 @@
   <string name="card_menu_view">Visualizza in %1$s</string>
   <string name="card_menu_delete">Elimina</string>
   <string name="card_menu_share">Condividi con ...</string>
+  <string name="card_menu_placemarks">Annotazioni</string>
   <!-- Tracklist toasts and messagebox -->
   <string name="card_message_delete_also_exported">Vuoi eliminare anche tutti i file esportati di questo itinerario?</string>
   <string name="card_message_delete_confirmation">Vuoi veramente eliminare questo itinerario?</string>
@@ -127,6 +128,8 @@
   <string name="pref_category_exporting">ESPORTAZIONE</string>
   <string name="pref_export_TXT">Esporta itinerari in TXT</string>
   <string name="pref_export_TXT_summary">Testo normale, valori separati da virgole</string>
+  <string name="pref_export_PMK">Esporta le annotazioni</string>
+  <string name="pref_export_PMK_summary">Testo normale, valori separati da virgole</string>
   <string name="pref_TXT_system_of_measurement">Unità di misura TXT</string>
   <string name="pref_TXT_system_of_measurement_follows_app_settings">Segue impostazioni interfaccia</string>
   <string name="pref_export_KML">Esporta itinerari in KML</string>

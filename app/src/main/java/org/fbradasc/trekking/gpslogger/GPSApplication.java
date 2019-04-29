@@ -110,6 +110,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private boolean prefExportGPX               = true;
     private int     prefGPXVersion              = 100;            // the version of the GPX schema
     private boolean prefExportTXT               = false;
+    private boolean prefExportPMK               = false;
     private int     prefKMLAltitudeMode         = 0;
     private int     prefShowTrackStatsType      = 0;
     private int     prefShowDirections          = 0;
@@ -148,7 +149,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private boolean Recording = false;
     private boolean PlacemarkRequest = false;
     private long OpenInViewer = -1;                    // The index to be opened in viewer
-    private long Share = -1;                                // The index to be Shared
+    private long ShareTrack = -1;                      // The index to be Shared
+    private long SharePlacemarks = -1;                 // The index to be Shared
     private boolean isGPSLocationUpdatesActive = false;
     private boolean isGPSPlacemarkLocationUpdatesActive = false;
     private int GPSStatus = GPS_SEARCHING;
@@ -349,13 +351,15 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         return OpenInViewer;
     }
 
-    public long getShare() {
-        return Share;
+    public long getShareTrack() {
+        return ShareTrack;
     }
 
-    public void setShare(long share) {
-        Share = share;
-    }
+    public void setShareTrack(long track) { ShareTrack = track; }
+
+    public void setSharePlacemarks(long track) { SharePlacemarks = track; }
+
+    public long getSharePlacemarks() { return SharePlacemarks; }
 
     public double getPrefAltitudeCorrection() {
         return prefAltitudeCorrection;
@@ -377,9 +381,9 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         return prefExportGPX;
     }
 
-    public boolean getPrefExportTXT() {
-        return prefExportTXT;
-    }
+    public boolean getPrefExportTXT() { return prefExportTXT; }
+
+    public boolean getPrefExportPMK() { return prefExportPMK; }
 
     public int getPrefUM() {
         return prefUM;
@@ -565,9 +569,13 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                                 intent.setDataAndType(Uri.fromFile(file), "application/vnd.google-earth.kml+xml");
                                 startActivity(intent);
                             }
-                            if (trackid == Share) {
-                                Share = -1;
+                            if (trackid == ShareTrack) {
+                                ShareTrack = -1;
                                 EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.INTENT_SEND, trackid));
+                            }
+                            if (trackid == SharePlacemarks) {
+                                SharePlacemarks = -1;
+                                EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.INTENT_SEND_PLACEMARKS, trackid));
                             }
                         }
                     }
@@ -577,19 +585,25 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
         if (msg.MSGType == EventBusMSG.EXPORT_TRACK) {
             long trackid = msg.id;
-            Ex = new Exporter(trackid, prefExportKML, prefExportGPX, prefExportTXT, Environment.getExternalStorageDirectory() + "/GPSLogger");
+            Ex = new Exporter(trackid, prefExportKML, prefExportGPX, prefExportTXT, prefExportPMK, Environment.getExternalStorageDirectory() + "/GPSLogger");
             Ex.start();
             return;
         }
         if (msg.MSGType == EventBusMSG.SHARE_TRACK) {
-            setShare(msg.id);
-            Ex = new Exporter(Share, prefExportKML, prefExportGPX, prefExportTXT, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+            setShareTrack(msg.id);
+            Ex = new Exporter(ShareTrack, prefExportKML, prefExportGPX, prefExportTXT, prefExportPMK, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
             Ex.start();
             return;
         }
         if (msg.MSGType == EventBusMSG.VIEW_TRACK) {
             setOpenInViewer(msg.id);
-            Ex = new Exporter(OpenInViewer, true, false, false, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+            Ex = new Exporter(OpenInViewer, true, false, false, false, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+            Ex.start();
+            return;
+        }
+        if (msg.MSGType == EventBusMSG.SHARE_PLACEMARKS) {
+            setSharePlacemarks(msg.id);
+            Ex = new Exporter(SharePlacemarks, false, false, false, true, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
             Ex.start();
             return;
         }
@@ -611,8 +625,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                             if (trackid == OpenInViewer) {
                                 OpenInViewer = -1;
                             }
-                            if (trackid == Share) {
-                                Share = -1;
+                            if (trackid == ShareTrack) {
+                                ShareTrack = -1;
                             }
                         }
                     }
@@ -1019,6 +1033,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         prefExportKML = preferences.getBoolean("prefExportKML", true);
         prefExportGPX = preferences.getBoolean("prefExportGPX", true);
         prefExportTXT = preferences.getBoolean("prefExportTXT", false);
+        prefExportPMK = preferences.getBoolean("prefExportPMK", true);
         prefKMLAltitudeMode = Integer.valueOf(preferences.getString("prefKMLAltitudeMode", "1"));
         prefGPXVersion = Integer.valueOf(preferences.getString("prefGPXVersion", "100"));               // Default value = v.1.0
         prefShowTrackStatsType = Integer.valueOf(preferences.getString("prefShowTrackStatsType", "0"));

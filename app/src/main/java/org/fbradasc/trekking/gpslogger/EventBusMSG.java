@@ -43,4 +43,7 @@ public class EventBusMSG {
     static final short TRACK_SETPROGRESS                =  30;  // Change the progress value of the Track (given id)
 
     static final short ACTIVITY_DETECTED                =  31;  // Sent to components on activity change detection
+
+    static final short SHARE_PLACEMARKS                 =  40;  // Share the track's placemarks (given id)
+    static final short INTENT_SEND_PLACEMARKS           =  41;  // Request to
 }

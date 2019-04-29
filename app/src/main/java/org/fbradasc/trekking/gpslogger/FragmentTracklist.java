@@ -131,10 +131,15 @@ public class FragmentTracklist extends Fragment {
 
         //menu.setHeaderTitle("Track " + data.get(selectedtrackID).getName());
         //Log.w("myApp", "[#] FragmentTracklist.java - share + export");
-        if (gpsApplication.getPrefExportGPX() || gpsApplication.getPrefExportKML() || gpsApplication.getPrefExportTXT()) {
+        if (gpsApplication.getPrefExportGPX() ||
+            gpsApplication.getPrefExportKML() ||
+            gpsApplication.getPrefExportTXT() ||
+            gpsApplication.getPrefExportPMK()) {
             menu.findItem(R.id.cardmenu_export).setVisible(true);   // menu export
-            if ((gpsApplication.getShare() == -1) && gpsApplication.isContextMenuShareVisible())
-                menu.findItem(R.id.cardmenu_share).setVisible(true);   // menu share
+            if ((gpsApplication.getShareTrack() == -1) && gpsApplication.isContextMenuShareVisible())
+                menu.findItem(R.id.cardmenu_share).setVisible(true);   // menu share tracks
+            if ((gpsApplication.getSharePlacemarks() == -1) && gpsApplication.isContextMenuShareVisible())
+                menu.findItem(R.id.cardmenu_placemarks).setVisible(true);   // menu share only placemarks
         }
         //Log.w("myApp", "[#] FragmentTracklist.java - view");
         if ((gpsApplication.getOpenInViewer() == -1) && gpsApplication.isContextMenuViewVisible()) {                                    // menu view
@@ -145,12 +150,22 @@ public class FragmentTracklist extends Fragment {
         //Log.w("myApp", "[#] FragmentTracklist.java - delete");
         if (selectedtrackID == gpsApplication.getCurrentTrack().getId()) menu.findItem(R.id.cardmenu_delete).setVisible(false);
 
+        if (selectedtrackID == -1) {
+            menu.findItem(R.id.cardmenu_placemarks).setEnabled(false);
+        }
+        else {
+            Track track = GPSApplication.getInstance().GPSDataBase.getTrack(selectedtrackID);
+            if (0 >= track.getNumberOfPlacemarks()) {
+                menu.findItem(R.id.cardmenu_placemarks).setEnabled(false);
+            }
+        }
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             boolean shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
             if (!shouldShowRationale && gpsApplication.isStoragePermissionChecked()) {
                 menu.findItem(R.id.cardmenu_share).setEnabled(false);
                 menu.findItem(R.id.cardmenu_view).setEnabled(false);
                 menu.findItem(R.id.cardmenu_export).setEnabled(false);
+                menu.findItem(R.id.cardmenu_placemarks).setEnabled(false);
             }
         }
     }
@@ -367,6 +382,26 @@ public class FragmentTracklist extends Fragment {
                     }
                 }
                 break;
+            case R.id.cardmenu_placemarks:
+                if (!data.isEmpty() && (selectedtrackID >= 0)) {
+                    int i = 0;
+                    boolean found = false;
+                    synchronized(data) {
+                        do {
+                            if (data.get(i).getId() == selectedtrackID) {
+                                found = true;
+                                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                                    // Store the message to send in case the storage permission will be granted
+                                    GPSApplication.getInstance().setDoIfGrantStoragePermission(new EventBusMSGNormal(EventBusMSG.SHARE_PLACEMARKS, data.get(i).getId()));
+                                    // Ask for storage permission
+                                    CheckStoragePermission();
+                                } else EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.SHARE_PLACEMARKS, data.get(i).getId()));
+                            }
+                            i++;
+                        } while ((i < data.size()) && !found);
+                    }
+                }
+                break;
             default:
                 //TODO: selectedtrackID = -1;
                 return false;
@@ -494,6 +529,47 @@ public class FragmentTracklist extends Fragment {
                 fname = track.getName() + ".txt";
                 file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
                 if (file.exists ()  && GPSApplication.getInstance().getPrefExportTXT()) {
+                    Uri uri = Uri.fromFile(file);
+                    files.add(uri);
+                }
+                fname = track.getName() + "_placemarks.txt";
+                file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
+                if (file.exists ()  && GPSApplication.getInstance().getPrefExportPMK()) {
+                    Uri uri = Uri.fromFile(file);
+                    files.add(uri);
+                }
+
+                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
+
+                String title = getString(R.string.card_menu_share);
+                // Create intent to show chooser
+                Intent chooser = Intent.createChooser(intent, title);
+
+                // Verify the intent will resolve to at least one activity
+                if ((intent.resolveActivity(getContext().getPackageManager()) != null) && (!files.isEmpty())) {
+                    startActivity(chooser);
+                }
+            }
+        }
+        if (msg.MSGType == EventBusMSG.INTENT_SEND_PLACEMARKS) {
+            final long trackid = msg.id;
+            if (trackid > 0) {
+                Track track = GPSApplication.getInstance().GPSDataBase.getTrack(trackid);
+
+                Intent intent = new Intent();
+                intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+                //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra(Intent.EXTRA_SUBJECT, "GPS Logger - Track " + track.getName());
+
+                intent.putExtra(Intent.EXTRA_TEXT, (CharSequence) ("GPS Logger - Track " + track.getName()
+                        + "\n" + track.getNumberOfPlacemarks() + " " + getString(R.string.placemarks)));
+
+                intent.setType("text/xml");
+
+                ArrayList<Uri> files = new ArrayList<>();
+                String fname = track.getName() + "_placemarks.txt";
+                File file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
+                if (file.exists ()  && GPSApplication.getInstance().getPrefExportPMK()) {
                     Uri uri = Uri.fromFile(file);
                     files.add(uri);
                 }
