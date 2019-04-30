@@ -258,7 +258,7 @@ class Exporter extends Thread {
             }
 
             if (ExportPMK) {
-                PMKbw.write("# ID#,Timestamp,Time,Film,EV/TV/AV/FV,Description" + newLine);
+                PMKbw.write("#Timestamp,Film,EV/TV/AV/FV,Description" + newLine);
             }
 
             String formattedLatitude = "";
@@ -381,9 +381,7 @@ class Exporter extends Thread {
                             // Placemarks alone
                             if (ExportPMK) {
                                 //timestamp,human readable time,film,EV/TV/AV/FV,description
-                                PMKbw.write(String.valueOf(i + 1) + ",");
                                 PMKbw.write(timestamp.format(loc.getLocation().getTime()) + ",");
-                                PMKbw.write(dfdtTXT.format(loc.getLocation().getTime()) + ",");
                                 PMKbw.write(loc.getDescription().replace("\n",","));
                                 PMKbw.write(newLine);
                             }

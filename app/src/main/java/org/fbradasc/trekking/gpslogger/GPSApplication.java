@@ -871,29 +871,28 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 isPrevFixRecorded = true;
             }
 
-            // Save fix in case this is a STOP or a START (the speed is "old>0 and new=0" or "old=0 and new>0")
-            if ((PrevFix != null)
-                && (PrevFix.getLocation().hasSpeed())
-                    && (eloc.getLocation().hasSpeed())
-                    && (GPSStatus == GPS_OK)
-                    && (Recording)
-                    && (((eloc.getLocation().getSpeed() == 0)
+            if (GPSStatus == GPS_OK) {
+                // Save fix in case this is a STOP or a START (the speed is "old>0 and new=0" or "old=0 and new>0")
+                if ((PrevFix != null)
+                        && (PrevFix.getLocation().hasSpeed())
+                        && (eloc.getLocation().hasSpeed())
+                        && (Recording)
+                        && (((eloc.getLocation().getSpeed() == 0)
                         && (PrevFix.getLocation().getSpeed() != 0))
                         || ((eloc.getLocation().getSpeed() != 0)
-                            && (PrevFix.getLocation().getSpeed() == 0)))) {
-                if (!isPrevFixRecorded) {                   // Record the old sample if not already recorded
-                    AsyncTODO ast = new AsyncTODO();
-                    ast.TaskType = "TASK_ADDLOCATION";
-                    ast.location = PrevFix;
-                    AsyncTODOQueue.add(ast);
-                    PrevRecordedFix = PrevFix;
-                    isPrevFixRecorded = true;
+                        && (PrevFix.getLocation().getSpeed() == 0)))) {
+                    if (!isPrevFixRecorded) {                   // Record the old sample if not already recorded
+                        AsyncTODO ast = new AsyncTODO();
+                        ast.TaskType = "TASK_ADDLOCATION";
+                        ast.location = PrevFix;
+                        AsyncTODOQueue.add(ast);
+                        PrevRecordedFix = PrevFix;
+                        isPrevFixRecorded = true;
+                    }
+
+                    ForceRecord = true;                         // + Force to record the new
                 }
 
-                ForceRecord = true;                         // + Force to record the new
-            }
-
-            if (GPSStatus == GPS_OK) {
                 AsyncTODO ast = new AsyncTODO();
 /*
                 if ((Recording)
@@ -934,6 +933,9 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     PlacemarkRequest = false;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
                     EventBus.getDefault().post(EventBusMSG.REQUEST_ADD_PLACEMARK);
+
+                    // turn OFF the GPS only if it was explicitly turned ON at placemark insertion request
+                    //
                     if (isGPSPlacemarkLocationUpdatesActive) {
                         // Log.w("myApp", "[#] GPSApplication.java - onLocationChanged: disable after placemark");
                         isGPSPlacemarkLocationUpdatesActive = false;
