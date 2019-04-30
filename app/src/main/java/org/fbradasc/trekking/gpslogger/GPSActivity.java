@@ -25,8 +25,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.TabLayout;
@@ -39,6 +41,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
+import android.support.v7.view.ActionMode;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -64,15 +67,18 @@ public class GPSActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private TabLayout tabLayout;
     private ViewPager viewPager;
+    private ActionMode actionMode;
     private View bottomSheet;
     private MenuItem menutrackfinished = null;
     private int activeTab = 1;
+    final Context context = this;
 
     private boolean prefKeepScreenOn = true;
 
     private BottomSheetBehavior mBottomSheetBehavior;
 
     Toast ToastClickAgain;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,13 +97,15 @@ public class GPSActivity extends AppCompatActivity {
         tabLayout.setTabMode(TabLayout.MODE_FIXED);
         tabLayout.setupWithViewPager(viewPager);
 
-        tabLayout.setOnTabSelectedListener(
+        tabLayout.addOnTabSelectedListener(
                 new TabLayout.ViewPagerOnTabSelectedListener(viewPager) {
                     @Override
                     public void onTabSelected(TabLayout.Tab tab) {
                         super.onTabSelected(tab);
                         activeTab = tab.getPosition();
+                        GPSApplication.getInstance().setGPSActivity_activeTab(activeTab);
                         updateBottomSheetPosition();
+                        ActivateActionModeIfNeeded();
                     }
                 });
 
@@ -107,17 +115,18 @@ public class GPSActivity extends AppCompatActivity {
         mBottomSheetBehavior.setHideable (false);
 
         activeTab = tabLayout.getSelectedTabPosition();
+        GPSApplication.getInstance().setGPSActivity_activeTab(activeTab);
 
         ToastClickAgain = Toast.makeText(this, getString(R.string.toast_track_finished_click_again), Toast.LENGTH_SHORT);
     }
 
     @Override
     public void onResume() {
+        super.onResume();
         EventBus.getDefault().register(this);
         Log.w("myApp", "[#] GPSActivity.java - onResume()");
         LoadPreferences();
         EventBus.getDefault().post(EventBusMSG.APP_RESUME);
-        super.onResume();
         if (menutrackfinished != null) menutrackfinished.setVisible(!GPSApplication.getInstance().getCurrentTrack().getName().equals(""));
 
         // Check for Location runtime Permissions (for Android 23+)
@@ -125,19 +134,20 @@ public class GPSActivity extends AppCompatActivity {
             CheckLocationPermission();
             GPSApplication.getInstance().setLocationPermissionChecked(true);
         }
+
+        ActivateActionModeIfNeeded();
     }
 
     @Override
     public void onPause() {
+        super.onPause();
         EventBus.getDefault().post(EventBusMSG.APP_PAUSE);
         Log.w("myApp", "[#] GPSActivity.java - onPause()");
         EventBus.getDefault().unregister(this);
-        super.onPause();
     }
 
     @Override
     public void onBackPressed() {
-        //moveTaskToBack(true);
         ShutdownApp();
     }
 
@@ -252,36 +262,67 @@ public class GPSActivity extends AppCompatActivity {
     }
 
     @Subscribe
-    public void onEvent(Short msg) {
+    public void onEvent(EventBusMSGNormal msg) {
+        switch (msg.MSGType) {
+            case EventBusMSG.TRACKLIST_SELECTION:
+                ActivateActionModeIfNeeded();
+        }
+    }
 
-        if (msg == EventBusMSG.REQUEST_ADD_PLACEMARK) {
-            // Show Placemark Dialog
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentPlacemarkDialog placemarkDialog = new FragmentPlacemarkDialog();
-            placemarkDialog.show(fm, "");
-            return;
-        }
-        if (msg == EventBusMSG.APPLY_SETTINGS) {
-            LoadPreferences();
-            return;
-        }
-        if (msg == EventBusMSG.UPDATE_TRACK) {
+    @Subscribe
+    public void onEvent(Short msg) {
+        switch (msg) {
+            case EventBusMSG.REQUEST_ADD_PLACEMARK:
+                // Show Placemark Dialog
+                FragmentManager fm = getSupportFragmentManager();
+                FragmentPlacemarkDialog placemarkDialog = new FragmentPlacemarkDialog();
+                placemarkDialog.show(fm, "");
+                break;
+            case EventBusMSG.UPDATE_TRACKLIST:
+            case EventBusMSG.NOTIFY_TRACKS_DELETED:
+                ActivateActionModeIfNeeded();
+                break;
+            case EventBusMSG.APPLY_SETTINGS:
+                LoadPreferences();
+                break;
+
+            case EventBusMSG.UPDATE_TRACK:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (menutrackfinished != null)
+                            menutrackfinished.setVisible(!GPSApplication.getInstance().getCurrentTrack().getName().equals(""));
+                    }
+                });
+                break;
+            case EventBusMSG.TOAST_TRACK_EXPORTED:
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (menutrackfinished != null) menutrackfinished.setVisible(!GPSApplication.getInstance().getCurrentTrack().getName().equals(""));
+                        Toast.makeText(context, getString(R.string.toast_track_exported), Toast.LENGTH_LONG).show();
                 }
             });
-            return;
-        }
-        if (msg == EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE) {
-            final Context context = this;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(context, getString(R.string.export_unable_to_write_file), Toast.LENGTH_LONG).show();
-                }
-            });
+                break;
+            case EventBusMSG.STORAGE_PERMISSION_REQUIRED:
+                GPSApplication.getInstance().setJobsPending(0);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(context, getString(R.string.please_grant_storage_permission), Toast.LENGTH_LONG).show();
+                    }
+                });
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                Uri uri = Uri.fromParts("package", getPackageName(), null);
+                intent.setData(uri);
+                startActivity(intent);
+                break;
+            case EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(context, getString(R.string.export_unable_to_write_file), Toast.LENGTH_LONG).show();
+                    }
+                });
         }
     }
 
@@ -332,6 +373,22 @@ public class GPSActivity extends AppCompatActivity {
         }
     }
 
+    private void ActivateActionModeIfNeeded() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if ((GPSApplication.getInstance().getNumberOfSelectedTracks() > 0) && (activeTab == 2)) {
+                    if (actionMode == null)
+                        actionMode = (startSupportActionMode(new ToolbarActionMode()));
+                    actionMode.setTitle(GPSApplication.getInstance().getNumberOfSelectedTracks() > 1 ? String.valueOf(GPSApplication.getInstance().getNumberOfSelectedTracks()) : "");
+                } else if (actionMode != null) {
+                    actionMode.finish();
+                    actionMode = null;
+                }
+            }
+        });
+    }
+
 
     public boolean CheckLocationPermission() {
         Log.w("myApp", "[#] GPSActivity.java - Check Location Permission...");
@@ -346,26 +403,13 @@ public class GPSActivity extends AppCompatActivity {
                 List<String> listPermissionsNeeded = new ArrayList<>();
                 listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
                 ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]) , REQUEST_ID_MULTIPLE_PERMISSIONS);
+            } else {
+
             }
             return false;
         }
     }
 
-    /*
-    public void CheckPermissions () {
-        List<String> listPermissionsNeeded = new ArrayList<>();
-
-        for (String p:permissions) {
-            int result = ContextCompat.checkSelfPermission(this,p);
-            Log.w("myApp", "[#] GPSActivity.java - " + p + " = PERMISSION_" + (result == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
-            if (result != PackageManager.PERMISSION_GRANTED) {
-                listPermissionsNeeded.add(p);
-            }
-        }
-        if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), REQUEST_ID_MULTIPLE_PERMISSIONS);
-        }
-    } */
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
@@ -417,16 +461,11 @@ public class GPSActivity extends AppCompatActivity {
                                 }
                             }
 
-                            EventBusMSGNormal MSG = GPSApplication.getInstance().getDoIfGrantStoragePermission();
-                            if (MSG != null) {
-                                EventBus.getDefault().post(MSG);
-                                GPSApplication.getInstance().setDoIfGrantStoragePermission(null);
-                            }
+                            if (GPSApplication.getInstance().getJobsPending() > 0) GPSApplication.getInstance().ExecuteJob();
 
                         } else {
                             Log.w("myApp", "[#] GPSActivity.java - WRITE_EXTERNAL_STORAGE = PERMISSION_DENIED");
-                            EventBusMSGNormal MSG = GPSApplication.getInstance().getDoIfGrantStoragePermission();
-                            if (MSG != null) {
+                            if (GPSApplication.getInstance().getJobsPending() > 0) {
                                 // Shows toast "Unable to write the file"
                                 final Context context = this;
                                 runOnUiThread(new Runnable() {
@@ -437,8 +476,8 @@ public class GPSActivity extends AppCompatActivity {
                                 });
                                 //EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE, MSG.id));
                                 //Log.w("myApp", "[#] GPSActivity.java - EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE " + MSG.id);
+                                GPSApplication.getInstance().setJobsPending(0);
                             }
-                            GPSApplication.getInstance().setDoIfGrantStoragePermission(null);
                         }
                         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
                         SharedPreferences.Editor editor1 = settings.edit();

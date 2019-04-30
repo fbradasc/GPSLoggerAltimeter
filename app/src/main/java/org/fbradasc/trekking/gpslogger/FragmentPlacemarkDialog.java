@@ -138,6 +138,7 @@ public class FragmentPlacemarkDialog extends DialogFragment {
         super.onAttach(activity);
     }
 
+    // TODO: to remove ?
     @Override
     public void onDestroyView() {
         Dialog dialog = getDialog();

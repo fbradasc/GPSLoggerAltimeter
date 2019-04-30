@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -74,8 +76,14 @@ class Exporter extends Thread {
     public void run() {
         Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 
+        final int GPX1_0 = 100;
+        final int GPX1_1 = 110;
+
+        Date creationTime;
         long elements_total;
         String versionName = BuildConfig.VERSION_NAME;
+        GPSApplication GPSApp = GPSApplication.getInstance();
+        if (GPSApp == null) return;
 
         elements_total = track.getNumberOfLocations() + track.getNumberOfPlacemarks();
         long start_Time = System.currentTimeMillis();
@@ -95,7 +103,10 @@ class Exporter extends Thread {
             //Log.w("myApp", "[#] Exporter.java - Track = null!!");
             return;
         }
-        if (track.getNumberOfLocations() + track.getNumberOfSteps() + track.getNumberOfPlacemarks() == 0) return;
+        if (track.getNumberOfLocations() + track.getNumberOfSteps() + track.getNumberOfPlacemarks() == 0) {
+            EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE, track.getId()));
+            return;
+        }
 
         EventBus.getDefault().post(new EventBusMSGLong(EventBusMSG.TRACK_SETPROGRESS, track.getId(), 1));
 
@@ -130,7 +141,10 @@ class Exporter extends Thread {
         if (!sd.exists()) {
             success = sd.mkdir();
         }
-        if (!success) return;
+        if (!success) {
+            EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE, track.getId()));
+            return;
+        }
 
         // Create files, deleting old version if exists
         if (ExportKML) {
@@ -203,6 +217,8 @@ class Exporter extends Thread {
                 PMKbw = new BufferedWriter(PMKfw);
             }
 
+            creationTime = Calendar.getInstance().getTime();
+
             // ---------------------------------------------------------------------- Writing Heads
             Log.w("myApp", "[#] Exporter.java - Writing Heads");
 
@@ -211,30 +227,43 @@ class Exporter extends Thread {
 
                 KMLbw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + newLine);
                 KMLbw.write("<!-- Created with BasicAirData GPS Logger for Android - ver. " + versionName + " -->" + newLine);
-                KMLbw.write("<!-- Track " + String.valueOf(track.getId()) + " = " + String.valueOf(track.getNumberOfLocations())
-                        + " TrackPoints + " + String.valueOf(track.getNumberOfPlacemarks())
-                        + " Placemarks + " + String.valueOf(track.getNumberOfSteps()) + " Steps -->" + newLine);
+                KMLbw.write("<!-- Track " + String.valueOf(track.getId()) + " = " +
+                                            String.valueOf(track.getNumberOfLocations ()) + " TrackPoints + " +
+                                            String.valueOf(track.getNumberOfPlacemarks()) + " Placemarks + "  +
+                                            String.valueOf(track.getNumberOfSteps     ()) + " Steps -->"      +
+                                            newLine);
                 KMLbw.write("<kml xmlns=\"http://www.opengis.net/kml/2.2\">" + newLine);
                 KMLbw.write(" <Document>" + newLine);
-                KMLbw.write("  <name>Paths</name>" + newLine);
-                KMLbw.write("  <description>GPS Logger: " + track.getName() + newLine);
-                KMLbw.write("  </description>" + newLine);
-
-                KMLbw.write("  <Style id=\"TrackLineAndPoly\">" + newLine);
-                KMLbw.write("   <LineStyle>" + newLine);
-                KMLbw.write("    <color>ff0000ff</color>" + newLine);
-                KMLbw.write("    <width>4</width>" + newLine);
-                KMLbw.write("   </LineStyle>" + newLine);
-                KMLbw.write("   <PolyStyle>" + newLine);
-                KMLbw.write("    <color>7f0000ff</color>" + newLine);
-                KMLbw.write("   </PolyStyle>" + newLine);
-                KMLbw.write("  </Style>" + newLine);
-
-                KMLbw.write("  <Style id=\"Bookmark_Style\">" + newLine);
-                KMLbw.write("   <IconStyle>" + newLine);
-                KMLbw.write("    <Icon> <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle_highlight.png</href> </Icon>" + newLine);
-                KMLbw.write("   </IconStyle>" + newLine);
-                KMLbw.write("  </Style>" + newLine + newLine);
+                KMLbw.write("  <name>GPS Logger " + track.getName() + "</name>" + newLine);
+                KMLbw.write("  <description><![CDATA[" + String.valueOf(track.getNumberOfLocations ()) + " Trackpoints<br>"        +
+                                                         String.valueOf(track.getNumberOfPlacemarks()) + " Placemarks<br>"         +
+                                                         String.valueOf(track.getNumberOfSteps     ()) + " Steps]]></description>" +
+                                                         newLine);
+                if (track.getNumberOfLocations() > 0) {
+                    KMLbw.write("  <Style id=\"TrackStyle\">" + newLine);
+                    KMLbw.write("   <LineStyle>" + newLine);
+                    KMLbw.write("    <color>ff0000ff</color>" + newLine);
+                    KMLbw.write("    <width>3</width>" + newLine);
+                    KMLbw.write("   </LineStyle>" + newLine);
+                    KMLbw.write("   <PolyStyle>" + newLine);
+                    KMLbw.write("    <color>7f0000ff</color>" + newLine);
+                    KMLbw.write("   </PolyStyle>" + newLine);
+                    KMLbw.write("   <BalloonStyle>" + newLine);
+                    KMLbw.write("    <text><![CDATA[<p style=\"color:red;font-weight:bold\">$[name]</p><p style=\"font-size:11px\">$[description]</p><p style=\"font-size:7px\">" +
+                            GPSApp.getApplicationContext().getString(R.string.pref_track_stats) + ": " +
+                            GPSApp.getApplicationContext().getString(R.string.pref_track_stats_totaltime) + " | " +
+                            GPSApp.getApplicationContext().getString(R.string.pref_track_stats_movingtime) + "</p>]]></text>" + newLine);
+                    KMLbw.write("   </BalloonStyle>" + newLine);
+                    KMLbw.write("  </Style>" + newLine);
+                }
+                if (track.getNumberOfPlacemarks() > 0) {
+                    KMLbw.write("  <Style id=\"PlacemarkStyle\">" + newLine);
+                    KMLbw.write("   <IconStyle>" + newLine);
+                    KMLbw.write("    <Icon> <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle_highlight.png</href> </Icon>" + newLine);
+                    KMLbw.write("   </IconStyle>" + newLine);
+                    KMLbw.write("  </Style>" + newLine);
+                }
+                KMLbw.write(newLine);
             }
 
             if (ExportGPX) {
@@ -242,14 +271,34 @@ class Exporter extends Thread {
 
                 GPXbw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + newLine);
                 GPXbw.write("<!-- Created with BasicAirData GPS Logger for Android - ver. " + versionName + " -->" + newLine);
-                GPXbw.write("<!-- Track " + String.valueOf(track.getId()) + " = " + String.valueOf(track.getNumberOfLocations())
-                        + " TrackPoints + " + String.valueOf(track.getNumberOfPlacemarks())
-                        + " Placemarks + " + String.valueOf(track.getNumberOfSteps()) + " Steps -->" + newLine);
-                if (getPrefGPXVersion == 100)     // GPX 1.0
-                    GPXbw.write("<gpx version=\"1.0\" creator=\"BasicAirData GPS Logger " + versionName + "\" xmlns=\"http://www.topografix.com/GPX/1/0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">" + newLine + newLine);
-                if (getPrefGPXVersion == 110)     // GPX 1.1
-                    GPXbw.write("<gpx version=\"1.1\" creator=\"BasicAirData GPS Logger " + versionName + "\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">" + newLine + newLine);
-
+                GPXbw.write("<!-- Track " + String.valueOf(track.getId()) + " = " +
+                        String.valueOf(track.getNumberOfLocations ()) + " TrackPoints + " +
+                        String.valueOf(track.getNumberOfPlacemarks()) + " Placemarks + "  +
+                        String.valueOf(track.getNumberOfSteps     ()) + " Steps -->"      +
+                        newLine);
+                if (getPrefGPXVersion == GPX1_0) {     // GPX 1.0
+                    GPXbw.write("<gpx version=\"1.0\"" + newLine
+                              + "     creator=\"BasicAirData GPS Logger " + versionName + "\"" + newLine
+                              + "     xmlns=\"http://www.topografix.com/GPX/1/0\"" + newLine
+                              + "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" + newLine
+                              + "     xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">" + newLine);
+                    GPXbw.write("<name>GPS Logger " + track.getName() + "</name>" + newLine);
+                    GPXbw.write("<time>" + dfdtGPX.format(creationTime) + "</time>" + newLine + newLine);
+                }
+                if (getPrefGPXVersion == GPX1_1) {    // GPX 1.1
+                    GPXbw.write("<gpx version=\"1.1\"" + newLine
+                              + "     creator=\"BasicAirData GPS Logger " + versionName + "\"" + newLine
+                              + "     xmlns=\"http://www.topografix.com/GPX/1/1\"" + newLine
+                              + "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" + newLine
+                              + "     xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">" + newLine);
+                    //          + "     xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\"" + newLine           // Garmin extension to include speeds
+                    //          + "     xmlns:gpxtrkx=\"http://www.garmin.com/xmlschemas/TrackStatsExtension/v1\"" + newLine  //
+                    //          + "     xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\">" + newLine); //
+                    GPXbw.write("<metadata> " + newLine);    // GPX Metadata
+                    GPXbw.write(" <name>GPS Logger " + track.getName() + "</name>" + newLine);
+                    GPXbw.write(" <time>" + dfdtGPX.format(creationTime) + "</time>" + newLine);
+                    GPXbw.write("</metadata>" + newLine + newLine);
+                }
             }
 
             if (ExportTXT) {
@@ -270,13 +319,15 @@ class Exporter extends Thread {
             Log.w("myApp", "[#] Exporter.java - Writing Placemarks");
 
             if (track.getNumberOfPlacemarks() > 0) {
+                int placemark_id = 1;                   // It is used to add a progressive "id" to Placemarks
+
                 // Writes track headings
 
                 List<LocationExtended> placemarkList = new ArrayList<>(GroupOfLocations);
 
                 for (int i = 0; i <= track.getNumberOfPlacemarks(); i += GroupOfLocations) {
                     //Log.w("myApp", "[#] Exporter.java - " + (i + GroupOfLocations));
-                    placemarkList.addAll(GPSApplication.getInstance().GPSDataBase.getPlacemarksList(track.getId(), i, i + GroupOfLocations - 1));
+                    placemarkList.addAll(GPSApp.GPSDataBase.getPlacemarksList(track.getId(), i, i + GroupOfLocations - 1));
 
                     if (!placemarkList.isEmpty()) {
                         for (LocationExtended loc : placemarkList) {
@@ -290,7 +341,7 @@ class Exporter extends Thread {
 
                             // KML
                             if (ExportKML) {
-                                KMLbw.write("  <Placemark>" + newLine);
+                                KMLbw.write("  <Placemark id=\"" + placemark_id + "\">" + newLine);
                                 KMLbw.write("   <name>");
                                 KMLbw.write(timestamp.format(loc.getLocation().getTime()));
                                 KMLbw.write("   </name>");
@@ -302,7 +353,7 @@ class Exporter extends Thread {
                                         .replace("\"","&quot;")
                                         .replace("'","&apos;"));
                                 KMLbw.write("</description>" + newLine);
-                                KMLbw.write("   <styleUrl>#Bookmark_Style</styleUrl>" + newLine);
+                                KMLbw.write("   <styleUrl>#PlacemarkStyle</styleUrl>" + newLine);
                                 KMLbw.write("   <Point>" + newLine);
                                 KMLbw.write("    <altitudeMode>" + (getPrefKMLAltitudeMode == 1 ? "clampToGround" : "absolute") + "</altitudeMode>" + newLine);
                                 KMLbw.write("    <coordinates>");
@@ -403,10 +454,36 @@ class Exporter extends Thread {
 
                 // Writes track headings
                 if (ExportKML) {
-                    KMLbw.write("  <Placemark>" + newLine);
-                    KMLbw.write("   <name>GPS Logger</name>" + newLine);
-                    KMLbw.write("   <description>Track: " + track.getName() + " </description>" + newLine);
-                    KMLbw.write("   <styleUrl>#TrackLineAndPoly</styleUrl>" + newLine);
+                    PhysicalDataFormatter phdformatter = new PhysicalDataFormatter();
+                    PhysicalData phdDuration;
+                    PhysicalData phdDurationMoving;
+                    PhysicalData phdSpeedMax;
+                    PhysicalData phdSpeedAvg;
+                    PhysicalData phdSpeedAvgMoving;
+                    PhysicalData phdDistance;
+                    PhysicalData phdAltitudeGap;
+                    PhysicalData phdOverallDirection;
+                    phdDuration = phdformatter.format(track.getDuration(),PhysicalDataFormatter.FORMAT_DURATION);
+                    phdDurationMoving = phdformatter.format(track.getDuration_Moving(),PhysicalDataFormatter.FORMAT_DURATION);
+                    phdSpeedMax = phdformatter.format(track.getSpeedMax(),PhysicalDataFormatter.FORMAT_SPEED);
+                    phdSpeedAvg = phdformatter.format(track.getSpeedAverage(),PhysicalDataFormatter.FORMAT_SPEED_AVG);
+                    phdSpeedAvgMoving = phdformatter.format(track.getSpeedAverageMoving(),PhysicalDataFormatter.FORMAT_SPEED_AVG);
+                    phdDistance = phdformatter.format(track.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
+                    phdAltitudeGap = phdformatter.format(track.getEstimatedAltitudeGap(GPSApp.getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
+                    phdOverallDirection = phdformatter.format(track.getBearing(),PhysicalDataFormatter.FORMAT_BEARING);
+
+                    String TrackDesc = GPSApp.getApplicationContext().getString(R.string.distance) + " = " + phdDistance.Value + " " + phdDistance.UM +
+                            "<br>" + GPSApp.getApplicationContext().getString(R.string.duration) + " = " + phdDuration.Value + " | " + phdDurationMoving.Value +
+                            "<br>" + GPSApp.getApplicationContext().getString(R.string.altitude_gap) + " = " + phdAltitudeGap.Value + " " + phdAltitudeGap.UM +
+                            "<br>" + GPSApp.getApplicationContext().getString(R.string.max_speed) + " = " + phdSpeedMax.Value + " " + phdSpeedMax.UM +
+                            "<br>" + GPSApp.getApplicationContext().getString(R.string.average_speed) + " = " + phdSpeedAvg.Value + " | " + phdSpeedAvgMoving.Value + " " + phdSpeedAvg.UM +
+                            "<br>" + GPSApp.getApplicationContext().getString(R.string.direction) + " = " + phdOverallDirection.Value + " " + phdOverallDirection.UM +
+                            "<br><br><i>" + track.getNumberOfLocations() + " " + GPSApp.getApplicationContext().getString(R.string.trackpoints) + "</i>" ;
+
+                    KMLbw.write("  <Placemark id=\"" + track.getName() + "\">" + newLine);
+                    KMLbw.write("   <name>" + GPSApp.getApplicationContext().getString(R.string.tab_track) + " " + track.getName() + "</name>" + newLine);
+                    KMLbw.write("   <description><![CDATA[" + TrackDesc + "]]></description>" + newLine);
+                    KMLbw.write("   <styleUrl>#TrackStyle</styleUrl>" + newLine);
                     KMLbw.write("   <LineString>" + newLine);
                     KMLbw.write("    <extrude>0</extrude>" + newLine);
                     KMLbw.write("    <tessellate>0</tessellate>" + newLine);
@@ -415,8 +492,7 @@ class Exporter extends Thread {
                 }
                 if (ExportGPX) {
                     GPXbw.write("<trk>" + newLine);
-                    GPXbw.write(" <name>" + track.getName() + "</name>" + newLine);
-                    GPXbw.write(" <desc>GPS Logger: " + track.getName() + "</desc>" + newLine);
+                    GPXbw.write(" <name>" + GPSApp.getApplicationContext().getString(R.string.tab_track) + " " + track.getName() + "</name>" + newLine);
                     GPXbw.write(" <trkseg>" + newLine);
                 }
 
@@ -455,16 +531,26 @@ class Exporter extends Thread {
                         GPXbw.write("<time>");     // Time
                         GPXbw.write(dfdtGPX.format(loc.getLocation().getTime()));
                         GPXbw.write("</time>");
-                        if (loc.getLocation().hasSpeed()) {
-                            GPXbw.write("<speed>");     // Speed
-                            GPXbw.write(formattedSpeed);
-                            GPXbw.write("</speed>");
+                        if (getPrefGPXVersion == GPX1_0) {
+                            if (loc.getLocation().hasSpeed()) {
+                                GPXbw.write("<speed>");     // Speed
+                                GPXbw.write(formattedSpeed);
+                                GPXbw.write("</speed>");
+                            }
                         }
                         if (loc.getNumberOfSatellitesUsedInFix() > 0) {                   // GPX standards requires sats used for FIX.
                             GPXbw.write("<sat>");                                         // and NOT the number of satellites in view!!!
                             GPXbw.write(String.valueOf(loc.getNumberOfSatellitesUsedInFix()));
                             GPXbw.write("</sat>");
                         }
+                        /*
+                        if (getPrefGPXVersion == GPX1_1) {                                // GPX 1.1 doesn't support speed tags. Let's switch to Garmin extensions :(
+                            if (loc.getLocation().hasSpeed()) {
+                                GPXbw.write("<extensions><gpxtpx:TrackPointExtension><gpxtpx:speed>");     // Speed (as Garmin extension)
+                                GPXbw.write(formattedSpeed);
+                                GPXbw.write("</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions>");
+                            }
+                        } */
                         GPXbw.write("</trkpt>" + newLine);
                     }
 

@@ -18,6 +18,7 @@
   ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
   -->
 <resources>
+  <string name="app_name">Walking Logger</string>
   <!-- Tabs -->
   <string name="tab_gpsfix">Fix GPS</string>
   <string name="tab_track">Itinerario</string>
@@ -35,6 +36,7 @@
   <string name="west">O</string>
   <!-- GPS Status messages -->
   <string name="gps_disabled">GPS disabilitato</string>
+  <string name="gps_disabled_with_hint">GPS disabilitato\n\nCliccando 2 volte qui\npuoi abilitare il servizio Posizione\ne impostare un metodo di ricerca\nche utilizza il sensore GPS</string>
   <string name="gps_out_of_service">GPS fuori servizio</string>
   <string name="gps_temporary_unavailable">GPS temporaneamente non disponibile</string>
   <string name="gps_searching">Ricerca del segnale GPS</string>
@@ -101,6 +103,9 @@
   <string name="pref_unit_of_measurement_imperial">Imperiale</string>
   <string name="pref_unit_of_measurement_aerial_nautical">Aereo / Nautico</string>
   <string name="pref_unit_of_measurement_speed">Visualizza le velocità in</string>
+  <string name="pref_view_tracks_with">Visualizza gli itinerari con</string>
+  <string name="pref_view_tracks_with_KML">Visualizzatore KML</string>
+  <string name="pref_view_tracks_with_GPX">Visualizzatore GPX</string>
   <string name="pref_category_tracking">REGISTRAZIONE</string>
   <string name="pref_GPS_distance">Densità registrazione punti</string>
   <string name="pref_GPS_distance_max">Massima</string>

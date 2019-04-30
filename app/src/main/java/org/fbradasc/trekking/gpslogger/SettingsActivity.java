@@ -50,14 +50,14 @@ public class SettingsActivity extends AppCompatActivity {
 
     @Override
     public void onResume() {
-        Log.w("myApp", "[#] SettingsActivity.java - onResume()");
         super.onResume();
+        Log.w("myApp", "[#] SettingsActivity.java - onResume()");
     }
 
     @Override
     public void onPause() {
-        Log.w("myApp", "[#] SettingsActivity.java - onPause()");
         super.onPause();
+        Log.w("myApp", "[#] SettingsActivity.java - onPause()");
     }
 
     @Override

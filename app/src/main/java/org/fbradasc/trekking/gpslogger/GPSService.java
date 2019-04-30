@@ -24,7 +24,8 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.support.v7.app.NotificationCompat;
+import android.os.PowerManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.location.ActivityRecognition;
@@ -51,13 +52,27 @@ public class GPSService extends Service {
         }
     }
 
+    // PARTIAL_WAKELOCK
+    private PowerManager powerManager;
+    PowerManager.WakeLock wakeLock;
+
     private Notification getNotification() {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        final String CHANNEL_ID = "GPSLoggerServiceChannel";
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID);
         //builder.setSmallIcon(R.drawable.ic_notification_24dp)
         builder.setSmallIcon(R.mipmap.ic_notify_24dp)
+                .setColor(getResources().getColor(R.color.colorPrimaryLight))
                 .setContentTitle(getString(R.string.app_name))
                 .setShowWhen(false)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setOngoing(true)
                 .setContentText(getString(R.string.notification_contenttext));
+
+        //if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+        //    builder.setPriority(NotificationCompat.PRIORITY_LOW);
+        //}
 
         final Intent startIntent = new Intent(getApplicationContext(), GPSActivity.class);
         startIntent.setAction(Intent.ACTION_MAIN);
@@ -92,6 +107,10 @@ public class GPSService extends Service {
         //if (!t.isAlive()) {
         //    t.start();
         //}
+
+        // PARTIAL_WAKELOCK
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"GPSLogger:wakelock");
         Log.w("myApp", "[#] GPSService.java - CREATE = onCreate");
     }
 
@@ -106,6 +125,10 @@ public class GPSService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        if (wakeLock != null && !wakeLock.isHeld()) {
+            wakeLock.acquire();
+            Log.w("myApp", "[#] GPSService.java - WAKELOCK acquired");
+        }
         Log.w("myApp", "[#] GPSService.java - BIND = onBind");
         requestActivityRecognitionUpdates();
         return mBinder;
@@ -114,6 +137,12 @@ public class GPSService extends Service {
 
     @Override
     public void onDestroy() {
+        // PARTIAL_WAKELOCK
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
+            Log.w("myApp", "[#] GPSService.java - WAKELOCK released");
+        }
+
         Log.w("myApp", "[#] GPSService.java - DESTROY = onDestroy");
         stopActivityRecognitionUpdates();
         // THREAD FOR DEBUG PURPOSE

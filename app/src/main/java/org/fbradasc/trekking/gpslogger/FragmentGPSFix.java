@@ -19,6 +19,7 @@
 
 package org.fbradasc.trekking.gpslogger;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -29,6 +30,7 @@ import android.widget.TextView;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 public class FragmentGPSFix extends Fragment {
 
@@ -76,15 +78,10 @@ public class FragmentGPSFix extends Fragment {
         // Required empty public constructor
     }
 
-    @Subscribe
+    @Subscribe (threadMode = ThreadMode.MAIN)
     public void onEvent(Short msg) {
         if (msg == EventBusMSG.UPDATE_FIX) {
-            (getActivity()).runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Update();
-                }
-            });
+            Update();
         }
     }
 
@@ -119,6 +116,23 @@ public class FragmentGPSFix extends Fragment {
         TLBearing = (TableLayout) view.findViewById(R.id.id_TableLayout_Bearing);
         TLAccuracy = (TableLayout) view.findViewById(R.id.id_TableLayout_Accuracy);
 
+        TVGPSFixStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (GPSStatus == GPS_DISABLED) {
+                    if (GPSApplication.getInstance().getLocationSettingsFlag()) {
+                        // This is the second click
+                        GPSApplication.getInstance().setLocationSettingsFlag(false);
+                        // Go to Settings screen
+                        Intent callGPSSettingIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        if (callGPSSettingIntent != null) startActivityForResult(callGPSSettingIntent, 0);
+                    } else {
+                        GPSApplication.getInstance().setLocationSettingsFlag(true); // Start the timer
+                    }
+                }
+            }
+        });
+
         return view;
     }
 
@@ -141,7 +155,7 @@ public class FragmentGPSFix extends Fragment {
     private LocationExtended location;
     private double AltitudeManualCorrection;
     private int prefDirections;
-    private int GPSStatus;
+    private int GPSStatus = GPS_DISABLED;
     private boolean EGMAltitudeCorrection;
     private boolean isValidAltitude;
 
@@ -179,7 +193,6 @@ public class FragmentGPSFix extends Fragment {
                 TVAltitude.setTextColor(isValidAltitude ? getResources().getColor(R.color.textColorPrimary) : getResources().getColor(R.color.textColorSecondary));
                 TVAltitudeUM.setTextColor(isValidAltitude ? getResources().getColor(R.color.textColorPrimary) : getResources().getColor(R.color.textColorSecondary));
 
-
                 TVGPSFixStatus.setVisibility(View.GONE);
 
                 TVDirectionUM.setVisibility(prefDirections == 0 ? View.GONE : View.VISIBLE);
@@ -200,7 +213,7 @@ public class FragmentGPSFix extends Fragment {
                 TVGPSFixStatus.setVisibility(View.VISIBLE);
                 switch (GPSStatus) {
                     case GPS_DISABLED:
-                        TVGPSFixStatus.setText(R.string.gps_disabled);
+                        TVGPSFixStatus.setText(R.string.gps_disabled_with_hint);
                         break;
                     case GPS_OUTOFSERVICE:
                         TVGPSFixStatus.setText(R.string.gps_out_of_service);

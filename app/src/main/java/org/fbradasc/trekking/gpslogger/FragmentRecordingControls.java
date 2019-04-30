@@ -110,6 +110,7 @@ public class FragmentRecordingControls extends Fragment{
             final Boolean grs = gpsApplication.getRecording();
             boolean newRecordingState = !grs;
             gpsApplication.setRecording(newRecordingState);
+            EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK); // TODO: to check
             tableLayoutGeoPoints.setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
             tableLayoutSteps    .setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
         }
@@ -120,6 +121,7 @@ public class FragmentRecordingControls extends Fragment{
             final Boolean grs = gpsApplication.getRecording();
             boolean newRecordingState = !grs;
             gpsApplication.setRecording(newRecordingState);
+            EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK); // TODO: to check
             tableLayoutSteps    .setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
             tableLayoutGeoPoints.setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorTrackBackground));
         }
@@ -134,15 +136,10 @@ public class FragmentRecordingControls extends Fragment{
         }
     }
 
-    @Subscribe
+    @Subscribe (threadMode = ThreadMode.MAIN)
     public void onEvent(Short msg) {
         if (msg == EventBusMSG.UPDATE_TRACK) {
-            (getActivity()).runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Update();
-                }
-            });
+            Update();
         }
     }
 

@@ -27,6 +27,7 @@ public class Track {
     // Constants
     private static final int NOT_AVAILABLE = -100000;
     private static final double MIN_ALTITUDE_STEP = 8.0;
+    private static final float MOVEMENT_SPEED_THRESHOLD = 0.5f;     // The minimum speed (in m/s) to consider the user in movement
     private static final float STANDARD_ACCURACY = 10.0f;
     private static final float SECURITY_COEFF = 1.7f;
 
@@ -101,6 +102,12 @@ public class Track {
 
     // The value of the progressbar in card view
     private int Progress = 0;
+
+    // The progress of the last Job
+    private int JobProgress = 0;
+
+    // True if the card view is selected
+    private boolean Selected = false;
 
     // The altitude validator (the anti spikes filter):
     // - Max Acceleration = 12 m/s^2
@@ -181,7 +188,7 @@ public class Track {
         // ---------------------------------------------------------------------------------- Times
 
         Duration = End_Time - Start_Time;
-        if (End_Speed > 0) Duration_Moving += End_Time - LastFix_Time;
+        if (End_Speed >= MOVEMENT_SPEED_THRESHOLD) Duration_Moving += End_Time - LastFix_Time;
 
         // --------------------------- Spaces (Distances) increment if distance > sum of accuracies
 
@@ -556,6 +563,22 @@ public class Track {
         Progress = progress;
     }
 
+    public int getJobProgress() {
+        return JobProgress;
+    }
+
+    public void setJobProgress(int jobProgress) {
+        JobProgress = jobProgress;
+    }
+
+    public boolean isSelected() {
+        return Selected;
+    }
+
+    public void setSelected(boolean selected) {
+        Selected = selected;
+    }
+
     // --------------------------------------------------------------------------------------------
 
     public boolean isValidAltitude() {
@@ -726,15 +749,25 @@ public class Track {
             }
         }
         if (SpeedMax < (50.0f / 3.6f)) {
+            if ((SpeedAverageMoving + SpeedMax) / 2 > 35.0f / 3.6f) return TRACK_TYPE_CAR;
+            if ((SpeedAverageMoving + SpeedMax) / 2 > 20.0f / 3.6)  return TRACK_TYPE_BICYCLE;
+            else if ((SpeedAverageMoving + SpeedMax) / 2 > 12.0f / 3.6f) return TRACK_TYPE_RUN;
+            else {
+                if ((Altitude_Up != NOT_AVAILABLE) && (Altitude_Down != NOT_AVAILABLE))
+                    if ((Altitude_Down + Altitude_Up > (0.1f * Distance)) && (Distance > 500.0f))
+                        return TRACK_TYPE_MOUNTAIN;
+                    else return TRACK_TYPE_WALK;
+            }
+            /*
             if (SpeedAverageMoving > 20.0f / 3.6f) return TRACK_TYPE_CAR;
-            if (SpeedAverageMoving > 12.0f / 3.6f) return TRACK_TYPE_BICYCLE;
+            if (SpeedAverageMoving > 12.0f / 3.6) return TRACK_TYPE_BICYCLE;
             else if (SpeedAverageMoving > 8.0f / 3.6f) return TRACK_TYPE_RUN;
             else {
                 if ((Altitude_Up != NOT_AVAILABLE) && (Altitude_Down != NOT_AVAILABLE))
                     if ((Altitude_Down + Altitude_Up > (0.1f * Distance)) && (Distance > 500.0f))
                         return TRACK_TYPE_MOUNTAIN;
                 else return TRACK_TYPE_WALK;
-            }
+            }*/
         }
         if ((Altitude_Up != NOT_AVAILABLE) && (Altitude_Down != NOT_AVAILABLE))
             if ((Altitude_Down + Altitude_Up > 5000.0) && (SpeedMax > 300.0f / 3.6f)) return TRACK_TYPE_FLIGHT;
