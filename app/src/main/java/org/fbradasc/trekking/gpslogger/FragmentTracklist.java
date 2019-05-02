@@ -33,10 +33,8 @@ import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-// import android.view.ContextMenu;
-// import android.view.LayoutInflater;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -54,12 +52,13 @@ public class FragmentTracklist extends Fragment {
     RecyclerView recyclerView;
     RecyclerView.LayoutManager layoutManager;
 
-    private RecyclerView.Adapter adapter;
+    private TrackAdapter adapter;
     private List<Track> data = Collections.synchronizedList(new ArrayList<Track>());
 
     private View view;
     private TextView TVTracklistEmpty;
-    private long selectedtrackID = -1;
+    private boolean gotoPermissionSettings = false;
+    // private long selectedtrackID = -1;
 
 
     public FragmentTracklist() {
@@ -323,6 +322,7 @@ public class FragmentTracklist extends Fragment {
             }
             final ArrayList<Track> selectedTracks = GPSApplication.getInstance().getJobTracklist(); // The list of shared tracks
             ArrayList<Uri> files = new ArrayList<>();                                               // The list of URI to be attached to intent
+            String fname;
             File file;
 
             StringBuilder extraSubject = new StringBuilder(getString(R.string.app_name) + " - ");
@@ -361,10 +361,10 @@ public class FragmentTracklist extends Fragment {
                     phdAltitudeGap = phdformatter.format(track.getEstimatedAltitudeGap(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
                     phdOverallDirection = phdformatter.format(track.getBearing(),PhysicalDataFormatter.FORMAT_BEARING);
                     if (track.getNumberOfLocations() <= 1) {
-                        extraText.append(getString(R.string.app_name) + " - " + getString(R.string.tab_track) + " " + track.getName()
-                                + "\n" + track.getNumberOfLocations() + " " + getString(R.string.trackpoints)
-                                + "\n" + track.getNumberOfPlacemarks() + " " + getString(R.string.placemarks)
-                                + "\n" + track.getNumberOfSteps() + " " + getString(R.string.steps)));
+                        extraText.append(getString(R.string.app_name)  + " - " + getString(R.string.tab_track) + " " + track.getName()
+                                + "\n" + track.getNumberOfLocations () + " "   + getString(R.string.trackpoints)
+                                + "\n" + track.getNumberOfPlacemarks() + " "   + getString(R.string.placemarks)
+                                + "\n" + track.getNumberOfSteps     () + " "   + getString(R.string.steps));
                     } else {
                         intent.putExtra(Intent.EXTRA_TEXT, (CharSequence) ("GPS Logger - Track " + track.getName()
                                 + "\n" + track.getNumberOfLocations() + " " + getString(R.string.trackpoints)
@@ -378,10 +378,10 @@ public class FragmentTracklist extends Fragment {
                                 + "\n" + getString(R.string.average_speed) + " = " + phdSpeedAvg.Value + " | " + phdSpeedAvgMoving.Value + " " + phdSpeedAvg.UM
                                 + "\n" + getString(R.string.overall_direction) + " = " + phdOverallDirection.Value + " " + phdOverallDirection.UM
                                 + "\n"
-                                + "\n" + getString(R.string.pref_track_stats) + ": " + getString(R.string.pref_track_stats_totaltime) + " | " + getString(R.string.pref_track_stats_movingtime));
+                                + "\n" + getString(R.string.pref_track_stats) + ": " + getString(R.string.pref_track_stats_totaltime) + " | " + getString(R.string.pref_track_stats_movingtime)));
                     }
 
-                    String fname = track.getName() + ".kml";
+                    fname = track.getName() + ".kml";
                     file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
                     if (file.exists () && GPSApplication.getInstance().getPrefExportKML()) {
                         Uri uri = Uri.fromFile(file);

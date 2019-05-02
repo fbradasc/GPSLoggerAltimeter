@@ -31,6 +31,7 @@ import android.widget.TextView;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 public class FragmentRecordingControls extends Fragment{
 
