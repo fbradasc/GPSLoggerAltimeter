@@ -38,7 +38,7 @@
         android:title="@string/card_menu_export" />
     <item
         android:id="@+id/cardmenu_placemarks"
-        android:icon="@mipmap/ic_share_white_24dp"
+        android:icon="@mipmap/ic_place_white_24dp"
         android:visible="true"
         android:title="@string/card_menu_placemarks" />
     <item

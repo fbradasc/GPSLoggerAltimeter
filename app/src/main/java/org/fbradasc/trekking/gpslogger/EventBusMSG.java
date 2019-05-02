@@ -55,4 +55,5 @@ public class EventBusMSG {
     static final short ACTION_BULK_EXPORT_TRACKS        =  51;  // Export the selected tracks
     static final short ACTION_BULK_VIEW_TRACKS          =  52;  // View the selected tracks
     static final short ACTION_BULK_SHARE_TRACKS         =  53;  // Share the selected tracks
+    static final short ACTION_BULK_SHARE_PLACEMARKS     =  54;  // Share the selected tracks
 }

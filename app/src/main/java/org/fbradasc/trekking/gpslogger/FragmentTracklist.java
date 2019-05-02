@@ -42,7 +42,11 @@ import android.widget.TextView;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -199,6 +203,18 @@ public class FragmentTracklist extends Fragment {
             GPSApplication.getInstance().DeselectAllTracks();
             return;
         }
+        if (msg == EventBusMSG.ACTION_BULK_SHARE_PLACEMARKS) {
+            GPSApplication.getInstance().LoadJob(GPSApplication.JOB_TYPE_SHARE_PLACEMARKS);
+            if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                if (gotoPermissionSettings) {       // Permission denied, no more ask!!
+                    EventBus.getDefault().post(EventBusMSG.STORAGE_PERMISSION_REQUIRED);
+                } else {
+                    CheckStoragePermission();   // Ask for storage permission
+                }
+            } else GPSApplication.getInstance().ExecuteJob();
+            GPSApplication.getInstance().DeselectAllTracks();
+            return;
+        }
         if (msg == EventBusMSG.ACTION_BULK_VIEW_TRACKS) {
             GPSApplication.getInstance().LoadJob(GPSApplication.JOB_TYPE_VIEW);
             if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -327,6 +343,7 @@ public class FragmentTracklist extends Fragment {
 
             StringBuilder extraSubject = new StringBuilder(getString(R.string.app_name) + " - ");
             StringBuilder extraText = new StringBuilder();
+            extraText.append(getString(R.string.app_name) + "\n\n");
             int i = 0;                                                                              // A service counter for string building
 
             Intent intent = new Intent();
@@ -335,10 +352,8 @@ public class FragmentTracklist extends Fragment {
             intent.setType("text/xml");
 
             for (Track track : selectedTracks) {
-
                 if (i > 0) {
                     extraSubject.append(" + ");
-                    extraText.append("\n\n----------------------------\n");
                 }
                 extraSubject.append(track.getName());
 
@@ -403,10 +418,43 @@ public class FragmentTracklist extends Fragment {
                 fname = track.getName() + "_placemarks.txt";
                 file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
                 if (file.exists ()  && GPSApplication.getInstance().getPrefExportPMK()) {
+                    if (!send_all_data) {
+                        extraText.append(getString(R.string.tab_track) + " " + track.getName()
+                                + ": " + track.getNumberOfPlacemarks() + " " + getString(R.string.placemarks) + "\n\n");
+
+                        FileReader     fr = null;
+                        BufferedReader br = null;
+
+                        try {
+                            fr = new FileReader(file);
+                            br = new BufferedReader(fr);
+
+                            String str;
+                            while ((str = br.readLine()) != null) {
+                                extraText.append(str);
+                                extraText.append('\n');
+                            }
+                        } catch (IOException ioe) {
+                        // } catch (FileNotFoundException fnfe) {
+                        } finally {
+                            try {
+                                if (br != null) {
+                                    br.close();
+                                }
+
+                                if (fr != null) {
+                                    fr.close();
+                                }
+                            } catch (IOException ex) {
+                            }
+                        }
+                    }
                     Uri uri = Uri.fromFile(file);
                     files.add(uri);
                 }
                 i++;
+
+                extraText.append("\n\n----------------------------\n");
             }
             intent.putExtra(Intent.EXTRA_SUBJECT, extraSubject.toString());
             intent.putExtra(Intent.EXTRA_TEXT, (CharSequence) (extraText.toString()));
@@ -424,326 +472,7 @@ public class FragmentTracklist extends Fragment {
         }
     }
 
-/*******************************************************************************
-    public void setProgress(int listPosition, int progress) {
-        RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(listPosition);
-        if (holder != null) {
-            ((TrackAdapter.TrackHolder)holder).SetProgress(progress);
-        }
-    }
 
-    @Subscribe
-    public void onEvent(EventBusMSGLong msg) {
-        if (msg.MSGType == EventBusMSG.TRACK_SETPROGRESS) {
-            final long trackid = msg.id;
-            final long progress = msg.Value;
-            if ((trackid > 0) && (progress >= 0)) {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        int i = 0;
-                        synchronized (data) {
-                            for (Track T : data) {
-                                if (T.getId() == trackid) setProgress(i, T.getProgress());
-                                i++;
-                            }
-                        }
-                    }
-                });
-            }
-        }
-    }
-
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v,
-                                    ContextMenu.ContextMenuInfo menuInfo) {
-
-        super.onCreateContextMenu(menu, v, menuInfo);
-        MenuInflater inflater = getActivity().getMenuInflater();
-        inflater.inflate(R.menu.card_menu, menu);
-
-        final GPSApplication gpsApplication = GPSApplication.getInstance();
-
-        //menu.setHeaderTitle("Track " + data.get(selectedtrackID).getName());
-        //Log.w("myApp", "[#] FragmentTracklist.java - share + export");
-        if (gpsApplication.getPrefExportGPX() ||
-            gpsApplication.getPrefExportKML() ||
-            gpsApplication.getPrefExportTXT() ||
-            gpsApplication.getPrefExportPMK()) {
-            menu.findItem(R.id.cardmenu_export).setVisible(true);   // menu export
-            if ((gpsApplication.getShareTrack() == -1) && gpsApplication.isContextMenuShareVisible())
-                menu.findItem(R.id.cardmenu_share).setVisible(true);   // menu share tracks
-            if ((gpsApplication.getSharePlacemarks() == -1) && gpsApplication.isContextMenuShareVisible())
-                menu.findItem(R.id.cardmenu_placemarks).setVisible(true);   // menu share only placemarks
-        }
-        //Log.w("myApp", "[#] FragmentTracklist.java - view");
-        if ((gpsApplication.getOpenInViewer() == -1) && gpsApplication.isContextMenuViewVisible()) {                                    // menu view
-            if (!gpsApplication.getViewInApp().equals(""))
-                menu.findItem(R.id.cardmenu_view).setTitle(getResources().getString(R.string.card_menu_view, gpsApplication.getViewInApp())).setVisible(true);
-            else menu.findItem(R.id.cardmenu_view).setVisible(true);
-        }
-        //Log.w("myApp", "[#] FragmentTracklist.java - delete");
-        if (selectedtrackID == gpsApplication.getCurrentTrack().getId()) menu.findItem(R.id.cardmenu_delete).setVisible(false);
-
-        if (selectedtrackID == -1) {
-            menu.findItem(R.id.cardmenu_placemarks).setEnabled(false);
-        }
-        else {
-            Track track = GPSApplication.getInstance().GPSDataBase.getTrack(selectedtrackID);
-            if (0 >= track.getNumberOfPlacemarks()) {
-                menu.findItem(R.id.cardmenu_placemarks).setEnabled(false);
-            }
-        }
-        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            boolean shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            if (!shouldShowRationale && gpsApplication.isStoragePermissionChecked()) {
-                menu.findItem(R.id.cardmenu_share).setEnabled(false);
-                menu.findItem(R.id.cardmenu_view).setEnabled(false);
-                menu.findItem(R.id.cardmenu_export).setEnabled(false);
-                menu.findItem(R.id.cardmenu_placemarks).setEnabled(false);
-            }
-        }
-    }
-
-
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        switch(item.getItemId()){
-            case R.id.cardmenu_delete:
-                if (!data.isEmpty() && (selectedtrackID >= 0)) {
-                    final Track track = GPSApplication.getInstance().GPSDataBase.getTrack(selectedtrackID);
-                    if (track != null) {
-                        boolean fileexist = FileExists(Environment.getExternalStorageDirectory() + "/GPSLogger/" + track.getName() + ".kml")
-                                || FileExists(Environment.getExternalStorageDirectory() + "/GPSLogger/" + track.getName() + ".gpx")
-                                || FileExists(Environment.getExternalStorageDirectory() + "/GPSLogger/" + track.getName() + ".txt");
-
-                        if (fileexist) {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.StyledDialog));
-                            builder.setMessage(getResources().getString(R.string.card_message_delete_also_exported));
-                            builder.setIcon(android.R.drawable.ic_menu_info_details);
-                            builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    String name = track.getName();
-                                    String nameID = String.valueOf(track.getId());
-
-                                    EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.DELETE_TRACK, track.getId()));
-
-                                    getActivity().runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            int i = 0;
-                                            boolean found = false;
-                                            synchronized (data) {
-                                                do {
-                                                    if (data.get(i).getId() == selectedtrackID) {
-                                                        found = true;
-                                                        data.remove(i);
-                                                        adapter.notifyItemRemoved(i);
-                                                        if (data.isEmpty())
-                                                            TVTracklistEmpty.setVisibility(View.VISIBLE);
-                                                    }
-                                                    i++;
-                                                } while ((i < data.size()) && !found);
-                                            }
-                                        }
-                                    });
-
-
-                                    // Delete exported files
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/" + name + ".txt");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/" + name + ".kml");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/" + name + ".gpx");
-                                    // Delete track files
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".txt");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".kml");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".gpx");
-                                    DeleteFile(getContext().getFilesDir() + "/Thumbnails/" + nameID + ".png");
-
-                                    dialog.dismiss();
-                                }
-                            });
-                            builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    String name = track.getName();
-                                    String nameID = String.valueOf(track.getId());
-
-                                    EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.DELETE_TRACK, track.getId()));
-
-                                    getActivity().runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            int i = 0;
-                                            boolean found = false;
-                                            synchronized (data) {
-                                                do {
-                                                    if (data.get(i).getId() == selectedtrackID) {
-                                                        found = true;
-                                                        data.remove(i);
-                                                        adapter.notifyItemRemoved(i);
-                                                        if (data.isEmpty())
-                                                            TVTracklistEmpty.setVisibility(View.VISIBLE);
-                                                    }
-                                                    i++;
-                                                } while ((i < data.size()) && !found);
-                                            }
-                                        }
-                                    });
-
-                                    // Delete track files
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".txt");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".kml");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".gpx");
-                                    DeleteFile(getContext().getFilesDir() + "/Thumbnails/" + nameID + ".png");
-
-                                    dialog.dismiss();
-                                }
-                            });
-                            builder.setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.dismiss();
-                                }
-                            });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        } else {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.StyledDialog));
-                            builder.setMessage(getResources().getString(R.string.card_message_delete_confirmation));
-                            builder.setIcon(android.R.drawable.ic_menu_info_details);
-                            builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    String name = track.getName();
-                                    String nameID = String.valueOf(track.getId());
-
-                                    EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.DELETE_TRACK, track.getId()));
-
-                                    getActivity().runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            int i = 0;
-                                            boolean found = false;
-                                            synchronized (data) {
-                                                do {
-                                                    if (data.get(i).getId() == selectedtrackID) {
-                                                        found = true;
-                                                        data.remove(i);
-                                                        adapter.notifyItemRemoved(i);
-                                                        if (data.isEmpty())
-                                                            TVTracklistEmpty.setVisibility(View.VISIBLE);
-                                                    }
-                                                    i++;
-                                                } while ((i < data.size()) && !found);
-                                            }
-                                        }
-                                    });
-
-                                    // Delete track files
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".txt");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".kml");
-                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + name + ".gpx");
-                                    DeleteFile(getContext().getFilesDir() + "/Thumbnails/" + nameID + ".png");
-
-                                    dialog.dismiss();
-                                }
-                            });
-                            builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.dismiss();
-                                }
-                            });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
-                    } else Update();    // Update the Tracklist!!
-                }
-                break;
-            case R.id.cardmenu_export:
-                if (!data.isEmpty() && (selectedtrackID >= 0)) {
-                    int i = 0;
-                    boolean found = false;
-                    synchronized(data) {
-                        do {
-                            if (data.get(i).getId() == selectedtrackID) {
-                                found = true;
-                                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                                    // Store the message to send in case the storage permission will be granted
-                                    GPSApplication.getInstance().setDoIfGrantStoragePermission(new EventBusMSGNormal(EventBusMSG.EXPORT_TRACK, data.get(i).getId()));
-                                    // Ask for storage permission
-                                    CheckStoragePermission();
-                                }
-                                else EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.EXPORT_TRACK, data.get(i).getId()));
-                            }
-                            i++;
-                        } while ((i < data.size()) && !found);
-                    }
-                }
-                break;
-            case R.id.cardmenu_view:
-                if (!data.isEmpty() && (selectedtrackID >= 0)) {
-                    int i = 0;
-                    boolean found = false;
-                    synchronized(data) {
-                        do {
-                            if (data.get(i).getId() == selectedtrackID) {
-                                found = true;
-                                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                                    // Store the message to send in case the storage permission will be granted
-                                    GPSApplication.getInstance().setDoIfGrantStoragePermission(new EventBusMSGNormal(EventBusMSG.VIEW_TRACK, data.get(i).getId()));
-                                    // Ask for storage permission
-                                    CheckStoragePermission();
-                                } else EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.VIEW_TRACK, data.get(i).getId()));
-                            }
-                            i++;
-                        } while ((i < data.size()) && !found);
-                    }
-                }
-                break;
-            case R.id.cardmenu_share:
-                if (!data.isEmpty() && (selectedtrackID >= 0)) {
-                    int i = 0;
-                    boolean found = false;
-                    synchronized(data) {
-                        do {
-                            if (data.get(i).getId() == selectedtrackID) {
-                                found = true;
-                                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                                    // Store the message to send in case the storage permission will be granted
-                                    GPSApplication.getInstance().setDoIfGrantStoragePermission(new EventBusMSGNormal(EventBusMSG.SHARE_TRACK, data.get(i).getId()));
-                                    // Ask for storage permission
-                                    CheckStoragePermission();
-                                } else EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.SHARE_TRACK, data.get(i).getId()));
-                            }
-                            i++;
-                        } while ((i < data.size()) && !found);
-                    }
-                }
-                break;
-            case R.id.cardmenu_placemarks:
-                if (!data.isEmpty() && (selectedtrackID >= 0)) {
-                    int i = 0;
-                    boolean found = false;
-                    synchronized(data) {
-                        do {
-                            if (data.get(i).getId() == selectedtrackID) {
-                                found = true;
-                                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                                    // Store the message to send in case the storage permission will be granted
-                                    GPSApplication.getInstance().setDoIfGrantStoragePermission(new EventBusMSGNormal(EventBusMSG.SHARE_PLACEMARKS, data.get(i).getId()));
-                                    // Ask for storage permission
-                                    CheckStoragePermission();
-                                } else EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.SHARE_PLACEMARKS, data.get(i).getId()));
-                            }
-                            i++;
-                        } while ((i < data.size()) && !found);
-                    }
-                }
-                break;
-            default:
-                //TODO: selectedtrackID = -1;
-                return false;
-        }
-        return true;
-    }
-*******************************************************************************/
 
     public void Update() {
         if (isAdded()) {

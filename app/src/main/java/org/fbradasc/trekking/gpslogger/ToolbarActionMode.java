@@ -27,6 +27,7 @@ public class ToolbarActionMode implements ActionMode.Callback {
         actionmenu.findItem(R.id.cardmenu_view).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         actionmenu.findItem(R.id.cardmenu_export).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         actionmenu.findItem(R.id.cardmenu_delete).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        actionmenu.findItem(R.id.cardmenu_placemarks).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         EvaluateVisibility();
         return true;
     }
@@ -42,6 +43,9 @@ public class ToolbarActionMode implements ActionMode.Callback {
                 break;
             case R.id.cardmenu_view:
                 EventBus.getDefault().post(EventBusMSG.ACTION_BULK_VIEW_TRACKS);
+                break;
+            case R.id.cardmenu_placemarks:
+                EventBus.getDefault().post(EventBusMSG.ACTION_BULK_SHARE_PLACEMARKS);
                 break;
             case R.id.cardmenu_share:
                 EventBus.getDefault().post(EventBusMSG.ACTION_BULK_SHARE_TRACKS);
@@ -80,6 +84,7 @@ public class ToolbarActionMode implements ActionMode.Callback {
             actionmenu.findItem(R.id.cardmenu_share).setVisible(gpsApplication.isContextMenuShareVisible());
             actionmenu.findItem(R.id.cardmenu_export).setVisible(gpsApplication.getPrefExportGPX() || gpsApplication.getPrefExportKML() || gpsApplication.getPrefExportTXT());
             actionmenu.findItem(R.id.cardmenu_delete).setVisible(!gpsApplication.getSelectedTracks().contains(gpsApplication.getCurrentTrack()));
+            actionmenu.findItem(R.id.cardmenu_placemarks).setVisible(gpsApplication.isContextMenuShareVisible());
             if (!gpsApplication.getViewInApp().equals(""))
                 actionmenu.findItem(R.id.cardmenu_view).setTitle(gpsApplication.getString(R.string.card_menu_view, gpsApplication.getViewInApp()));
             else

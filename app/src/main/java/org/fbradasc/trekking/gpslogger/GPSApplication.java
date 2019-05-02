@@ -85,9 +85,9 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     //private static final int UM_IMPERIAL_FPS = 8;
     //private static final int UM_IMPERIAL_MPH = 9;
 
-    private static final int STABILIZERVALUE = 3000;            // The application discards fixes for 3000 ms (minimum)
-    private static final int DEFAULTHANDLERTIMER = 5000;        // The timer for turning off GPS on exit
-    private static final int GPSUNAVAILABLEHANDLERTIMER = 7000; // The "GPS temporary unavailable" timer
+    private static final int STABILIZERVALUE = 3000;             // The application discards fixes for 3000 ms (minimum)
+    private static final int DEFAULTHANDLERTIMER = 60000;        // The timer for turning off GPS on exit
+    private static final int GPSUNAVAILABLEHANDLERTIMER = 7000;  // The "GPS temporary unavailable" timer
     private int StabilizingSamples = 3;
 
     private static final int GPS_DISABLED = 0;
@@ -809,7 +809,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     public void setGPSLocationUpdates (boolean update) {
         // Request permissions = https://developer.android.com/training/permissions/requesting.html
 
-/* TODO: check this:
+/* TODO: Testing
         if (!update && !getRecording() && isGPSLocationUpdatesActive
                 && (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             GPSStatus = GPS_SEARCHING;
@@ -824,7 +824,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             isGPSLocationUpdatesActive = true;
             StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
         }
- */
+*/
         if (isGPSLocationUpdatesActive == update) {
             return;
         }
