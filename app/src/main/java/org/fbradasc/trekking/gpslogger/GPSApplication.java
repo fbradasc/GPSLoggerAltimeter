@@ -86,7 +86,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     //private static final int UM_IMPERIAL_MPH = 9;
 
     private static final int STABILIZERVALUE = 3000;             // The application discards fixes for 3000 ms (minimum)
-    private static final int DEFAULTHANDLERTIMER = 60000;        // The timer for turning off GPS on exit
+    private static final int DEFAULTHANDLERTIMER = 10000;        // The timer for turning off GPS on exit
     private static final int GPSUNAVAILABLEHANDLERTIMER = 7000;  // The "GPS temporary unavailable" timer
     private int StabilizingSamples = 3;
 

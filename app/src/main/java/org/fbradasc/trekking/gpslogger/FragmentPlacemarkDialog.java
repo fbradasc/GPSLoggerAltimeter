@@ -38,17 +38,41 @@ public class FragmentPlacemarkDialog extends DialogFragment {
 
     EditText DescEditText;
     EditText Film_Data_EditText;
+    EditText P_Data_Sv_EditText;
     EditText P_Data_Ev_EditText;
     EditText P_Data_Fv_EditText;
     EditText P_Data_Tv_EditText;
     EditText P_Data_Av_EditText;
+    EditText P_Data_Z0_EditText;
+    EditText P_Data_Z1_EditText;
+    EditText P_Data_Z2_EditText;
+    EditText P_Data_Z3_EditText;
+    EditText P_Data_Z4_EditText;
+    EditText P_Data_Z5_EditText;
+    EditText P_Data_Z6_EditText;
+    EditText P_Data_Z7_EditText;
+    EditText P_Data_Z8_EditText;
+    EditText P_Data_Z9_EditText;
+    EditText P_Data_ZA_EditText;
 
     static String mDesc      = "";
     static String mFilm_Data = "";
+    static String mP_Data_Sv = "";
     static String mP_Data_Ev = "";
     static String mP_Data_Fv = "";
     static String mP_Data_Tv = "";
     static String mP_Data_Av = "";
+    static String mP_Data_Z0 = "";
+    static String mP_Data_Z1 = "";
+    static String mP_Data_Z2 = "";
+    static String mP_Data_Z3 = "";
+    static String mP_Data_Z4 = "";
+    static String mP_Data_Z5 = "";
+    static String mP_Data_Z6 = "";
+    static String mP_Data_Z7 = "";
+    static String mP_Data_Z8 = "";
+    static String mP_Data_Z9 = "";
+    static String mP_Data_ZA = "";
 
     //@SuppressLint("InflateParams")
     @Override
@@ -63,10 +87,22 @@ public class FragmentPlacemarkDialog extends DialogFragment {
 
         DescEditText       = (EditText) view.findViewById(R.id.placemark_description);
         Film_Data_EditText = (EditText) view.findViewById(R.id.film_data);
+        P_Data_Sv_EditText = (EditText) view.findViewById(R.id.pdata_speed);
         P_Data_Ev_EditText = (EditText) view.findViewById(R.id.pdata_ev);
         P_Data_Fv_EditText = (EditText) view.findViewById(R.id.pdata_fv);
         P_Data_Tv_EditText = (EditText) view.findViewById(R.id.pdata_tv);
         P_Data_Av_EditText = (EditText) view.findViewById(R.id.pdata_av);
+        P_Data_Z0_EditText = (EditText) view.findViewById(R.id.pdata_zs0);
+        P_Data_Z1_EditText = (EditText) view.findViewById(R.id.pdata_zs1);
+        P_Data_Z2_EditText = (EditText) view.findViewById(R.id.pdata_zs2);
+        P_Data_Z3_EditText = (EditText) view.findViewById(R.id.pdata_zs3);
+        P_Data_Z4_EditText = (EditText) view.findViewById(R.id.pdata_zs4);
+        P_Data_Z5_EditText = (EditText) view.findViewById(R.id.pdata_zs5);
+        P_Data_Z6_EditText = (EditText) view.findViewById(R.id.pdata_zs6);
+        P_Data_Z7_EditText = (EditText) view.findViewById(R.id.pdata_zs7);
+        P_Data_Z8_EditText = (EditText) view.findViewById(R.id.pdata_zs8);
+        P_Data_Z9_EditText = (EditText) view.findViewById(R.id.pdata_zs9);
+        P_Data_ZA_EditText = (EditText) view.findViewById(R.id.pdata_zs10);
 
         P_Data_Ev_EditText.postDelayed(new Runnable()
         {
@@ -74,10 +110,22 @@ public class FragmentPlacemarkDialog extends DialogFragment {
             {
                 if (isAdded()) {
                     if (!mFilm_Data.isEmpty()) Film_Data_EditText.setText(mFilm_Data);
+                    if (!mP_Data_Sv.isEmpty()) P_Data_Sv_EditText.setText(mP_Data_Sv);
                     if (!mP_Data_Ev.isEmpty()) P_Data_Ev_EditText.setText(mP_Data_Ev);
                     if (!mP_Data_Tv.isEmpty()) P_Data_Tv_EditText.setText(mP_Data_Tv);
                     if (!mP_Data_Av.isEmpty()) P_Data_Av_EditText.setText(mP_Data_Av);
                     if (!mP_Data_Fv.isEmpty()) P_Data_Fv_EditText.setText(mP_Data_Fv);
+                    if (!mP_Data_Z0.isEmpty()) P_Data_Z0_EditText.setText(mP_Data_Z0);
+                    if (!mP_Data_Z1.isEmpty()) P_Data_Z1_EditText.setText(mP_Data_Z1);
+                    if (!mP_Data_Z2.isEmpty()) P_Data_Z2_EditText.setText(mP_Data_Z2);
+                    if (!mP_Data_Z3.isEmpty()) P_Data_Z3_EditText.setText(mP_Data_Z3);
+                    if (!mP_Data_Z4.isEmpty()) P_Data_Z4_EditText.setText(mP_Data_Z4);
+                    if (!mP_Data_Z5.isEmpty()) P_Data_Z5_EditText.setText(mP_Data_Z5);
+                    if (!mP_Data_Z6.isEmpty()) P_Data_Z6_EditText.setText(mP_Data_Z6);
+                    if (!mP_Data_Z7.isEmpty()) P_Data_Z7_EditText.setText(mP_Data_Z7);
+                    if (!mP_Data_Z8.isEmpty()) P_Data_Z8_EditText.setText(mP_Data_Z8);
+                    if (!mP_Data_Z9.isEmpty()) P_Data_Z9_EditText.setText(mP_Data_Z9);
+                    if (!mP_Data_ZA.isEmpty()) P_Data_ZA_EditText.setText(mP_Data_ZA);
                     if (!mDesc     .isEmpty()) DescEditText      .setText(mDesc     );
 
                     P_Data_Ev_EditText.requestFocus();
@@ -100,9 +148,33 @@ public class FragmentPlacemarkDialog extends DialogFragment {
                             mP_Data_Tv = P_Data_Tv_EditText.getText().toString().trim();
                             mP_Data_Av = P_Data_Av_EditText.getText().toString().trim();
                             mP_Data_Fv = P_Data_Fv_EditText.getText().toString().trim();
+                            mP_Data_Sv = P_Data_Sv_EditText.getText().toString().trim();
+                            mP_Data_Z0 = P_Data_Z0_EditText.getText().toString().trim();
+                            mP_Data_Z1 = P_Data_Z1_EditText.getText().toString().trim();
+                            mP_Data_Z2 = P_Data_Z2_EditText.getText().toString().trim();
+                            mP_Data_Z3 = P_Data_Z3_EditText.getText().toString().trim();
+                            mP_Data_Z4 = P_Data_Z4_EditText.getText().toString().trim();
+                            mP_Data_Z5 = P_Data_Z5_EditText.getText().toString().trim();
+                            mP_Data_Z6 = P_Data_Z6_EditText.getText().toString().trim();
+                            mP_Data_Z7 = P_Data_Z7_EditText.getText().toString().trim();
+                            mP_Data_Z8 = P_Data_Z8_EditText.getText().toString().trim();
+                            mP_Data_Z9 = P_Data_Z9_EditText.getText().toString().trim();
+                            mP_Data_ZA = P_Data_ZA_EditText.getText().toString().trim();
                             mDesc      = DescEditText      .getText().toString().trim();
                             String PlacemarkDescription =
                                     mFilm_Data + "\n" +
+                                    mP_Data_Z0 + "," +
+                                    mP_Data_Z1 + "," +
+                                    mP_Data_Z2 + "," +
+                                    mP_Data_Z3 + "," +
+                                    mP_Data_Z4 + "," +
+                                    mP_Data_Z5 + "," +
+                                    mP_Data_Z6 + "," +
+                                    mP_Data_Z7 + "," +
+                                    mP_Data_Z8 + "," +
+                                    mP_Data_Z9 + "," +
+                                    mP_Data_ZA + "\n" +
+                                    mP_Data_Sv + "/" +
                                     mP_Data_Ev + "/" +
                                     mP_Data_Tv + "/" +
                                     mP_Data_Av + "/" +

@@ -307,7 +307,7 @@ class Exporter extends Thread {
             }
 
             if (ExportPMK) {
-                PMKbw.write("#Timestamp,Film,EV/TV/AV/FV,Description" + newLine);
+                PMKbw.write("#Timestamp,Film,0,I,II,III,IV,V,VI,VII,VIII,IX,X,XI,ASA,EV,TV,AV,FV,Description" + newLine);
             }
 
             String formattedLatitude = "";
