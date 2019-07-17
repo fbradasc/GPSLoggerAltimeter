@@ -26,15 +26,19 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 
-public class FragmentPlacemarkDialog extends DialogFragment {
+public class FragmentPlacemarkDialog extends DialogFragment implements View.OnClickListener {
 
     EditText DescEditText;
     EditText Film_Data_EditText;
@@ -43,17 +47,18 @@ public class FragmentPlacemarkDialog extends DialogFragment {
     EditText P_Data_Fv_EditText;
     EditText P_Data_Tv_EditText;
     EditText P_Data_Av_EditText;
-    EditText P_Data_Z0_EditText;
-    EditText P_Data_Z1_EditText;
-    EditText P_Data_Z2_EditText;
-    EditText P_Data_Z3_EditText;
-    EditText P_Data_Z4_EditText;
-    EditText P_Data_Z5_EditText;
-    EditText P_Data_Z6_EditText;
-    EditText P_Data_Z7_EditText;
-    EditText P_Data_Z8_EditText;
-    EditText P_Data_Z9_EditText;
-    EditText P_Data_ZA_EditText;
+    RadioGroup  RG_ZoneSystem;
+    RadioButton RB_ZS_0;
+    RadioButton RB_ZS_1;
+    RadioButton RB_ZS_2;
+    RadioButton RB_ZS_3;
+    RadioButton RB_ZS_4;
+    RadioButton RB_ZS_5;
+    RadioButton RB_ZS_6;
+    RadioButton RB_ZS_7;
+    RadioButton RB_ZS_8;
+    RadioButton RB_ZS_9;
+    RadioButton RB_ZS_10;
 
     static String mDesc      = "";
     static String mFilm_Data = "";
@@ -62,17 +67,19 @@ public class FragmentPlacemarkDialog extends DialogFragment {
     static String mP_Data_Fv = "";
     static String mP_Data_Tv = "";
     static String mP_Data_Av = "";
-    static String mP_Data_Z0 = "";
-    static String mP_Data_Z1 = "";
-    static String mP_Data_Z2 = "";
-    static String mP_Data_Z3 = "";
-    static String mP_Data_Z4 = "";
-    static String mP_Data_Z5 = "";
-    static String mP_Data_Z6 = "";
-    static String mP_Data_Z7 = "";
-    static String mP_Data_Z8 = "";
-    static String mP_Data_Z9 = "";
-    static String mP_Data_ZA = "";
+    static String mP_Data_ZS = "";
+
+    int lastChecked = -1;
+
+    public void onClick(View v) {
+        if (((RadioButton) v).isChecked()) {
+            if (v.getId() == lastChecked) {
+                RG_ZoneSystem.clearCheck();
+            }
+        }
+
+        lastChecked = RG_ZoneSystem.getCheckedRadioButtonId();
+    }
 
     //@SuppressLint("InflateParams")
     @Override
@@ -85,24 +92,37 @@ public class FragmentPlacemarkDialog extends DialogFragment {
         LayoutInflater inflater = getActivity().getLayoutInflater();
         final View view = (View) inflater.inflate(R.layout.fragment_placemark_dialog, null);
 
-        DescEditText       = (EditText) view.findViewById(R.id.placemark_description);
-        Film_Data_EditText = (EditText) view.findViewById(R.id.film_data);
-        P_Data_Sv_EditText = (EditText) view.findViewById(R.id.pdata_speed);
-        P_Data_Ev_EditText = (EditText) view.findViewById(R.id.pdata_ev);
-        P_Data_Fv_EditText = (EditText) view.findViewById(R.id.pdata_fv);
-        P_Data_Tv_EditText = (EditText) view.findViewById(R.id.pdata_tv);
-        P_Data_Av_EditText = (EditText) view.findViewById(R.id.pdata_av);
-        P_Data_Z0_EditText = (EditText) view.findViewById(R.id.pdata_zs0);
-        P_Data_Z1_EditText = (EditText) view.findViewById(R.id.pdata_zs1);
-        P_Data_Z2_EditText = (EditText) view.findViewById(R.id.pdata_zs2);
-        P_Data_Z3_EditText = (EditText) view.findViewById(R.id.pdata_zs3);
-        P_Data_Z4_EditText = (EditText) view.findViewById(R.id.pdata_zs4);
-        P_Data_Z5_EditText = (EditText) view.findViewById(R.id.pdata_zs5);
-        P_Data_Z6_EditText = (EditText) view.findViewById(R.id.pdata_zs6);
-        P_Data_Z7_EditText = (EditText) view.findViewById(R.id.pdata_zs7);
-        P_Data_Z8_EditText = (EditText) view.findViewById(R.id.pdata_zs8);
-        P_Data_Z9_EditText = (EditText) view.findViewById(R.id.pdata_zs9);
-        P_Data_ZA_EditText = (EditText) view.findViewById(R.id.pdata_zs10);
+        DescEditText       = (EditText   ) view.findViewById(R.id.placemark_description);
+        Film_Data_EditText = (EditText   ) view.findViewById(R.id.film_data);
+        P_Data_Sv_EditText = (EditText   ) view.findViewById(R.id.pdata_speed);
+        P_Data_Ev_EditText = (EditText   ) view.findViewById(R.id.pdata_ev);
+        P_Data_Fv_EditText = (EditText   ) view.findViewById(R.id.pdata_fv);
+        P_Data_Tv_EditText = (EditText   ) view.findViewById(R.id.pdata_tv);
+        P_Data_Av_EditText = (EditText   ) view.findViewById(R.id.pdata_av);
+        RG_ZoneSystem      = (RadioGroup ) view.findViewById(R.id.rg_zs);
+        RB_ZS_0            = (RadioButton) view.findViewById(R.id.rb_zs_0);
+        RB_ZS_1            = (RadioButton) view.findViewById(R.id.rb_zs_1);
+        RB_ZS_2            = (RadioButton) view.findViewById(R.id.rb_zs_2);
+        RB_ZS_3            = (RadioButton) view.findViewById(R.id.rb_zs_3);
+        RB_ZS_4            = (RadioButton) view.findViewById(R.id.rb_zs_4);
+        RB_ZS_5            = (RadioButton) view.findViewById(R.id.rb_zs_5);
+        RB_ZS_6            = (RadioButton) view.findViewById(R.id.rb_zs_6);
+        RB_ZS_7            = (RadioButton) view.findViewById(R.id.rb_zs_7);
+        RB_ZS_8            = (RadioButton) view.findViewById(R.id.rb_zs_8);
+        RB_ZS_9            = (RadioButton) view.findViewById(R.id.rb_zs_9);
+        RB_ZS_10           = (RadioButton) view.findViewById(R.id.rb_zs_10);
+
+        RB_ZS_0  .setOnClickListener(this);
+        RB_ZS_1  .setOnClickListener(this);
+        RB_ZS_2  .setOnClickListener(this);
+        RB_ZS_3  .setOnClickListener(this);
+        RB_ZS_4  .setOnClickListener(this);
+        RB_ZS_5  .setOnClickListener(this);
+        RB_ZS_6  .setOnClickListener(this);
+        RB_ZS_7  .setOnClickListener(this);
+        RB_ZS_8  .setOnClickListener(this);
+        RB_ZS_9  .setOnClickListener(this);
+        RB_ZS_10 .setOnClickListener(this);
 
         P_Data_Ev_EditText.postDelayed(new Runnable()
         {
@@ -115,18 +135,31 @@ public class FragmentPlacemarkDialog extends DialogFragment {
                     if (!mP_Data_Tv.isEmpty()) P_Data_Tv_EditText.setText(mP_Data_Tv);
                     if (!mP_Data_Av.isEmpty()) P_Data_Av_EditText.setText(mP_Data_Av);
                     if (!mP_Data_Fv.isEmpty()) P_Data_Fv_EditText.setText(mP_Data_Fv);
-                    if (!mP_Data_Z0.isEmpty()) P_Data_Z0_EditText.setText(mP_Data_Z0);
-                    if (!mP_Data_Z1.isEmpty()) P_Data_Z1_EditText.setText(mP_Data_Z1);
-                    if (!mP_Data_Z2.isEmpty()) P_Data_Z2_EditText.setText(mP_Data_Z2);
-                    if (!mP_Data_Z3.isEmpty()) P_Data_Z3_EditText.setText(mP_Data_Z3);
-                    if (!mP_Data_Z4.isEmpty()) P_Data_Z4_EditText.setText(mP_Data_Z4);
-                    if (!mP_Data_Z5.isEmpty()) P_Data_Z5_EditText.setText(mP_Data_Z5);
-                    if (!mP_Data_Z6.isEmpty()) P_Data_Z6_EditText.setText(mP_Data_Z6);
-                    if (!mP_Data_Z7.isEmpty()) P_Data_Z7_EditText.setText(mP_Data_Z7);
-                    if (!mP_Data_Z8.isEmpty()) P_Data_Z8_EditText.setText(mP_Data_Z8);
-                    if (!mP_Data_Z9.isEmpty()) P_Data_Z9_EditText.setText(mP_Data_Z9);
-                    if (!mP_Data_ZA.isEmpty()) P_Data_ZA_EditText.setText(mP_Data_ZA);
                     if (!mDesc     .isEmpty()) DescEditText      .setText(mDesc     );
+
+                    RG_ZoneSystem.clearCheck();
+
+                    if (mP_Data_ZS == "0"   ) { RB_ZS_0 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "I"   ) { RB_ZS_1 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "II"  ) { RB_ZS_2 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "III" ) { RB_ZS_3 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "IV"  ) { RB_ZS_4 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "V"   ) { RB_ZS_5 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "VI"  ) { RB_ZS_6 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "VII" ) { RB_ZS_7 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "VIII") { RB_ZS_8 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "IX"  ) { RB_ZS_9 .setChecked(true);}
+                    else
+                    if (mP_Data_ZS == "X"   ) { RB_ZS_10.setChecked(true);}
 
                     P_Data_Ev_EditText.requestFocus();
                     InputMethodManager mgr = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -149,37 +182,34 @@ public class FragmentPlacemarkDialog extends DialogFragment {
                             mP_Data_Av = P_Data_Av_EditText.getText().toString().trim();
                             mP_Data_Fv = P_Data_Fv_EditText.getText().toString().trim();
                             mP_Data_Sv = P_Data_Sv_EditText.getText().toString().trim();
-                            mP_Data_Z0 = P_Data_Z0_EditText.getText().toString().trim();
-                            mP_Data_Z1 = P_Data_Z1_EditText.getText().toString().trim();
-                            mP_Data_Z2 = P_Data_Z2_EditText.getText().toString().trim();
-                            mP_Data_Z3 = P_Data_Z3_EditText.getText().toString().trim();
-                            mP_Data_Z4 = P_Data_Z4_EditText.getText().toString().trim();
-                            mP_Data_Z5 = P_Data_Z5_EditText.getText().toString().trim();
-                            mP_Data_Z6 = P_Data_Z6_EditText.getText().toString().trim();
-                            mP_Data_Z7 = P_Data_Z7_EditText.getText().toString().trim();
-                            mP_Data_Z8 = P_Data_Z8_EditText.getText().toString().trim();
-                            mP_Data_Z9 = P_Data_Z9_EditText.getText().toString().trim();
-                            mP_Data_ZA = P_Data_ZA_EditText.getText().toString().trim();
                             mDesc      = DescEditText      .getText().toString().trim();
+                            mP_Data_ZS = "";
+
+                            switch (RG_ZoneSystem.getCheckedRadioButtonId())
+                            {
+                                case R.id.rb_zs_0 : mP_Data_ZS = "0"   ; break;
+                                case R.id.rb_zs_1 : mP_Data_ZS = "I"   ; break;
+                                case R.id.rb_zs_2 : mP_Data_ZS = "II"  ; break;
+                                case R.id.rb_zs_3 : mP_Data_ZS = "III" ; break;
+                                case R.id.rb_zs_4 : mP_Data_ZS = "IV"  ; break;
+                                case R.id.rb_zs_5 : mP_Data_ZS = "V"   ; break;
+                                case R.id.rb_zs_6 : mP_Data_ZS = "VI"  ; break;
+                                case R.id.rb_zs_7 : mP_Data_ZS = "VII" ; break;
+                                case R.id.rb_zs_8 : mP_Data_ZS = "VIII"; break;
+                                case R.id.rb_zs_9 : mP_Data_ZS = "IX"  ; break;
+                                case R.id.rb_zs_10: mP_Data_ZS = "X"   ; break;
+                                default           : mP_Data_ZS = ""    ; break;
+                            }
+
                             String PlacemarkDescription =
-                                    mFilm_Data + "\n" +
-                                    mP_Data_Z0 + "," +
-                                    mP_Data_Z1 + "," +
-                                    mP_Data_Z2 + "," +
-                                    mP_Data_Z3 + "," +
-                                    mP_Data_Z4 + "," +
-                                    mP_Data_Z5 + "," +
-                                    mP_Data_Z6 + "," +
-                                    mP_Data_Z7 + "," +
-                                    mP_Data_Z8 + "," +
-                                    mP_Data_Z9 + "," +
-                                    mP_Data_ZA + "\n" +
-                                    mP_Data_Sv + "/" +
-                                    mP_Data_Ev + "/" +
-                                    mP_Data_Tv + "/" +
-                                    mP_Data_Av + "/" +
+                                    mP_Data_Sv + ","  +
+                                    mP_Data_Ev + ","  +
+                                    mP_Data_ZS + "\n" +
+                                    mP_Data_Tv + ","  +
+                                    mP_Data_Av + ","  +
                                     mP_Data_Fv + "\n" +
-                                    mDesc;
+                                    mDesc      + "\n" +
+                                    mFilm_Data;
                             final GPSApplication GlobalVariables = (GPSApplication) getActivity().getApplicationContext();
                             GlobalVariables.setPlacemarkDescription(PlacemarkDescription.trim());
                             EventBus.getDefault().post(EventBusMSG.ADD_PLACEMARK);

@@ -123,6 +123,7 @@ class Exporter extends Thread {
         }
 
         SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss");  // date and time formatter for GPX timestamp
+        SimpleDateFormat dfdtPMK = new SimpleDateFormat("yyyy/MM/dd,HH:mm:ss");  // date and time formatter for PMK timestamp
         SimpleDateFormat dfdtGPX = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");  // date and time formatter for GPX timestamp
         dfdtGPX.setTimeZone(TimeZone.getTimeZone("GMT"));
         SimpleDateFormat dfdtTXT = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss");  // date and time formatter for TXT timestamp
@@ -307,7 +308,7 @@ class Exporter extends Thread {
             }
 
             if (ExportPMK) {
-                PMKbw.write("#Timestamp,Film,0,I,II,III,IV,V,VI,VII,VIII,IX,X,XI,ASA,EV,TV,AV,FV,Description" + newLine);
+                PMKbw.write("#Date,Time,Film,ASA,EV,Zone,TV,AV,FV,Description" + newLine);
             }
 
             String formattedLatitude = "";
@@ -432,7 +433,7 @@ class Exporter extends Thread {
                             // Placemarks alone
                             if (ExportPMK) {
                                 //timestamp,human readable time,film,EV/TV/AV/FV,description
-                                PMKbw.write(timestamp.format(loc.getLocation().getTime()) + ",");
+                                PMKbw.write(dfdtPMK.format(loc.getLocation().getTime()) + ",");
                                 PMKbw.write(loc.getDescription().replace("\n",","));
                                 PMKbw.write(newLine);
                             }

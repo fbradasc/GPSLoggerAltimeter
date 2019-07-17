@@ -63,371 +63,145 @@
 
             <TableRow
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="42dp"
                 android:descendantFocusability="beforeDescendants">
 
                 <requestFocus />
 
-                <TextView
-                    android:id="@+id/textViewZS0"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
+                <RadioGroup
+                    android:id="@+id/rg_zs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginLeft="4dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs0" />
-
-                <TextView
-                    android:id="@+id/textViewZS1"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs1" />
-
-                <TextView
-                    android:id="@+id/textViewZS2"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs2" />
-
-                <TextView
-                    android:id="@+id/textViewZS3"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs3" />
-
-                <TextView
-                    android:id="@+id/textViewZS4"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs4" />
-
-                <TextView
-                    android:id="@+id/textViewZS5"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs5" />
-
-                <TextView
-                    android:id="@+id/textViewZS6"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs6" />
-
-                <TextView
-                    android:id="@+id/textViewZS7"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs7" />
-
-                <TextView
-                    android:id="@+id/textViewZS8"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs8" />
-
-                <TextView
-                    android:id="@+id/textViewZS9"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
-                    android:layout_weight="1"
-                    android:text="@string/dphoto_zs9" />
-
-                <TextView
-                    android:id="@+id/textViewZS10"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginLeft="0dp"
                     android:layout_marginRight="4dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_horizontal"
                     android:layout_weight="1"
-                    android:text="@string/dphoto_zs10" />
+                    android:orientation="horizontal">
 
-            </TableRow>
+                    <RadioButton
+                        android:id="@+id/rb_zs_0"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs0" />
 
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:descendantFocusability="beforeDescendants">
+                    <RadioButton
+                        android:id="@+id/rb_zs_1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs1" />
 
-                <requestFocus />
+                    <RadioButton
+                        android:id="@+id/rb_zs_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs2" />
 
-                <EditText
-                    android:id="@+id/pdata_zs0"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="4dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs1"
-                    android:nextFocusForward="@id/pdata_zs1"
-                    android:nextFocusDown="@id/pdata_zs1">
+                    <RadioButton
+                        android:id="@+id/rb_zs_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs3" />
 
-                    <requestFocus />
-                </EditText>
+                    <RadioButton
+                        android:id="@+id/rb_zs_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:checked="false"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs4" />
 
-                <EditText
-                    android:id="@+id/pdata_zs1"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs2"
-                    android:nextFocusForward="@id/pdata_zs2"
-                    android:nextFocusDown="@id/pdata_zs2">
+                    <RadioButton
+                        android:id="@+id/rb_zs_5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:checked="false"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs5" />
 
-                    <requestFocus />
-                </EditText>
+                    <RadioButton
+                        android:id="@+id/rb_zs_6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs6" />
 
-                <EditText
-                    android:id="@+id/pdata_zs2"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs3"
-                    android:nextFocusForward="@id/pdata_zs3"
-                    android:nextFocusDown="@id/pdata_zs3">
+                    <RadioButton
+                        android:id="@+id/rb_zs_7"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs7" />
 
-                    <requestFocus />
-                </EditText>
+                    <RadioButton
+                        android:id="@+id/rb_zs_8"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs8" />
 
-                <EditText
-                    android:id="@+id/pdata_zs3"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs4"
-                    android:nextFocusForward="@id/pdata_zs4"
-                    android:nextFocusDown="@id/pdata_zs4">
+                    <RadioButton
+                        android:id="@+id/rb_zs_9"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs9" />
 
-                    <requestFocus />
-                </EditText>
+                    <RadioButton
+                        android:id="@+id/rb_zs_10"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:button="@null"
+                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:gravity="center_horizontal"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="@string/dphoto_zs10" />
+                </RadioGroup>
 
-                <EditText
-                    android:id="@+id/pdata_zs4"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs5"
-                    android:nextFocusForward="@id/pdata_zs5"
-                    android:nextFocusDown="@id/pdata_zs5">
 
-                    <requestFocus />
-                </EditText>
-
-                <EditText
-                    android:id="@+id/pdata_zs5"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs6"
-                    android:nextFocusForward="@id/pdata_zs6"
-                    android:nextFocusDown="@id/pdata_zs6">
-
-                    <requestFocus />
-                </EditText>
-
-                <EditText
-                    android:id="@+id/pdata_zs6"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs7"
-                    android:nextFocusForward="@id/pdata_zs7"
-                    android:nextFocusDown="@id/pdata_zs7">
-
-                    <requestFocus />
-                </EditText>
-
-                <EditText
-                    android:id="@+id/pdata_zs7"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs8"
-                    android:nextFocusForward="@id/pdata_zs8"
-                    android:nextFocusDown="@id/pdata_zs8">
-
-                    <requestFocus />
-                </EditText>
-
-                <EditText
-                    android:id="@+id/pdata_zs8"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs9"
-                    android:nextFocusForward="@id/pdata_zs9"
-                    android:nextFocusDown="@id/pdata_zs9">
-
-                    <requestFocus />
-                </EditText>
-
-                <EditText
-                    android:id="@+id/pdata_zs9"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_zs10"
-                    android:nextFocusForward="@id/pdata_zs10"
-                    android:nextFocusDown="@id/pdata_zs10">
-
-                    <requestFocus />
-                </EditText>
-
-                <EditText
-                    android:id="@+id/pdata_zs10"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginRight="4dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_weight="1"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:selectAllOnFocus="true"
-                    android:inputType="number"
-                    android:nextFocusLeft="@id/pdata_speed"
-                    android:nextFocusForward="@id/pdata_speed"
-                    android:nextFocusDown="@id/pdata_speed">
-
-                    <requestFocus />
-                </EditText>
             </TableRow>
 
             <TableRow
