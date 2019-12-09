@@ -202,14 +202,14 @@ public class FragmentPlacemarkDialog extends DialogFragment implements View.OnCl
                             }
 
                             String PlacemarkDescription =
+                                    mFilm_Data + "\n" +
                                     mP_Data_Sv + ","  +
                                     mP_Data_Ev + ","  +
                                     mP_Data_ZS + "\n" +
                                     mP_Data_Tv + ","  +
                                     mP_Data_Av + ","  +
                                     mP_Data_Fv + "\n" +
-                                    mDesc      + "\n" +
-                                    mFilm_Data;
+                                    mDesc;
                             final GPSApplication GlobalVariables = (GPSApplication) getActivity().getApplicationContext();
                             GlobalVariables.setPlacemarkDescription(PlacemarkDescription.trim());
                             EventBus.getDefault().post(EventBusMSG.ADD_PLACEMARK);
