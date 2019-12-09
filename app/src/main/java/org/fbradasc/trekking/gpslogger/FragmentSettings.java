@@ -151,7 +151,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
 
                             // execute this when the downloader must be fired
                             final DownloadTask downloadTask = new DownloadTask(getActivity());
-                            downloadTask.execute("http://earth-info.nga.mil/GandG/wgs84/gravitymod/egm96/binary/WW15MGH.DAC");
+                            downloadTask.execute("https://earth-info.nga.mil/GandG/wgs84/gravitymod/egm96/binary/WW15MGH.DAC");
 
                             mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                                 @Override
