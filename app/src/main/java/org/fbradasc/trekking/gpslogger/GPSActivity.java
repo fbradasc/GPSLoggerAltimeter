@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
@@ -40,6 +41,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.view.ActionMode;
 import android.support.v7.view.ContextThemeWrapper;
@@ -64,6 +66,8 @@ public class GPSActivity extends AppCompatActivity {
 
     private static final int REQUEST_ID_MULTIPLE_PERMISSIONS = 1;
 
+    private final GPSApplication GPSApp = GPSApplication.getInstance();
+
     private Toolbar toolbar;
     private TabLayout tabLayout;
     private ViewPager viewPager;
@@ -74,6 +78,7 @@ public class GPSActivity extends AppCompatActivity {
     final Context context = this;
 
     private boolean prefKeepScreenOn = true;
+    private boolean show_toast_grant_storage_permission = false;
 
     private BottomSheetBehavior mBottomSheetBehavior;
 
@@ -82,18 +87,25 @@ public class GPSActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
+        if (PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean("prefLightColorTheme", false)) {
+            getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        } else {
+            getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
+
         setContentView(R.layout.activity_gps);
-        toolbar = (Toolbar) findViewById(R.id.id_toolbar);
+        toolbar = findViewById(R.id.id_toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        viewPager = (ViewPager) findViewById(R.id.id_viewpager);
+        viewPager = findViewById(R.id.id_viewpager);
         viewPager.setOffscreenPageLimit(3);
 
         setupViewPager(viewPager);
 
-        tabLayout = (TabLayout) findViewById(R.id.id_tablayout);
+        tabLayout = findViewById(R.id.id_tablayout);
         tabLayout.setTabMode(TabLayout.MODE_FIXED);
         tabLayout.setupWithViewPager(viewPager);
 
@@ -103,7 +115,7 @@ public class GPSActivity extends AppCompatActivity {
                     public void onTabSelected(TabLayout.Tab tab) {
                         super.onTabSelected(tab);
                         activeTab = tab.getPosition();
-                        GPSApplication.getInstance().setGPSActivity_activeTab(activeTab);
+                        GPSApp.setGPSActivity_activeTab(activeTab);
                         updateBottomSheetPosition();
                         ActivateActionModeIfNeeded();
                     }
@@ -114,36 +126,99 @@ public class GPSActivity extends AppCompatActivity {
         mBottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
         mBottomSheetBehavior.setHideable (false);
 
-        activeTab = tabLayout.getSelectedTabPosition();
-        GPSApplication.getInstance().setGPSActivity_activeTab(activeTab);
-
         ToastClickAgain = Toast.makeText(this, getString(R.string.toast_track_finished_click_again), Toast.LENGTH_SHORT);
     }
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        //Log.w("myApp", "[#] GPSActivity.java - onStart()");
+        activeTab = tabLayout.getSelectedTabPosition();
+        GPSApp.setGPSActivity_activeTab(activeTab);
+    }
+
 
     @Override
     public void onResume() {
         super.onResume();
+
+        // Workaround for Nokia Devices, Android 9
+        // https://github.com/BasicAirData/GPSLogger/issues/77
+        if (EventBus.getDefault().isRegistered(this)) {
+            //Log.w("myApp", "[#] GPSActivity.java - EventBus: GPSActivity already registered");
+            EventBus.getDefault().unregister(this);
+        }
+
         EventBus.getDefault().register(this);
         Log.w("myApp", "[#] GPSActivity.java - onResume()");
         LoadPreferences();
         EventBus.getDefault().post(EventBusMSG.APP_RESUME);
-        if (menutrackfinished != null) menutrackfinished.setVisible(!GPSApplication.getInstance().getCurrentTrack().getName().equals(""));
+        if (menutrackfinished != null) menutrackfinished.setVisible(!GPSApp.getCurrentTrack().getName().equals(""));
 
         // Check for Location runtime Permissions (for Android 23+)
-        if (!GPSApplication.getInstance().isLocationPermissionChecked()) {
+        if (!GPSApp.isLocationPermissionChecked()) {
             CheckLocationPermission();
-            GPSApplication.getInstance().setLocationPermissionChecked(true);
+            GPSApp.setLocationPermissionChecked(true);
         }
 
         ActivateActionModeIfNeeded();
+
+        if (GPSApp.FlagExists(GPSApp.FLAG_RECORDING) && !GPSApp.getRecording()) {
+            // The app is crashed in background
+            Log.w("myApp", "[#] GPSActivity.java - THE APP HAS BEEN KILLED IN BACKGROUND DURING A RECORDING !!!");
+            GPSApp.FlagRemove(GPSApp.FLAG_RECORDING);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.StyledDialog));
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                builder.setMessage(getResources().getString(R.string.dlg_app_killed) + "\n\n" + getResources().getString(R.string.dlg_app_killed_description));
+                builder.setNeutralButton(R.string.open_android_app_settings, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        Intent intent = new Intent();
+                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        try {
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            //Log.w("myApp", "[#] GPSActivity.java - Unable to open the settings screen");
+                        }
+                        dialog.dismiss();
+                    }
+                });
+            }
+            else builder.setMessage(getResources().getString(R.string.dlg_app_killed));
+            builder.setIcon(android.R.drawable.ic_menu_info_details);
+            builder.setPositiveButton(R.string.about_ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.dismiss();
+                }
+            });
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+
+        if (GPSApp.isJustStarted() && (GPSApp.getCurrentTrack().getNumberOfLocations() +
+                                       GPSApp.getCurrentTrack().getNumberOfPlacemarks() +
+                                       GPSApp.getCurrentTrack().getNumberOfSteps()> 0)) {
+            Toast.makeText(this.context, getString(R.string.toast_active_track_not_empty), Toast.LENGTH_LONG).show();
+            GPSApp.setJustStarted(false);
+        } else GPSApp.setJustStarted(false);
+
+        if (show_toast_grant_storage_permission) {
+            Toast.makeText(this.context, getString(R.string.please_grant_storage_permission), Toast.LENGTH_LONG).show();
+            show_toast_grant_storage_permission = false;
+        }
     }
 
     @Override
     public void onPause() {
-        super.onPause();
         EventBus.getDefault().post(EventBusMSG.APP_PAUSE);
         Log.w("myApp", "[#] GPSActivity.java - onPause()");
         EventBus.getDefault().unregister(this);
+        super.onPause();
     }
 
     @Override
@@ -166,7 +241,7 @@ public class GPSActivity extends AppCompatActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         menutrackfinished = menu.findItem(R.id.action_track_finished);
-        menutrackfinished.setVisible(!GPSApplication.getInstance().getCurrentTrack().getName().equals(""));
+        menutrackfinished.setVisible(!GPSApp.getCurrentTrack().getName().equals(""));
         return true;
     }
 
@@ -175,22 +250,22 @@ public class GPSActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
-            GPSApplication.getInstance().setHandlerTimer(60000);
+            GPSApp.setHandlerTimer(60000);
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
         }
         if (id == R.id.action_track_finished) {
-            if (GPSApplication.getInstance().getNewTrackFlag()) {
+            if (GPSApp.getNewTrackFlag()) {
                 // This is the second click
-                GPSApplication.getInstance().setNewTrackFlag(false);
-                GPSApplication.getInstance().setRecording(false);
+                GPSApp.setNewTrackFlag(false);
+                GPSApp.setRecording(false);
                 EventBus.getDefault().post(EventBusMSG.NEW_TRACK);
                 ToastClickAgain.cancel();
                 Toast.makeText(this, getString(R.string.toast_track_saved_into_tracklist), Toast.LENGTH_SHORT).show();
             } else {
                 // This is the first click
-                GPSApplication.getInstance().setNewTrackFlag(true); // Start the timer
+                GPSApp.setNewTrackFlag(true); // Start the timer
                 ToastClickAgain.show();
             }
             return true;
@@ -264,7 +339,8 @@ public class GPSActivity extends AppCompatActivity {
     @Subscribe
     public void onEvent(EventBusMSGNormal msg) {
         switch (msg.MSGType) {
-            case EventBusMSG.TRACKLIST_SELECTION:
+            case EventBusMSG.TRACKLIST_SELECT:
+            case EventBusMSG.TRACKLIST_DESELECT:
                 ActivateActionModeIfNeeded();
         }
     }
@@ -291,7 +367,7 @@ public class GPSActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         if (menutrackfinished != null)
-                            menutrackfinished.setVisible(!GPSApplication.getInstance().getCurrentTrack().getName().equals(""));
+                            menutrackfinished.setVisible(!GPSApp.getCurrentTrack().getName().equals(""));
                     }
                 });
                 break;
@@ -303,18 +379,13 @@ public class GPSActivity extends AppCompatActivity {
                 }
             });
                 break;
-            case EventBusMSG.STORAGE_PERMISSION_REQUIRED:
-                GPSApplication.getInstance().setJobsPending(0);
+            case EventBusMSG.TOAST_STORAGE_PERMISSION_REQUIRED:
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         Toast.makeText(context, getString(R.string.please_grant_storage_permission), Toast.LENGTH_LONG).show();
                     }
                 });
-                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                Uri uri = Uri.fromParts("package", getPackageName(), null);
-                intent.setData(uri);
-                startActivity(intent);
                 break;
             case EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE:
                 runOnUiThread(new Runnable() {
@@ -342,32 +413,45 @@ public class GPSActivity extends AppCompatActivity {
                 || (GPSApplication.getInstance().getPlacemarkRequest())) {
 
             AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.StyledDialog));
-            builder.setMessage(getResources().getString(R.string.message_exit_confirmation));
+            builder.setMessage(getResources().getString(R.string.message_exit_finalizing));
             builder.setIcon(android.R.drawable.ic_menu_info_details);
             builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
-                    GPSApplication.getInstance().setRecording(false);
-                    GPSApplication.getInstance().setPlacemarkRequest(false);
+                    GPSApp.setRecording(false);
+                    GPSApp.setPlacemarkRequest(false);
                     EventBus.getDefault().post(EventBusMSG.NEW_TRACK);
-                    GPSApplication.getInstance().StopAndUnbindGPSService();
-                    GPSApplication.getInstance().setLocationPermissionChecked(false);
+                    GPSApp.StopAndUnbindGPSService();
+                    GPSApp.setLocationPermissionChecked(false);
 
                     dialog.dismiss();
+                    GPSApp.setJustStarted(true);
                     finish();
+                }
+            });
+            builder.setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.dismiss();
                 }
             });
             builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
+                    GPSApp.setRecording(false);
+                    GPSApp.setPlacemarkRequest(false);
+                    GPSApp.StopAndUnbindGPSService();
+                    GPSApp.setLocationPermissionChecked(false);
+
                     dialog.dismiss();
+                    GPSApp.setJustStarted(true);
+                    finish();
                 }
             });
             AlertDialog dialog = builder.create();
             dialog.show();
         } else {
-            GPSApplication.getInstance().setRecording(false);
-            GPSApplication.getInstance().setPlacemarkRequest(false);
-            GPSApplication.getInstance().StopAndUnbindGPSService();
-            GPSApplication.getInstance().setLocationPermissionChecked(false);
+            GPSApp.setRecording(false);
+            GPSApp.setPlacemarkRequest(false);
+            GPSApp.StopAndUnbindGPSService();
+            GPSApp.setLocationPermissionChecked(false);
 
             finish();
         }
@@ -377,10 +461,10 @@ public class GPSActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if ((GPSApplication.getInstance().getNumberOfSelectedTracks() > 0) && (activeTab == 2)) {
+                if ((GPSApp.getNumberOfSelectedTracks() > 0) && (activeTab == 2)) {
                     if (actionMode == null)
                         actionMode = (startSupportActionMode(new ToolbarActionMode()));
-                    actionMode.setTitle(GPSApplication.getInstance().getNumberOfSelectedTracks() > 1 ? String.valueOf(GPSApplication.getInstance().getNumberOfSelectedTracks()) : "");
+                    actionMode.setTitle(GPSApp.getNumberOfSelectedTracks() > 1 ? String.valueOf(GPSApp.getNumberOfSelectedTracks()) : "");
                 } else if (actionMode != null) {
                     actionMode.finish();
                     actionMode = null;
@@ -398,13 +482,11 @@ public class GPSActivity extends AppCompatActivity {
         } else {
             Log.w("myApp", "[#] GPSActivity.java - Location Permission denied");
             boolean showRationale = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION);
-            if (showRationale || !GPSApplication.getInstance().isLocationPermissionChecked()) {
+            if (showRationale || !GPSApp.isLocationPermissionChecked()) {
                 Log.w("myApp", "[#] GPSActivity.java - Location Permission denied, need new check");
                 List<String> listPermissionsNeeded = new ArrayList<>();
                 listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
                 ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]) , REQUEST_ID_MULTIPLE_PERMISSIONS);
-            } else {
-
             }
             return false;
         }
@@ -423,7 +505,10 @@ public class GPSActivity extends AppCompatActivity {
                     // Check for permissions
                     if (perms.containsKey(Manifest.permission.ACCESS_FINE_LOCATION)) {
                         if (perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                            Log.w("myApp", "[#] GPSActivity.java - ACCESS_FINE_LOCATION = PERMISSION_GRANTED");
+                            Log.w("myApp", "[#] GPSActivity.java - ACCESS_FINE_LOCATION = PERMISSION_GRANTED; setGPSLocationUpdates!");
+                            GPSApp.setGPSLocationUpdates(false);
+                            GPSApp.setGPSLocationUpdates(true);
+                            GPSApp.updateGPSLocationFrequency();
                         } else {
                             Log.w("myApp", "[#] GPSActivity.java - ACCESS_FINE_LOCATION = PERMISSION_DENIED");
                         }
@@ -461,29 +546,17 @@ public class GPSActivity extends AppCompatActivity {
                                 }
                             }
 
-                            if (GPSApplication.getInstance().getJobsPending() > 0) GPSApplication.getInstance().ExecuteJob();
+                            if (GPSApp.getJobsPending() > 0) GPSApp.ExecuteJob();
 
                         } else {
                             Log.w("myApp", "[#] GPSActivity.java - WRITE_EXTERNAL_STORAGE = PERMISSION_DENIED");
-                            if (GPSApplication.getInstance().getJobsPending() > 0) {
+                            if (GPSApp.getJobsPending() > 0) {
                                 // Shows toast "Unable to write the file"
-                                final Context context = this;
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(context, getString(R.string.export_unable_to_write_file), Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                                //EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE, MSG.id));
-                                //Log.w("myApp", "[#] GPSActivity.java - EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE " + MSG.id);
-                                GPSApplication.getInstance().setJobsPending(0);
+                                show_toast_grant_storage_permission = true;
+                                EventBus.getDefault().post(EventBusMSG.TOAST_STORAGE_PERMISSION_REQUIRED);
+                                GPSApp.setJobsPending(0);
                             }
                         }
-                        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-                        SharedPreferences.Editor editor1 = settings.edit();
-                        editor1.putBoolean("prefIsStoragePermissionChecked", true);
-                        editor1.commit();
-                        GPSApplication.getInstance().setStoragePermissionChecked(true);
                     }
                 }
                 break;

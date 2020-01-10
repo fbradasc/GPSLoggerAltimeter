@@ -20,28 +20,11 @@
 
 <resources>
 
+    <!-- Overall Styles -->
     <style name="MyMaterialTheme" parent="MyMaterialTheme.Base">
-
     </style>
 
-    <style name="StyledDialog" parent="Theme.AppCompat.Dialog">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-    </style>
-
-    <style name="MyPreferenceCategory" parent="@style/Preference.Category">
-        <item name="android:textColor">@color/preference_accent</item>
-    </style>
-
-    <style name="MyPreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
-        <item name="android:listSeparatorTextViewStyle">@style/ListSeparatorTextView</item>
-        <item name="preferenceCategoryStyle">@style/MyPreferenceCategory</item>
-        <item name="colorAccent">@color/preference_accent</item>
-        <item name="divider">@color/colorAccent</item>
-    </style>
-
-    <style name="MyMaterialTheme.Base" parent="Theme.AppCompat">
+    <style name="MyMaterialTheme.Base" parent="Theme.AppCompat.DayNight">
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -61,19 +44,10 @@
 
     <style name="ProgressBar" parent="@android:style/Widget.ProgressBar.Horizontal">
         <item name="android:layout_margin">0dp</item>
-        <item name="android:minHeight">3.6dp</item>
-        <item name="android:maxHeight">3.6dp</item>
+        <item name="android:minHeight">5dp</item>
+        <item name="android:maxHeight">5dp</item>
         <item name="android:progressDrawable">@drawable/progress</item>
     </style>
-
-    <style name="ProgressBarCard" parent="@android:style/Widget.ProgressBar.Horizontal">
-        <item name="android:layout_marginBottom">3dp</item>
-        <item name="android:layout_marginTop">3dp</item>
-        <item name="android:minHeight">1.7dp</item>
-        <item name="android:maxHeight">1.7dp</item>
-        <item name="android:progressDrawable">@drawable/progress</item>
-    </style>
-
 
     <style name="TextAppearanceLargeNumbers" parent="@android:style/TextAppearance.Large">
         <item name="android:textColor">@color/textColorPrimary</item>
@@ -90,6 +64,36 @@
         <item name="android:textSize">@dimen/TextAppearanceSmallTextSize</item>
     </style>
 
+
+    <!-- Dialogs -->
+    <style name="StyledDialog" parent="Theme.AppCompat.DayNight.Dialog">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/textColorPrimary</item>
+    </style>
+
+    <style name="MyEditText" parent="Theme.AppCompat.DayNight">
+        <item name="colorAccent">@color/textColorPrimary</item>
+        <item name="colorControlNormal">@color/textColorSecondary</item>
+        <item name="colorControlActivated">@color/textColorSecondary</item>
+    </style>
+
+
+    <!-- SettingsActivity -->
+    <style name="MySettingsTheme" parent="MyMaterialTheme">
+        <item name="colorAccent">@color/textColorPrimary</item>
+    </style>
+
+    <style name="MyPreferenceCategory" parent="@style/Preference.Category">
+        <item name="android:textColor">@color/preference_accent</item>
+    </style>
+
+    <style name="MyPreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay.v14.Material">
+        <item name="android:listSeparatorTextViewStyle">@style/ListSeparatorTextView</item>
+        <item name="preferenceCategoryStyle">@style/MyPreferenceCategory</item>
+        <item name="divider">@color/colorAccent</item>
+    </style>
+
     <style name="ListSeparatorTextView">
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
@@ -98,8 +102,17 @@
         <item name="android:layout_marginBottom">16dp</item>
     </style>
 
+
+    <!-- About Screen -->
     <style name="MyMaterialThemeAbout" parent="MyMaterialTheme.Base">
-        <item name="android:windowBackground">@color/colorTrackBackground</item>
+        <item name="android:windowBackground">@color/colorBackground</item>
+        <item name="colorAccent">@color/textColorPrimary</item>
+        <item name="android:windowAnimationStyle">@style/MyAboutAnimation.Window</item>
+    </style>
+
+    <style name="MyAboutAnimation.Window" parent="@android:style/Animation.Activity">
+        <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/slide_out_right</item>
     </style>
 
 </resources>

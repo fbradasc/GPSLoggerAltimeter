@@ -83,7 +83,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:button="@null"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs0" />
@@ -94,7 +94,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:button="@null"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs1" />
@@ -105,7 +105,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:button="@null"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs2" />
@@ -116,7 +116,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:button="@null"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs3" />
@@ -128,7 +128,7 @@
                         android:layout_weight="1"
                         android:button="@null"
                         android:checked="false"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs4" />
@@ -140,7 +140,7 @@
                         android:layout_weight="1"
                         android:button="@null"
                         android:checked="false"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs5" />
@@ -151,7 +151,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:button="@null"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs6" />
@@ -162,7 +162,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:button="@null"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs7" />
@@ -173,7 +173,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:button="@null"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs8" />
@@ -184,7 +184,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:button="@null"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs9" />
@@ -195,7 +195,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:button="@null"
-                        android:drawableBottom="@*android:drawable/btn_radio_material_anim"
+                        android:drawableBottom="@drawable/my_btn_radio_anim"
                         android:gravity="center_horizontal"
                         android:onClick="onRadioButtonClicked"
                         android:text="@string/dphoto_zs10" />

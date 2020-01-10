@@ -20,11 +20,14 @@
 package org.fbradasc.trekking.gpslogger;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
 
@@ -45,6 +48,8 @@ public class FragmentGPSFix extends Fragment {
 
     private PhysicalDataFormatter phdformatter = new PhysicalDataFormatter();
 
+    private FrameLayout FLGPSFix;
+
     private TextView TVLatitude;
     private TextView TVLongitude;
     private TextView TVLatitudeUM;
@@ -58,12 +63,18 @@ public class FragmentGPSFix extends Fragment {
     private TextView TVAccuracyUM;
     private TextView TVGPSFixStatus;
     private TextView TVDirectionUM;
+    private TextView TVTime;
+    private TextView TVSatellites;
 
     private TableLayout TLCoordinates;
     private TableLayout TLAltitude;
     private TableLayout TLSpeed;
     private TableLayout TLBearing;
     private TableLayout TLAccuracy;
+    private TableLayout TLTime;
+    private TableLayout TLSatellites;
+
+    private LinearLayout LLTimeSatellites;
 
     private PhysicalData phdLatitude;
     private PhysicalData phdLongitude;
@@ -71,6 +82,7 @@ public class FragmentGPSFix extends Fragment {
     private PhysicalData phdSpeed;
     private PhysicalData phdBearing;
     private PhysicalData phdAccuracy;
+    private PhysicalData phdTime;
 
     final GPSApplication gpsApplication = GPSApplication.getInstance();
 
@@ -96,25 +108,37 @@ public class FragmentGPSFix extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_gpsfix, container, false);
 
-        TVLatitude = (TextView) view.findViewById(R.id.id_textView_Latitude);
-        TVLongitude = (TextView) view.findViewById(R.id.id_textView_Longitude);
-        TVLatitudeUM = (TextView) view.findViewById(R.id.id_textView_LatitudeUM);
-        TVLongitudeUM = (TextView) view.findViewById(R.id.id_textView_LongitudeUM);
-        TVAltitude = (TextView) view.findViewById(R.id.id_textView_Altitude);
-        TVAltitudeUM = (TextView) view.findViewById(R.id.id_textView_AltitudeUM);
-        TVSpeed = (TextView) view.findViewById(R.id.id_textView_Speed);
-        TVSpeedUM = (TextView) view.findViewById(R.id.id_textView_SpeedUM);
-        TVBearing = (TextView) view.findViewById(R.id.id_textView_Bearing);
-        TVAccuracy = (TextView) view.findViewById(R.id.id_textView_Accuracy);
-        TVAccuracyUM = (TextView) view.findViewById(R.id.id_textView_AccuracyUM);
-        TVGPSFixStatus = (TextView) view.findViewById(R.id.id_textView_GPSFixStatus);
-        TVDirectionUM = (TextView) view.findViewById(R.id.id_textView_BearingUM);
+        // FrameLayouts
+        FLGPSFix            = view.findViewById(R.id.id_fragmentgpsfixFrameLayout);
 
-        TLCoordinates = (TableLayout) view.findViewById(R.id.id_TableLayout_Coordinates) ;
-        TLAltitude = (TableLayout) view.findViewById(R.id.id_TableLayout_Altitude);
-        TLSpeed = (TableLayout) view.findViewById(R.id.id_TableLayout_Speed);
-        TLBearing = (TableLayout) view.findViewById(R.id.id_TableLayout_Bearing);
-        TLAccuracy = (TableLayout) view.findViewById(R.id.id_TableLayout_Accuracy);
+        // TextViews
+        TVLatitude          = view.findViewById(R.id.id_textView_Latitude);
+        TVLongitude         = view.findViewById(R.id.id_textView_Longitude);
+        TVLatitudeUM        = view.findViewById(R.id.id_textView_LatitudeUM);
+        TVLongitudeUM       = view.findViewById(R.id.id_textView_LongitudeUM);
+        TVAltitude          = view.findViewById(R.id.id_textView_Altitude);
+        TVAltitudeUM        = view.findViewById(R.id.id_textView_AltitudeUM);
+        TVSpeed             = view.findViewById(R.id.id_textView_Speed);
+        TVSpeedUM           = view.findViewById(R.id.id_textView_SpeedUM);
+        TVBearing           = view.findViewById(R.id.id_textView_Bearing);
+        TVAccuracy          = view.findViewById(R.id.id_textView_Accuracy);
+        TVAccuracyUM        = view.findViewById(R.id.id_textView_AccuracyUM);
+        TVGPSFixStatus      = view.findViewById(R.id.id_textView_GPSFixStatus);
+        TVDirectionUM       = view.findViewById(R.id.id_textView_BearingUM);
+        TVTime              = view.findViewById(R.id.id_textView_Time);
+        TVSatellites        = view.findViewById(R.id.id_textView_Satellites);
+
+        // TableLayouts
+        TLCoordinates       = view.findViewById(R.id.id_TableLayout_Coordinates) ;
+        TLAltitude          = view.findViewById(R.id.id_TableLayout_Altitude);
+        TLSpeed             = view.findViewById(R.id.id_TableLayout_Speed);
+        TLBearing           = view.findViewById(R.id.id_TableLayout_Bearing);
+        TLAccuracy          = view.findViewById(R.id.id_TableLayout_Accuracy);
+        TLTime              = view.findViewById(R.id.id_TableLayout_Time);
+        TLSatellites        = view.findViewById(R.id.id_TableLayout_Satellites);
+
+        // LinearLayouts
+        LLTimeSatellites    = view.findViewById(R.id.id_linearLayout_Time_Satellites);
 
         TVGPSFixStatus.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -138,16 +162,22 @@ public class FragmentGPSFix extends Fragment {
 
     @Override
     public void onResume() {
-        //Log.w("myApp", "[#] FragmentGPSFix: onResume() - " + FLatitude);
+        super.onResume();
+
+        // Workaround for Nokia Devices, Android 9
+        // https://github.com/BasicAirData/GPSLogger/issues/77
+        if (EventBus.getDefault().isRegistered(this)) {
+            //Log.w("myApp", "[#] FragmentGPSFix.java - EventBus: FragmentGPSFix already registered");
+            EventBus.getDefault().unregister(this);
+        }
+
         EventBus.getDefault().register(this);
         Update();
-        super.onResume();
     }
 
     @Override
     public void onPause() {
         EventBus.getDefault().unregister(this);
-        //Log.w("myApp", "[#] FragmentGPSFix: onPause()");
         super.onPause();
     }
 
@@ -175,6 +205,7 @@ public class FragmentGPSFix extends Fragment {
                 phdSpeed = phdformatter.format(location.getSpeed(), PhysicalDataFormatter.FORMAT_SPEED);
                 phdBearing = phdformatter.format(location.getBearing(), PhysicalDataFormatter.FORMAT_BEARING);
                 phdAccuracy = phdformatter.format(location.getAccuracy(), PhysicalDataFormatter.FORMAT_ACCURACY);
+                phdTime = phdformatter.format(location.getTime(), PhysicalDataFormatter.FORMAT_TIME);
 
                 TVLatitude.setText(phdLatitude.Value);
                 TVLongitude.setText(phdLongitude.Value);
@@ -187,6 +218,8 @@ public class FragmentGPSFix extends Fragment {
                 TVBearing.setText(phdBearing.Value);
                 TVAccuracy.setText(phdAccuracy.Value);
                 TVAccuracyUM.setText(phdAccuracy.UM);
+                TVTime.setText(phdTime.Value);
+                TVSatellites.setText(location.getNumberOfSatellitesUsedInFix() != NOT_AVAILABLE ? location.getNumberOfSatellitesUsedInFix() + "/" + location.getNumberOfSatellites() : "");
 
                 // Colorize the Altitude textview depending on the altitude EGM Correction
                 isValidAltitude = EGMAltitudeCorrection && (location.getAltitudeEGM96Correction() != NOT_AVAILABLE);
@@ -202,6 +235,35 @@ public class FragmentGPSFix extends Fragment {
                 TLSpeed.setVisibility(phdSpeed.Value.equals("") ? View.INVISIBLE : View.VISIBLE);
                 TLBearing.setVisibility(phdBearing.Value.equals("") ? View.INVISIBLE : View.VISIBLE);
                 TLAccuracy.setVisibility(phdAccuracy.Value.equals("") ? View.INVISIBLE : View.VISIBLE);
+                TLTime.setVisibility(View.VISIBLE);
+                TLSatellites.setVisibility(location.getNumberOfSatellitesUsedInFix() == NOT_AVAILABLE ? View.INVISIBLE : View.VISIBLE);
+
+                FLGPSFix.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+                    @Override
+                    public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                               int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                        FLGPSFix.removeOnLayoutChangeListener(this);
+
+                        int ViewHeight   = TLTime.getMeasuredHeight() + (int)(6*getResources().getDisplayMetrics().density);
+                        int LayoutHeight = FLGPSFix.getHeight() - (int)(6*getResources().getDisplayMetrics().density);
+                        //Log.w("myApp", "[#]");
+                        //Log.w("myApp", "[#] -----------------------------------");
+                        boolean isTimeAndSatellitesVisible;
+                        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
+                            isTimeAndSatellitesVisible = LayoutHeight >= 6*ViewHeight;
+                            //Log.w("myApp", "[#] " + LayoutHeight + " / " + 6*ViewHeight + " -> " + isTimeAndSatellitesVisible);
+                        } else {
+                            isTimeAndSatellitesVisible = LayoutHeight >= 4*ViewHeight;
+                            //Log.w("myApp", "[#] " + LayoutHeight + " / " + 4*ViewHeight + " -> " + isTimeAndSatellitesVisible);
+                        }
+                        LLTimeSatellites.setVisibility(isTimeAndSatellitesVisible ? View.VISIBLE : View.GONE);
+
+                        //Log.w("myApp", "[#] -----------------------------------");
+                        //Log.w("myApp", "[#] Available Height = " + LayoutHeight + " px");
+                        //Log.w("myApp", "[#] Density          = " + getResources().getDisplayMetrics().density);
+                        //Log.w("myApp", "[#] Tile Height      = " + ViewHeight + " px");
+                    }
+                });
 
             } else {
                 TLCoordinates.setVisibility(View.INVISIBLE);
@@ -209,6 +271,8 @@ public class FragmentGPSFix extends Fragment {
                 TLSpeed.setVisibility(View.INVISIBLE);
                 TLBearing.setVisibility(View.INVISIBLE);
                 TLAccuracy.setVisibility(View.INVISIBLE);
+                TLTime.setVisibility(View.INVISIBLE);
+                TLSatellites.setVisibility(View.INVISIBLE);
 
                 TVGPSFixStatus.setVisibility(View.VISIBLE);
                 switch (GPSStatus) {
@@ -219,8 +283,8 @@ public class FragmentGPSFix extends Fragment {
                         TVGPSFixStatus.setText(R.string.gps_out_of_service);
                         break;
                     case GPS_TEMPORARYUNAVAILABLE:
-                        TVGPSFixStatus.setText(R.string.gps_temporary_unavailable);
-                        break;
+                        //TVGPSFixStatus.setText(R.string.gps_temporary_unavailable);
+                        //break;
                     case GPS_SEARCHING:
                         TVGPSFixStatus.setText(R.string.gps_searching);
                         break;

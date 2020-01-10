@@ -24,16 +24,21 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Location;
+import android.util.Log;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 
 class DatabaseHandler extends SQLiteOpenHelper {
 
     // All Static variables
     // Database Version
-    private static final int DATABASE_VERSION = 3;          // Updated to 2 in v2.1.3 (code 14)
+    private static final int DATABASE_VERSION = 4;          // Updated to 2 in v2.1.3 (code 14)
     private static final int LOCATION_TYPE_LOCATION = 1;
     private static final int LOCATION_TYPE_PLACEMARK = 2;
 
@@ -110,6 +115,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
     private static final String KEY_TRACK_ALTITUDE_UP = "altitude_up";
     private static final String KEY_TRACK_ALTITUDE_DOWN = "altitude_down";
+    private static final String KEY_TRACK_ALTITUDE_MIN = "altitude_min";
+    private static final String KEY_TRACK_ALTITUDE_MAX = "altitude_max";
     private static final String KEY_TRACK_ALTITUDE_INPROGRESS = "altitude_in_progress";
 
     private static final String KEY_TRACK_SPEED_MAX = "speed_max";
@@ -174,7 +181,9 @@ class DatabaseHandler extends SQLiteOpenHelper {
                 + KEY_TRACK_NUMBEROFPLACEMARKS + " INTEGER,"        // 38
                 + KEY_TRACK_VALIDMAP + " INTEGER,"                  // 39
                 + KEY_TRACK_TYPE + " INTEGER,"                      // 40
-                + KEY_TRACK_NUMBEROFSTEPS + " INTEGER " + ")";      // 41
+                + KEY_TRACK_NUMBEROFSTEPS + " INTEGER,"             // 41
+                + KEY_TRACK_ALTITUDE_MIN + " REAL,"                 // 42
+                + KEY_TRACK_ALTITUDE_MAX + " REAL " + ")";          // 43
         db.execSQL(CREATE_TRACKS_TABLE);
 
         String CREATE_LOCATIONS_TABLE = "CREATE TABLE " + TABLE_LOCATIONS + "("
@@ -227,6 +236,10 @@ class DatabaseHandler extends SQLiteOpenHelper {
             + TABLE_LOCATIONS + " ADD COLUMN " + KEY_LOCATION_NUMBEROFSTEPS + " INTEGER DEFAULT " +  NONE + ";";
     private static final String DATABASE_ALTER_TABLE_PLACEMARKS_TO_V3 = "ALTER TABLE "
             + TABLE_PLACEMARKS + " ADD COLUMN " + KEY_LOCATION_NUMBEROFSTEPS + " INTEGER DEFAULT " +  NONE + ";";
+    private static final String DATABASE_ALTER_TABLE_TRACKS_1_TO_V4 = "ALTER TABLE "
+            + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_ALTITUDE_MIN + " REAL DEFAULT " +  NOT_AVAILABLE + ";";
+    private static final String DATABASE_ALTER_TABLE_TRACKS_2_TO_V4 = "ALTER TABLE "
+            + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_ALTITUDE_MAX + " REAL DEFAULT " +  NOT_AVAILABLE + ";";
     // Upgrading database
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -253,6 +266,10 @@ class DatabaseHandler extends SQLiteOpenHelper {
                 db.execSQL(DATABASE_ALTER_TABLE_TRACKS_TO_V3);
                 db.execSQL(DATABASE_ALTER_TABLE_LOCATIONS_TO_V3);
                 db.execSQL(DATABASE_ALTER_TABLE_PLACEMARKS_TO_V3);
+            case 3:
+                //upgrade from version 3 to 4
+                db.execSQL(DATABASE_ALTER_TABLE_TRACKS_1_TO_V4);
+                db.execSQL(DATABASE_ALTER_TABLE_TRACKS_2_TO_V4);
 
                 //and so on.. do not add breaks so that switch will
                 //start at oldVersion, and run straight through to the latest
@@ -327,6 +344,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
         trkvalues.put(KEY_TRACK_ALTITUDE_UP, track.getAltitude_Up());
         trkvalues.put(KEY_TRACK_ALTITUDE_DOWN, track.getAltitude_Down());
         trkvalues.put(KEY_TRACK_ALTITUDE_INPROGRESS, track.getAltitude_InProgress());
+        trkvalues.put(KEY_TRACK_ALTITUDE_MIN, track.getAltitude_Min());
+        trkvalues.put(KEY_TRACK_ALTITUDE_MAX, track.getAltitude_Max());
 
         trkvalues.put(KEY_TRACK_SPEED_MAX, track.getSpeedMax());
         trkvalues.put(KEY_TRACK_SPEED_AVERAGE, track.getSpeedAverage());
@@ -763,6 +782,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
         trkvalues.put(KEY_TRACK_ALTITUDE_UP, track.getAltitude_Up());
         trkvalues.put(KEY_TRACK_ALTITUDE_DOWN, track.getAltitude_Down());
         trkvalues.put(KEY_TRACK_ALTITUDE_INPROGRESS, track.getAltitude_InProgress());
+        trkvalues.put(KEY_TRACK_ALTITUDE_MIN, track.getAltitude_Min());
+        trkvalues.put(KEY_TRACK_ALTITUDE_MAX, track.getAltitude_Max());
 
         trkvalues.put(KEY_TRACK_SPEED_MAX, track.getSpeedMax());
         trkvalues.put(KEY_TRACK_SPEED_AVERAGE, track.getSpeedAverage());
@@ -846,6 +867,9 @@ class DatabaseHandler extends SQLiteOpenHelper {
                         cursor.getDouble(31),
                         cursor.getDouble(32),
                         cursor.getDouble(33),
+
+                        cursor.getDouble(42),
+                        cursor.getDouble(43),
 
                         cursor.getFloat(34),
                         cursor.getFloat(35),
@@ -958,6 +982,9 @@ class DatabaseHandler extends SQLiteOpenHelper {
                             cursor.getDouble(32),
                             cursor.getDouble(33),
 
+                            cursor.getDouble(42),
+                            cursor.getDouble(43),
+
                             cursor.getFloat(34),
                             cursor.getFloat(35),
                             cursor.getFloat(36),
@@ -975,6 +1002,69 @@ class DatabaseHandler extends SQLiteOpenHelper {
             cursor.close();
         }
         return trackList;
+    }
+
+
+    public void CorrectGPSWeekRollover() {
+        String CorrectLocationsQuery = "UPDATE " + TABLE_LOCATIONS + " SET " + KEY_LOCATION_TIME + " = " + KEY_LOCATION_TIME + " + 619315200000 WHERE "
+                + KEY_LOCATION_TIME + " <= 1388534400000 ";               // 01/01/2014 00:00:00.000
+        String CorrectPlacemarksQuery = "UPDATE " + TABLE_PLACEMARKS + " SET " + KEY_LOCATION_TIME + " = " + KEY_LOCATION_TIME + " + 619315200000 WHERE "
+                + KEY_LOCATION_TIME + " <= 1388534400000 ";               // 01/01/2014 00:00:00.000
+        String CorrectNamesQuery = "SELECT " + KEY_ID + "," + KEY_TRACK_NAME + " FROM " + TABLE_TRACKS + " WHERE "
+                + KEY_TRACK_NAME + " LIKE '199%'";
+
+        class IdAndName {
+            long id;
+            String Name;
+        }
+
+        ArrayList <IdAndName> Names = new ArrayList<>();
+
+        //Log.w("myApp", "[#] DatabaseHandler.java - getTrackList(" + startNumber + ", " +endNumber + ") ==> " + selectQuery);
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Correction of Locations
+        db.execSQL(CorrectLocationsQuery);
+
+        // Correction of Placemarks
+        db.execSQL(CorrectPlacemarksQuery);
+
+
+        // Correction of Track Names
+        Cursor cursor = db.rawQuery(CorrectNamesQuery, null);
+
+        if (cursor != null) {
+            int i = 0;
+            // looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    SimpleDateFormat SDF = new SimpleDateFormat("yyyyMMdd-HHmmss");  // date and time formatter
+                    SDF.setTimeZone(TimeZone.getTimeZone("GMT"));
+                    try {
+                        Date d = SDF.parse(cursor.getString(1));
+                        long timeInMilliseconds = d.getTime();
+                        long timeInMilliseconds_Corrected = timeInMilliseconds + 619315200000L;
+                        String Name_Corrected = SDF.format(timeInMilliseconds_Corrected);
+                        //Log.w("myApp", "[#] GPSApplication.java - NAME CORRECTED FROM " + cursor.getString(0) + " TO " + Name_Corrected);
+                        IdAndName IN = new IdAndName();
+                        IN.id = cursor.getLong(0);
+                        IN.Name = Name_Corrected;
+                        Names.add(IN);
+                    } catch (ParseException ex) {
+                        Log.v("Exception", ex.getLocalizedMessage());
+                    }
+                    i++;
+                } while (cursor.moveToNext());
+            }
+            Log.w("myApp", "[#] DatabaseHandler.java - CorrectGPSWeekRollover NAMES = " + i);
+            cursor.close();
+        }
+
+        for (IdAndName N : Names) {
+            Log.w("myApp", "[#] GPSApplication.java - CORRECTING TRACK " + N.id + " = " + N.Name);
+            db.execSQL("UPDATE " + TABLE_TRACKS + " SET " + KEY_TRACK_NAME + " = \"" + N.Name + "\" WHERE " + KEY_ID + " = " + N.id);
+        }
     }
 
 

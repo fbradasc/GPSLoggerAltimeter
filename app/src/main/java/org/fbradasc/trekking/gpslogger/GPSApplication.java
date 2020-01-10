@@ -24,6 +24,7 @@ import android.app.AlarmManager;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -32,7 +33,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -51,9 +51,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.StrictMode;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
-import android.util.SparseArray;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
@@ -86,7 +87,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     //private static final int UM_IMPERIAL_MPH = 9;
 
     private static final int STABILIZERVALUE = 3000;             // The application discards fixes for 3000 ms (minimum)
-    private static final int DEFAULTHANDLERTIMER = 10000;        // The timer for turning off GPS on exit
+    private static final int DEFAULTHANDLERTIMER = 5000;        // The timer for turning off GPS on exit
     private static final int GPSUNAVAILABLEHANDLERTIMER = 7000;  // The "GPS temporary unavailable" timer
     private int StabilizingSamples = 3;
 
@@ -106,6 +107,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     public static final int JOB_TYPE_SHARE            = 3;          // Bulk Share
     public static final int JOB_TYPE_DELETE           = 4;          // Bulk Delete
     public static final int JOB_TYPE_SHARE_PLACEMARKS = 5;      // Bulk Share placemark only
+
+    public static final String FLAG_RECORDING   = "flagRecording";  // The persistent Flag is set when the app is recording, in order to detect Background Crashes
 
     private static final long MICROSECONDS_IN_ONE_MINUTE = 60000000;
     private static final long SAVE_OFFSET_TIME = AlarmManager.INTERVAL_HOUR;
@@ -128,10 +131,12 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private int     prefKMLAltitudeMode         = 0;
     private int     prefShowTrackStatsType      = 0;
     private int     prefShowDirections          = 0;
+    private boolean prefGPSWeekRolloverCorrected= false;
 
     private boolean LocationPermissionChecked = false;            // If the flag is false the GPSActivity will check for Location Permission
-    private boolean StoragePermissionChecked = false;             // If the flag is false Storage Permission must be asked
-    private EventBusMSGNormal DoIfGrantStoragePermission = null;  // Store the message to send in case the user grant storage permission
+    private boolean isFirstRun                  = false;          // True if it is the first run of the app (the DB is empty)
+    private boolean isJustStarted               = true;           // True if the application has just been started
+    private boolean isMockProvider              = false;          // True if the location is from mock provider
 
     private LocationExtended PrevFix = null;
     private boolean isPrevFixRecorded = false;
@@ -197,11 +202,10 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private int GPSActivity_activeTab = 0;                  // The active tab on GPSActivity
     private int JobProgress = 0;
     private int JobsPending = 0;                            // The number of jobs to be done
-    public int JobType = JOB_TYPE_NONE;                     // The type off job that is pending
+    public int JobType = JOB_TYPE_NONE;                     // The type of job that is pending
+    private boolean DeleteAlsoExportedFiles = false;        // When true, the deletion of some tracks will delete also the exported files of the tracks
     private ArrayList<Track> JobTracklist = new ArrayList<Track>();
                                                             // The list of tracks that are processed on the current job
-    private ArrayList<Track> JobToBeExecutedTracklist = new ArrayList<Track>();
-                                                            // The list of tracks that are not yet processed on the current job
 
     private int _Stabilizer = StabilizingSamples;
     private int HandlerTimer = DEFAULTHANDLERTIMER;
@@ -210,8 +214,6 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     private LocationExtended _currentPlacemark = null;
     private Track _currentTrack = null;
     private List<Track> _ArrayListTracks = Collections.synchronizedList(new ArrayList<Track>());
-
-    static SparseArray<Bitmap> thumbsArray = new SparseArray<>();       // The Array containing the Tracks Thumbnail
 
     Thumbnailer Th;
     Exporter Ex;
@@ -239,8 +241,100 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
     };
 
-    private int ActiveExporterThreads = 0;                  // The exporter that are active
-    private final int MAX_ACTIVE_EXPORTER_THREADS = 5;      // The maximum number of Exporter threads to run simultaneously
+    private final int MAX_ACTIVE_EXPORTER_THREADS = 3;      // The maximum number of Exporter threads to run simultaneously
+
+    private List<ExportingTask> ExportingTaskList = new ArrayList<>();
+
+
+    // The handler that checks the progress of an exportation:
+    private final int ExportingStatusCheckInterval = 16;          // The app updates the progress of exportation every 16 milliseconds
+    final Handler ExportingStatusCheckHandler = new Handler();
+
+    Runnable ExportingStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            long Total = 0;
+            long Progress = 0;
+            int Exporters_Total = ExportingTaskList.size();     // The total amount of exportation into the current job
+            int Exporters_Pending = 0;
+            int Exporters_Running = 0;                          // The amount of exportation in progress
+            int Exporters_Success = 0;                          // The amount of exportation finished with success
+            int Exporters_Failed = 0;                           // The amount of exportation failed
+
+
+            // Check Progress
+            for (ExportingTask ET : ExportingTaskList) {
+                Total += ET.getNumberOfPoints_Total();
+                Progress += ET.getNumberOfPoints_Processed();
+                if (ET.getStatus() == ExportingTask.STATUS_PENDING) Exporters_Pending++;
+                if (ET.getStatus() == ExportingTask.STATUS_RUNNING) Exporters_Running++;
+                if (ET.getStatus() == ExportingTask.STATUS_ENDED_SUCCESS) Exporters_Success++;
+                if (ET.getStatus() == ExportingTask.STATUS_ENDED_FAILED) Exporters_Failed++;
+            }
+
+            // Update job progress
+            if (Total != 0) {
+                if (JobProgress != (int) Math.round(1000L * Progress / Total)) {        // The ProgressBar on FragmentJobProgress has android:max="1000"
+                    JobProgress = (int) Math.round(1000L * Progress / Total);
+                    EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
+                }
+            } else {
+                if (JobProgress != 0) {
+                    JobProgress = 0;
+                    EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
+                }
+            }
+
+            //Log.w("myApp", "[#] GPSApplication.java - ExportingStatusChecker running: " + 100*Progress/Total + "% - P "
+            //        + Exporters_Pending + " - R " + Exporters_Running + " - S " + Exporters_Success + " - F " + Exporters_Failed);
+
+            // Exportation Failed
+            if (Exporters_Failed != 0) {
+                EventBus.getDefault().post(EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE);
+                JobProgress = 0;
+                JobsPending = 0;
+                EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
+                return;
+            }
+
+            // Exportation Finished
+            if (Exporters_Success == Exporters_Total) {
+                if (JobType == JOB_TYPE_VIEW) {
+                    if (!ExportingTaskList.isEmpty()) ViewTrack(ExportingTaskList.get(0));
+                } else if (JobType == JOB_TYPE_SHARE) {
+                    EventBus.getDefault().post(EventBusMSG.INTENT_SEND);
+                } else {
+                    EventBus.getDefault().post(EventBusMSG.TOAST_TRACK_EXPORTED);
+                }
+                JobProgress = 0;
+                JobsPending = 0;
+                EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
+                return;
+            }
+
+            // If needed, run another Exportation Thread
+            if ((Exporters_Running < MAX_ACTIVE_EXPORTER_THREADS) && (Exporters_Pending > 0)) {
+                for (ExportingTask ET : ExportingTaskList) {
+                    if (ET.getStatus() == ExportingTask.STATUS_PENDING) {
+                        //Log.w("myApp", "[#] GPSApplication.java - Run the export thread nr." + Exporters_Running + ": " + ET.getId());
+                        ET.setStatus(ExportingTask.STATUS_RUNNING);
+                        ExecuteExportingTask(ET);
+                        break;
+                    }
+                }
+            }
+
+            ExportingStatusCheckHandler.postDelayed(ExportingStatusChecker, ExportingStatusCheckInterval);
+        }
+    };
+
+    void startExportingStatusChecker() {
+        ExportingStatusChecker.run();
+    }
+
+    void stopExportingStatusChecker() {
+        ExportingStatusCheckHandler.removeCallbacks(ExportingStatusChecker);
+    }
 
 
     // ------------------------------------------------------------------------------------ Service
@@ -336,14 +430,6 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
     }
 
-    public boolean isStoragePermissionChecked() {
-        return StoragePermissionChecked;
-    }
-
-    public void setStoragePermissionChecked(boolean storagePermissionChecked) {
-        StoragePermissionChecked = storagePermissionChecked;
-    }
-
     public boolean isContextMenuShareVisible() {
         return isContextMenuShareVisible;
     }
@@ -425,7 +511,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     }
 
     public LocationExtended getCurrentLocationExtended() {
-        return _currentLocationExtended == null ? null : _currentLocationExtended;
+        return _currentLocationExtended;
     }
 
     public void setPlacemarkDescription(String Description) {
@@ -433,7 +519,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     }
 
     public Track getCurrentTrack() {
-        return _currentTrack == null ? null : _currentTrack;
+        return _currentTrack;
     }
 
     public int getNumberOfSatellites() {
@@ -457,6 +543,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         PrevRecordedFix = null;
         Recording = recordingState;
         reRegisterSensor(recordingState);
+        if (Recording) FlagAdd(FLAG_RECORDING);
+        else FlagRemove(FLAG_RECORDING);
     }
 
     public boolean getPlacemarkRequest() { return PlacemarkRequest; }
@@ -485,10 +573,6 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         return AppOrigin;
     }
 
-    public ArrayList<Track> getJobTracklist() {
-        return JobTracklist;
-    }
-
     public int getJobProgress() {
         return JobProgress;
     }
@@ -509,6 +593,66 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         this.GPSActivity_activeTab = GPSActivity_activeTab;
     }
 
+    public List<ExportingTask> getExportingTaskList() {
+        return ExportingTaskList;
+    }
+
+    public void setDeleteAlsoExportedFiles(boolean deleteAlsoExportedFiles) {
+        DeleteAlsoExportedFiles = deleteAlsoExportedFiles;
+    }
+
+    public boolean isJustStarted() {
+        return isJustStarted;
+    }
+
+    public void setJustStarted(boolean justStarted) {
+        isJustStarted = justStarted;
+    }
+
+    // ------------------------------------------------------------------------ Utility
+
+    private void DeleteFile(String filename) {
+        File file = new File(filename);
+        boolean deleted;
+        if (file.exists ()) {
+            deleted = file.delete();
+            if (deleted) Log.w("myApp", "[#] GPSApplication.java - DeleteFile: " + filename + " deleted");
+            else Log.w("myApp", "[#] GPSApplication.java - DeleteFile: " + filename + " unable to delete the File");
+        }
+        else Log.w("myApp", "[#] GPSApplication.java - DeleteFile: " + filename + " doesn't exists");
+    }
+
+
+    /* NOT USED, Commented out
+    private boolean FileExists(String filename) {
+        File file = new File(filename);
+        return file.exists ();
+    } */
+
+
+    // Flags are Boolean SharedPreferences that are excluded by automatic Backups
+
+    public void FlagAdd (String flag) {
+        SharedPreferences preferences_nobackup = getSharedPreferences("prefs_nobackup",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences_nobackup.edit();
+        editor.putBoolean(flag, true);
+        editor.commit();
+    }
+
+
+    public void FlagRemove (String flag) {
+        SharedPreferences preferences_nobackup = getSharedPreferences("prefs_nobackup",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences_nobackup.edit();
+        editor.remove(flag);
+        editor.commit();
+    }
+
+
+    public boolean FlagExists (String flag) {
+        SharedPreferences preferences_nobackup = getSharedPreferences("prefs_nobackup",Context.MODE_PRIVATE);
+        return preferences_nobackup.getBoolean(flag, false);
+    }
+
     public void setDetectedActivity(int _detectedActivity)
     {
         detectedActivity = _detectedActivity;
@@ -519,11 +663,22 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         return detectedActivity;
     }
 
+
     // --------------------------------------------------------------------------------------------
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        if (PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean("prefLightColorTheme", false)) {
+            AppCompatDelegate.setDefaultNightMode(
+                    AppCompatDelegate.MODE_NIGHT_NO);
+        }
+        else {
+            AppCompatDelegate.setDefaultNightMode(
+                    AppCompatDelegate.MODE_NIGHT_YES);
+        }
+
         singleton = this;
 
         // work around the android.os.FileUriExposedException
@@ -547,6 +702,19 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(channel);
         }
+
+        // -----------------------
+        // TODO: Uncomment it to run the Week Rollover Tests (For Test Purpose)
+        // SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+        // editor.putBoolean("prefGPSWeekRolloverCorrected", false);
+        // editor.commit();
+        // -----------------------
+
+        // -----------------------
+        // TODO: Uncomment it to reload the EGM Grid File (For Test Purpose)
+        //File file = new File(getApplicationContext().getFilesDir() + "/WW15MGH.DAC");
+        //if (file.exists ()) file.delete();
+        // -----------------------
 
         StartAndBindGPSService();
 
@@ -594,7 +762,10 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         GPSDataBase = new DatabaseHandler(this);                                        // Initialize the Database
 
         // Prepare the current track
-        if (GPSDataBase.getLastTrackID() == 0) GPSDataBase.addTrack(new Track());       // Creation of the first track if the DB is empty
+        if (GPSDataBase.getLastTrackID() == 0) {
+            GPSDataBase.addTrack(new Track());                                          // Creation of the first track if the DB is empty
+            isFirstRun = true;
+        }
         _currentTrack = GPSDataBase.getLastTrack();                                     // Get the last track
 
         LoadPreferences();                                                              // Load Settings
@@ -610,8 +781,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         // Get max available VM memory, exceeding this amount will throw an
         // OutOfMemory exception. Stored in kilobytes as LruCache takes an
         // int in its constructor.
-        Log.w("myApp", "[#] GPSApplication.java - Max available VM memory = " + (int) (Runtime.getRuntime().maxMemory() / 1024) + " kbytes");
-
+        //Log.w("myApp", "[#] GPSApplication.java - Max available VM memory = " + (int) (Runtime.getRuntime().maxMemory() / 1024) + " kbytes");
     }
 
     @Override
@@ -624,102 +794,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     }
 
     @Subscribe
-    public void onEvent(EventBusMSGLong msg) {
-        if (msg.MSGType == EventBusMSG.TRACK_SETPROGRESS) {
-            long trackid = msg.id;
-            long progress = msg.Value;
-            if ((trackid > 0) && (progress >= 0)) {
-                synchronized(_ArrayListTracks) {
-                    for (Track T : _ArrayListTracks) {
-                        if (T.getId() == trackid) {
-                            T.setProgress((int) progress);
-                            if (progress > T.getJobProgress()) T.setJobProgress(T.getProgress());
-                        }
-                    }
-                }
-
-
-                long jobTotalPoints = 0;
-                long jobDonePoints = 0;
-                int jobProgress = 0;
-                int jobOldProgress = JobProgress;
-                //int i = 0;
-
-                for (Track T : JobTracklist) {
-                    //i++;
-                    jobTotalPoints += T.getNumberOfLocations() + T.getNumberOfPlacemarks();
-                    //Log.w("myApp","Progress = " + T.getJobProgress());
-                    jobDonePoints += Math.ceil((T.getNumberOfLocations() + T.getNumberOfPlacemarks()) * T.getJobProgress() / 100);
-                }
-                if (jobTotalPoints > 0) {
-                    jobProgress = (int) Math.ceil(100 * jobDonePoints / jobTotalPoints);
-                }
-                if (JobTracklist.isEmpty()) jobProgress = 0;
-                if (jobProgress != jobOldProgress) {
-                    //Log.w("myApp", "[#] GPSApplication.java - Global progress of current Job = 100 * " + jobDonePoints + "/" + jobTotalPoints + " = " + jobProgress + " | JobsTracklist has " + i + " elements");
-                    JobProgress = jobProgress;
-                    EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
-                }
-            }
-            return;
-        }
-    }
-
-    @Subscribe
     public void onEvent(EventBusMSGNormal msg) {
-        if (msg.MSGType == EventBusMSG.TRACK_EXPORTED) {
-            long trackid = msg.id;
-            if (trackid > 0) {
-                synchronized(_ArrayListTracks) {
-                    for (Track T : _ArrayListTracks) {
-                        if (T.getId() == trackid) {
-                            T.setProgress(0);
-                            T.setJobProgress(100);
-                            ActiveExporterThreads--;
-                            ExecuteJob();
-                            if (JobsPending > 0) {
-                                JobsPending--;
-                                if (JobsPending == 0) {
-                                    if (JobType == JOB_TYPE_VIEW) {
-                                        ViewTracks();
-                                    } else if (JobType == JOB_TYPE_SHARE) {
-                                        EventBus.getDefault().post(EventBusMSG.INTENT_SEND);
-                                    } else if (JobType == JOB_TYPE_SHARE_PLACEMARKS) {
-                                        EventBus.getDefault().post(EventBusMSG.INTENT_SEND_PLACEMARKS);
-                                    } else {
-                                        EventBus.getDefault().post(EventBusMSG.TOAST_TRACK_EXPORTED);
-                                    }
-                                }
-                            }
-                            Log.w("myApp", "[#] GPSApplication.java - Pending Jobs = " + JobsPending);
-                        }
-                    }
-                }
-            }
-            return;
-        }
-        if (msg.MSGType == EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE) {
-            long trackid = msg.id;
-            if (trackid > 0) {
-                synchronized(_ArrayListTracks) {
-                    for (Track T : _ArrayListTracks) {
-                        if (T.getId() == trackid) {
-                            T.setProgress(0);
-                            T.setJobProgress(100);
-                            ActiveExporterThreads--;
-                            ExecuteJob();
-                            if (JobsPending > 0) {
-                                JobsPending = 0;
-                                EventBus.getDefault().post(EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE);
-                            }
-                            Log.w("myApp", "[#] GPSApplication.java - WORK FAILED - Pending Jobs = " + JobsPending);
-                        }
-                    }
-                }
-                EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
-            }
-            return;
-        }
         if (msg.MSGType == EventBusMSG.ACTIVITY_DETECTED) {
             setDetectedActivity((int)msg.id);
 /*
@@ -753,7 +828,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     break;
             }
 */
-            EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
+            EventBus.getDefault().post(EventBusMSG.REFRESH_TRACKLIST);
 
             return;
         }
@@ -816,13 +891,16 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             mlocManager.removeGpsStatusListener(this);
             mlocManager.removeUpdates(this);
             isGPSLocationUpdatesActive = false;
+            //Log.w("myApp", "[#] GPSApplication.java - setGPSLocationUpdates = false");
         }
         if (update && !isGPSLocationUpdatesActive
                 && (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             mlocManager.addGpsStatusListener(this);
             mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, prefGPSupdatefrequency, 0, this); // Requires Location update
             isGPSLocationUpdatesActive = true;
-            StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
+            //Log.w("myApp", "[#] GPSApplication.java - setGPSLocationUpdates = true");
+            if (prefGPSupdatefrequency >= 1000) StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
+            else StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / 1000);
         }
 */
         if (isGPSLocationUpdatesActive == update) {
@@ -838,7 +916,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         if (isGPSLocationUpdatesActive) {
             mlocManager.addGpsStatusListener(this);
             mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, prefGPSupdatefrequency, 0, this); // Requires Location update
-            StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
+            if (prefGPSupdatefrequency >= 1000) StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
+            else StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / 1000);
         } else {
             GPSStatus = GPS_SEARCHING;
             mlocManager.removeGpsStatusListener(this);
@@ -847,12 +926,13 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
     }
 
     public void updateGPSLocationFrequency () {
-
         if (isGPSLocationUpdatesActive
                 && (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+            //Log.w("myApp", "[#] GPSApplication.java - updateGPSLocationFrequency");
             mlocManager.removeGpsStatusListener(this);
             mlocManager.removeUpdates(this);
-            StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
+            if (prefGPSupdatefrequency >= 1000) StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / prefGPSupdatefrequency);
+            else StabilizingSamples = (int) Math.ceil(STABILIZERVALUE / 1000);
             mlocManager.addGpsStatusListener(this);
             mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, prefGPSupdatefrequency, 0, this);
         }
@@ -885,29 +965,37 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         } catch (NullPointerException e) {
             _NumberOfSatellites = NOT_AVAILABLE;
             _NumberOfSatellitesUsedInFix = NOT_AVAILABLE;
-            Log.w("myApp", "[#] GPSApplication.java - updateSats: Caught NullPointerException: " + e);
+            //Log.w("myApp", "[#] GPSApplication.java - updateSats: Caught NullPointerException: " + e);
         }
         //Log.w("myApp", "[#] GPSApplication.java - updateSats: Total=" + _NumberOfSatellites + " Used=" + _NumberOfSatellitesUsedInFix);
     }
 
 
-    private void ViewTracks() {
+    private void ViewTrack(ExportingTask exportingTask) {
         if (prefViewTracksWith == 0) {              // KML Viewer
-            for (Track T : JobTracklist) {
-                File file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", T.getName() + ".kml");
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.setDataAndType(Uri.fromFile(file), "application/vnd.google-earth.kml+xml");
+            File file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", exportingTask.getName() + ".kml");
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setDataAndType(Uri.fromFile(file), "application/vnd.google-earth.kml+xml");
+            try {
                 startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Log.w("myApp", "[#] GPSApplication.java - ViewTrack: Unable to view the track: " + e);
+                AsyncPrepareTracklistContextMenu asyncPrepareTracklistContextMenu = new AsyncPrepareTracklistContextMenu();
+                asyncPrepareTracklistContextMenu.start();
             }
         }
         if (prefViewTracksWith == 1) {              // GPX Viewer
-            for (Track T : JobTracklist) {
-                File file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", T.getName() + ".gpx");
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.setDataAndType(Uri.fromFile(file), "gpx+xml");
+            File file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", exportingTask.getName() + ".gpx");
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setDataAndType(Uri.fromFile(file), "gpx+xml");
+            try {
                 startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Log.w("myApp", "[#] GPSApplication.java - ViewTrack: Unable to view the track: " + e);
+                AsyncPrepareTracklistContextMenu asyncPrepareTracklistContextMenu = new AsyncPrepareTracklistContextMenu();
+                asyncPrepareTracklistContextMenu.start();
             }
         }
     }
@@ -942,96 +1030,89 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             for (Track T : _ArrayListTracks) {
                 if (T.isSelected()) {
                     T.setSelected(false);
-                    EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TRACKLIST_SELECTION, T.getId()));
+                    EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TRACKLIST_DESELECT, T.getId()));
                 }
             }
         }
-        EventBus.getDefault().post(EventBusMSG.UPDATE_TRACKLIST);
+        EventBus.getDefault().post(EventBusMSG.REFRESH_TRACKLIST);
     }
 
 
     public void LoadJob (int jobType) {
-        JobTracklist.clear();
-        JobTracklist = getSelectedTracks();
-        JobToBeExecutedTracklist.clear();
-        JobToBeExecutedTracklist.addAll(JobTracklist);
-        for (Track T : JobTracklist) {
-            T.setJobProgress(0);
+        ExportingTaskList.clear();
+        synchronized(_ArrayListTracks) {
+            for (Track T : _ArrayListTracks) {
+                if (T.isSelected()) {
+                    ExportingTask ET = new ExportingTask();
+                    ET.setId(T.getId());
+                    ET.setName(T.getName());
+                    ET.setNumberOfPoints_Total(T.getNumberOfLocations() + T.getNumberOfPlacemarks());
+                    ET.setNumberOfPoints_Processed(0);
+                    ExportingTaskList.add(ET);
         }
-        JobsPending = JobTracklist.size();
+            }
+        }
+        JobsPending = ExportingTaskList.size();
         JobType = jobType;
     }
 
-    public void ExecuteJob () {
+
+    public void ExecuteExportingTask (ExportingTask exportingTask) {
         switch (JobType) {
             case JOB_TYPE_NONE:
-                break;
             case JOB_TYPE_DELETE:
-                synchronized (_ArrayListTracks) {
-                    for (Track T : JobToBeExecutedTracklist) {
-                        int i = _ArrayListTracks.indexOf(T);
-                        if (i != -1) {
-                            GPSDataBase.DeleteTrack(_ArrayListTracks.get(i).getId());
-                            Log.w("myApp", "[#] GPSApplication.java - Track " + _ArrayListTracks.get(i).getId() + " deleted.");
-                            _ArrayListTracks.remove(i);
-                            if (JobsPending > 0) JobsPending--;
-                        }
-                    }
-                }
-                EventBus.getDefault().post(EventBusMSG.NOTIFY_TRACKS_DELETED);
-                JobToBeExecutedTracklist.clear();
                 break;
             case JOB_TYPE_EXPORT:
-                for (int i = JobToBeExecutedTracklist.size()-1; i >= 0; i--) {
-                    Track T = JobToBeExecutedTracklist.get(i);
-                    Ex = new Exporter(T.getId(), prefExportKML, prefExportGPX, prefExportTXT, prefExportPMK, Environment.getExternalStorageDirectory() + "/GPSLogger");
-                    JobToBeExecutedTracklist.remove(i);
-                    ActiveExporterThreads ++;
-                    Ex.start();
-                    if (ActiveExporterThreads >= MAX_ACTIVE_EXPORTER_THREADS) break;
-                }
+                Ex = new Exporter(exportingTask, prefExportKML, prefExportGPX, prefExportTXT, prefExportPMK, Environment.getExternalStorageDirectory() + "/GPSLogger");
+                Ex.start();
                 break;
             case JOB_TYPE_VIEW:
-                for (int i = JobToBeExecutedTracklist.size()-1; i >= 0; i--) {
-                    Track T = JobToBeExecutedTracklist.get(i);
-                    if (prefViewTracksWith == 0) {              // KML Viewer
-                        Ex = new Exporter(T.getId(), true, false, false, false, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
-                        JobToBeExecutedTracklist.remove(T);
-                        ActiveExporterThreads ++;
-                        Ex.start();
-                        if (ActiveExporterThreads >= MAX_ACTIVE_EXPORTER_THREADS) break;
-                    }
-                    if (prefViewTracksWith == 1) {              // GPX Viewer
-                        Ex = new Exporter(T.getId(), false, true, false, false, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
-                        JobToBeExecutedTracklist.remove(T);
-                        ActiveExporterThreads ++;
-                        Ex.start();
-                        if (ActiveExporterThreads >= MAX_ACTIVE_EXPORTER_THREADS) break;
-                    }
-                }
+                if (prefViewTracksWith == 0) Ex = new Exporter(exportingTask, true, false, false, false, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+                if (prefViewTracksWith == 1) Ex = new Exporter(exportingTask, false, true, false, false, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+                Ex.start();
                 break;
             case JOB_TYPE_SHARE:
-                for (int i = JobToBeExecutedTracklist.size()-1; i >= 0; i--) {
-                    Track T = JobToBeExecutedTracklist.get(i);
-                    Ex = new Exporter(T.getId(), prefExportKML, prefExportGPX, prefExportTXT, prefExportPMK, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
-                    JobToBeExecutedTracklist.remove(T);
-                    ActiveExporterThreads ++;
-                    Ex.start();
-                    if (ActiveExporterThreads >= MAX_ACTIVE_EXPORTER_THREADS) break;
-                }
+                Ex = new Exporter(exportingTask, prefExportKML, prefExportGPX, prefExportTXT, prefExportPMK, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+                Ex.start();
                 break;
             case JOB_TYPE_SHARE_PLACEMARKS:
-                for (int i = JobToBeExecutedTracklist.size()-1; i >= 0; i--) {
-                    Track T = JobToBeExecutedTracklist.get(i);
-                    Ex = new Exporter(T.getId(), false, false, false, prefExportPMK, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
-                    JobToBeExecutedTracklist.remove(T);
-                    ActiveExporterThreads ++;
-                    Ex.start();
-                    if (ActiveExporterThreads >= MAX_ACTIVE_EXPORTER_THREADS) break;
-                }
+                Ex = new Exporter(exportingTask, false, false, false, prefExportPMK, Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
+                Ex.start();
                 break;
             default:
                 break;
+        }
+    }
+
+
+    public void ExecuteJob () {
+        if (!ExportingTaskList.isEmpty()) {
+            switch (JobType) {
+                case JOB_TYPE_NONE:
+                    break;
+                case JOB_TYPE_DELETE:
+                    String S = "TASK_DELETE_TRACKS";
+                    for (ExportingTask ET : ExportingTaskList) {
+                        S = S + " " + ET.getId();
+                    }
+                    AsyncTODO ast = new AsyncTODO();
+                    ast.TaskType = S;
+                    ast.location = null;
+                    AsyncTODOQueue.add(ast);
+                    break;
+                case JOB_TYPE_EXPORT:
+                case JOB_TYPE_VIEW:
+                case JOB_TYPE_SHARE:
+                case JOB_TYPE_SHARE_PLACEMARKS:
+                    startExportingStatusChecker();
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            Log.w("myApp", "[#] GPSApplication.java - Empty Job, nothing processed");
+            JobProgress = 0;
+            JobsPending = 0;
         }
     }
 
@@ -1049,8 +1130,8 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             final PackageManager pm = getPackageManager();
 
             // ----- menu share
-            Intent intent = new Intent();
-            intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+            Intent intent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.setType("text/xml");
             // Verify the intent will resolve to at least one activity
             if ((intent.resolveActivity(pm) != null)) isContextMenuShareVisible = true;
@@ -1068,9 +1149,9 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             }
             ResolveInfo ri = pm.resolveActivity(intent, 0); // Find default app
             if (ri != null) {
-                //Log.w("myApp", "[#] FragmentTracklist.java - Open with: " + ri.activityInfo.applicationInfo.loadLabel(getContext().getPackageManager()));
+                //Log.w("myApp", "[#] GPSApplication.java - Open with: " + ri.activityInfo.applicationInfo.loadLabel(getContext().getPackageManager()));
                 List<ResolveInfo> lri = pm.queryIntentActivities(intent, 0);
-                //Log.w("myApp", "[#] FragmentTracklist.java - Found " + lri.size() + " viewers:");
+                //Log.w("myApp", "[#] GPSApplication.java - Found " + lri.size() + " viewers:");
                 for (ResolveInfo tmpri : lri) {
                     //Log.w("myApp", "[#] " + ri.activityInfo.applicationInfo.packageName + " - " + tmpri.activityInfo.applicationInfo.packageName);
                     if (ri.activityInfo.applicationInfo.packageName.equals(tmpri.activityInfo.applicationInfo.packageName)) {
@@ -1081,8 +1162,10 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 isContextMenuViewVisible = true;
             }
             Log.w("myApp", "[#] GPSApplication.java - Tracklist ContextMenu prepared");
+            EventBus.getDefault().post(EventBusMSG.UPDATE_ACTIONBAR);
         }
     }
+
 
     // ------------------------------------------------------------------------- GpsStatus.Listener
     @Override
@@ -1097,13 +1180,29 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         }
     }
 
+
     // --------------------------------------------------------------------------- LocationListener
     @Override
     public void onLocationChanged(Location loc) {
         //if ((loc != null) && (loc.getProvider().equals(LocationManager.GPS_PROVIDER)) {
         if (loc != null) {      // Location data is valid
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {          // For API >= 18
+                if ((PrevFix == null) || (loc.isFromMockProvider()!=isMockProvider)) {  // Reset the number of satellites when the provider changes between GPS and MOCK
+                    isMockProvider = loc.isFromMockProvider();
+                    _NumberOfSatellites = NOT_AVAILABLE;
+                    _NumberOfSatellitesUsedInFix = NOT_AVAILABLE;
+                    if (isMockProvider) Log.w("myApp", "[#] GPSApplication.java - Provider Type = MOCK PROVIDER");
+                    else Log.w("myApp", "[#] GPSApplication.java - Provider Type = GPS PROVIDER");
+                }
+            }
+
             //Log.w("myApp", "[#] GPSApplication.java - onLocationChanged: provider=" + loc.getProvider());
             if (loc.hasSpeed() && (loc.getSpeed() == 0)) loc.removeBearing();           // Removes bearing if the speed is zero
+            // --------- Workaround for old GPS that are affected to Week Rollover
+            //loc.setTime(loc.getTime() - 619315200000L);                               // Commented out, it simulate the old GPS hardware Timestamp
+            if (loc.getTime() <= 1388534400000L)                                        // if the Location Time is <= 01/01/2014 00:00:00.000
+                loc.setTime(loc.getTime() + 619315200000L);                             // Timestamp incremented by 1024×7×24×60×60×1000 = 619315200000 ms
+                                                                                        // This value must be doubled every 1024 weeks !!!
             LocationExtended eloc = new LocationExtended(loc);
             eloc.setNumberOfSatellites(getNumberOfSatellites());
             eloc.setNumberOfSatellitesUsedInFix(getNumberOfSatellitesUsedInFix());
@@ -1178,7 +1277,6 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 }
 
                 if (PlacemarkRequest) {
-                    // Log.w("myApp", "[#] GPSApplication.java - onLocationChanged: placemark");
                     _currentPlacemark = new LocationExtended(loc);
                     _currentPlacemark.setNumberOfSatellites(getNumberOfSatellites());
                     _currentPlacemark.setNumberOfSatellitesUsedInFix(getNumberOfSatellitesUsedInFix());
@@ -1246,6 +1344,13 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
 
         if (ID > 0) {
             synchronized(_ArrayListTracks) {
+                // Save Selections
+                ArrayList <Long> SelectedT = new ArrayList<>();
+                for (Track T : _ArrayListTracks) {
+                    if (T.isSelected()) SelectedT.add(T.getId());
+                }
+
+                // Update the List
                 _ArrayListTracks.clear();
                 _ArrayListTracks.addAll(GPSDataBase.getTracksList(0, ID - 1));
                 if ((ID > 1) && (GPSDataBase.getTrack(ID - 1) != null)) {
@@ -1259,13 +1364,12 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 } else
                     Log.w("myApp", "[#] GPSApplication.java - Update Tracklist: current track not visible into the tracklist");
 
-                // Resume the state of Job and Selection of each Track
+                // Restore the selection state
                 for (Track T : _ArrayListTracks) {
-                    for (Track OT : _OldArrayListTracks) {
-                        if (T.getId() == OT.getId()) {
-                            T.setSelected(OT.isSelected());
-                            T.setJobProgress(OT.getJobProgress());
-                            T.setProgress(OT.getProgress());
+                    for (Long SelT : SelectedT) {
+                        if (SelT == T.getId()) {
+                            T.setSelected(true);
+                            break;
                         }
                     }
                 }
@@ -1290,9 +1394,19 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             editor.remove("prefShowImperialUnits");
             editor.commit();
         }
+
+        // ---------Remove the prefIsStoragePermissionChecked in preferences if present
+
+        if (preferences.contains("prefIsStoragePermissionChecked")) {
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.remove("prefIsStoragePermissionChecked");
+            editor.commit();
+        }
+
         // -----------------------------------------------------------------------
 
         //prefKeepScreenOn = preferences.getBoolean("prefKeepScreenOn", true);
+        prefGPSWeekRolloverCorrected = preferences.getBoolean("prefGPSWeekRolloverCorrected", false);
         prefShowDecimalCoordinates = preferences.getBoolean("prefShowDecimalCoordinates", false);
         prefViewTracksWith = Integer.valueOf(preferences.getString("prefViewTracksWith", "0"));
         prefUM = Integer.valueOf(preferences.getString("prefUM", "0")) + Integer.valueOf(preferences.getString("prefUMSpeed", "1"));
@@ -1308,13 +1422,20 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
         prefGPXVersion = Integer.valueOf(preferences.getString("prefGPXVersion", "100"));               // Default value = v.1.0
         prefShowTrackStatsType = Integer.valueOf(preferences.getString("prefShowTrackStatsType", "0"));
         prefShowDirections = Integer.valueOf(preferences.getString("prefShowDirections", "0"));
-        StoragePermissionChecked = preferences.getBoolean("prefIsStoragePermissionChecked", false);
 
         long oldGPSupdatefrequency = prefGPSupdatefrequency;
         prefGPSupdatefrequency = Long.valueOf(preferences.getString("prefGPSupdatefrequency", "1000"));
 
         // ---------------------------------------------- Update the GPS Update Frequency if needed
         if (oldGPSupdatefrequency != prefGPSupdatefrequency) updateGPSLocationFrequency();
+
+        // ---------------------------------------------------------------- If no Exportation formats are enabled, enable the GPX one
+        if (!prefExportKML && !prefExportGPX && !prefExportTXT) {
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean("prefExportGPX", true);
+            editor.commit();
+            prefExportGPX = true;
+        }
 
         // ---------------------------------------------------------------- Load EGM Grid if needed
         EGM96 egm96 = EGM96.getInstance();
@@ -1354,6 +1475,26 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             track = _currentTrack;
             EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
             UpdateTrackList();
+
+            // ----------------------------------------------------------------------------------------
+            // Apply the GPS Week Rollover Correction, for data already stored into the DB
+            // ----------------------------------------------------------------------------------------
+
+            if (!prefGPSWeekRolloverCorrected) {
+                if (!isFirstRun) {
+                    Log.w("myApp", "[#] GPSApplication.java - CORRECTING DATA FOR GPS WEEK ROLLOVER");
+                    GPSDataBase.CorrectGPSWeekRollover();
+                    Log.w("myApp", "[#] GPSApplication.java - DATA FOR GPS WEEK ROLLOVER CORRECTED");
+                    UpdateTrackList();
+                    Log.w("myApp", "[#] GPSApplication.java - TRACKLIST UPDATED WITH THE CORRECTED NAMES");
+                }
+                prefGPSWeekRolloverCorrected = true;
+                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit();
+                editor.putBoolean("prefGPSWeekRolloverCorrected", true);
+                editor.commit();
+            }
+            // ----------------------------------------------------------------------------------------
+
 
             while (true) {
                 AsyncTODO asyncTODO;
@@ -1395,6 +1536,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     EventBus.getDefault().post(EventBusMSG.UPDATE_FIX);
                     track.add(locationExtended);
                     GPSDataBase.addLocationToTrack(locationExtended, track);
+                    //Log.w("myApp", "[#] GPSApplication.java - TASK_ADDLOCATION: Added new Location in " + track.getId());
                     _currentTrack = track;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
                     if ((_currentTrack.getNumberOfLocations() + _currentTrack.getNumberOfSteps() + _currentTrack.getNumberOfPlacemarks()) == 1) UpdateTrackList();
@@ -1422,33 +1564,66 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                     _currentLocationExtended.setNumberOfSteps(asyncTODO.location.getNumberOfSteps());
                     EventBus.getDefault().post(EventBusMSG.UPDATE_FIX);
                 }
-/*
-                if (asyncTODO.TaskType.contains("TASK_DELETE_TRACK")) {
-                    Log.w("myApp", "[#] GPSApplication.java - Deleting Track ID = " + asyncTODO.TaskType.split(" ")[1]);
-                    if (Integer.valueOf(asyncTODO.TaskType.split(" ")[1]) >= 0) {
-                        long selectedtrackID = Integer.valueOf(asyncTODO.TaskType.split(" ")[1]);
-                        synchronized(_ArrayListTracks) {
-                            if (!_ArrayListTracks.isEmpty() && (selectedtrackID >= 0)) {
-                                int i = 0;
-                                boolean found = false;
-                                do {
-                                    if (_ArrayListTracks.get(i).getId() == selectedtrackID) {
-                                        found = true;
-                                        GPSDataBase.DeleteTrack(_ArrayListTracks.get(i).getId());
-                                        Log.w("myApp", "[#] GPSApplication.java - Track " + _ArrayListTracks.get(i).getId() + " deleted.");
-                                        _ArrayListTracks.remove(i);
-                                        if (JobsPending > 0) JobsPending--;
-                                        else EventBus.getDefault().post(EventBusMSG.UPDATE_TRACKLIST);
+
+                // Task: Delete some tracks
+                if (asyncTODO.TaskType.startsWith("TASK_DELETE_TRACKS")) {
+
+                    String STokens = asyncTODO.TaskType.substring(19);
+                    List<String> tokens = new ArrayList<>();
+                    StringTokenizer tokenizer = new StringTokenizer(STokens, " ");
+                    while (tokenizer.hasMoreElements()) {
+                        tokens.add(tokenizer.nextToken());
+                    }
+                    if (!tokens.isEmpty()) {
+                        JobProgress = 0;
+                        int TracksToBeDeleted = tokens.size();
+                        int TracksDeleted = 0;
+                        for (String s : tokens) {
+                            Track track = null;                 // The track found in the _ArrayListTracks
+                            int i = Integer.valueOf(s);
+                            if (i != _currentTrack.getId()) {   // Prevent the deletion of the current track
+                                synchronized(_ArrayListTracks) {
+                                    for (Track T : _ArrayListTracks) {
+                                        if (T.getId() == i) {
+                                            track = T;
+                                            GPSDataBase.DeleteTrack(i);
+                                            Log.w("myApp", "[#] GPSApplication.java - TASK_DELETE_TRACKS: Track " + i + " deleted.");
+                                            _ArrayListTracks.remove(T);
+                                            break;
+                                        }
                                     }
-                                    i++;
-                                } while ((i < _ArrayListTracks.size()) && !found);
-                                //Log.w("myApp", "[#] GPSApplication.java - now DB Contains " + GPSDataBase.getLocationsTotalCount() + " locations");
-                                //if (found) UpdateTrackList();
+                                }
+                                if (track != null) {
+                                    // Delete track files
+                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + track.getName() + ".txt");
+                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + track.getName() + ".kml");
+                                    DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + track.getName() + ".gpx");
+                                    DeleteFile(getApplicationContext().getFilesDir() + "/Thumbnails/" + track.getId() + ".png");
+                                    if (DeleteAlsoExportedFiles) {
+                                        // Delete exported files
+                                        DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/" + track.getName() + ".txt");
+                                        DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/" + track.getName() + ".kml");
+                                        DeleteFile(Environment.getExternalStorageDirectory() + "/GPSLogger/" + track.getName() + ".gpx");
+                                    }
+
+                                    TracksDeleted++;
+                                    JobProgress = (int) Math.round(1000L * TracksDeleted / TracksToBeDeleted);
+                                    EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
+                                        if (JobsPending > 0) JobsPending--;
+                                    }
+                            } else {
+                                Log.w("myApp", "[#] GPSApplication.java - TASK_DELETE_TRACKS: Unable to delete the current track!");
+                                TracksDeleted++;
+                                JobProgress = (int) Math.round(1000L * TracksDeleted / TracksToBeDeleted);
+                                EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
+                                if (JobsPending > 0) JobsPending--;
                             }
                         }
                     }
+                    JobProgress = 0;
+                    EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
+                    EventBus.getDefault().post(EventBusMSG.NOTIFY_TRACKS_DELETED);
                 }
-                */
             }
         }
     }
@@ -1494,6 +1669,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
 
                 // Setup Paints
                 drawPaint.setColor(Color.parseColor("#c9c9c9"));
+                // TODO: drawPaint.setColor(getResources().getColor(R.color.colorThumbnailLineColor));
                 drawPaint.setAntiAlias(true);
                 drawPaint.setStrokeWidth(getResources().getDimension(R.dimen.thumbLineWidth));
                 //drawPaint.setStrokeWidth(2);
@@ -1510,6 +1686,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                 BGPaint.setStrokeCap(Paint.Cap.ROUND);
 
                 EndDotdrawPaint.setColor(Color.parseColor("#c9c9c9"));
+                // TODO: EndDotdrawPaint.setColor(getResources().getColor(R.color.colorThumbnailLineColor));
                 EndDotdrawPaint.setAntiAlias(true);
                 EndDotdrawPaint.setStrokeWidth(getResources().getDimension(R.dimen.thumbLineWidth) * 2.5f);
                 EndDotdrawPaint.setStyle(Paint.Style.STROKE);
@@ -1596,19 +1773,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
                             //Log.w("myApp", "[#] GPSApplication.java - Unable to save: " + Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/" + fname);
                         }
 
-/* TODO: check this:
-                        final String FilesDir = GPSApplication.getInstance().getApplicationContext().getFilesDir().toString() + "/Thumbnails/";
-                        String Filename = FilesDir + Id + ".png";
-                        file = new File(Filename);
-                        if (file.exists ()) {
-                            Bitmap bmp = BitmapFactory.decodeFile(Filename);
-                            if (bmp != null) {
-                                thumbsArray.put((int)Id, bmp);
-                                Log.w("myApp", "[#] GPSApplication.java - Loaded track " + Id + " thumbnail");
-                            }
-                        }
-*/
-                        EventBus.getDefault().post(EventBusMSG.UPDATE_TRACKLIST);
+                        EventBus.getDefault().post(EventBusMSG.REFRESH_TRACKLIST);
                     }
                 }
             }

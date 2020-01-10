@@ -27,13 +27,12 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.preference.SwitchPreferenceCompat;
-import android.support.v7.view.ContextThemeWrapper;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -46,6 +45,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class FragmentSettings extends PreferenceFragmentCompat {
 
@@ -134,24 +142,9 @@ public class FragmentSettings extends PreferenceFragmentCompat {
                 if (key.equals("prefEGM96AltitudeCorrection")) {
                     if (sharedPreferences.getBoolean(key, false)) {
                         if (!Downloaded) {
-
-                        /* new AlertDialog.Builder(this)                         // Confirmation dialog for file download
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setTitle("Question")
-                            .setMessage("Download EGM96 coefficients (file size 2 MB)?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Start Download
-                                }
-
-                            })
-                            .setNegativeButton("No", null)
-                            .show();         */
-
                             // execute this when the downloader must be fired
                             final DownloadTask downloadTask = new DownloadTask(getActivity());
-                            downloadTask.execute("https://earth-info.nga.mil/GandG/wgs84/gravitymod/egm96/binary/WW15MGH.DAC");
+                            downloadTask.execute("http://earth-info.nga.mil/GandG/wgs84/gravitymod/egm96/binary/WW15MGH.DAC");
 
                             mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                                 @Override
@@ -164,6 +157,25 @@ public class FragmentSettings extends PreferenceFragmentCompat {
                         }
                     }
                 }
+
+                if (key.equals("prefLightColorTheme")) {
+                    SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
+                    SharedPreferences.Editor editor1 = settings.edit();
+                    editor1.putBoolean("prefLightColorTheme", sharedPreferences.getBoolean(key, false));
+                    editor1.commit();
+
+                    if (PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("prefLightColorTheme", false)) {
+                        AppCompatDelegate.setDefaultNightMode(
+                                AppCompatDelegate.MODE_NIGHT_NO);
+                    }
+                    else {
+                        AppCompatDelegate.setDefaultNightMode(
+                                AppCompatDelegate.MODE_NIGHT_YES);
+                    }
+
+                    getActivity().recreate();
+                }
+
                 SetupPreferences();
             }
         };
@@ -171,6 +183,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
 
     @Override
     public void onResume() {
+        super.onResume();
         // Remove dividers between preferences
         setDivider(new ColorDrawable(Color.TRANSPARENT));
         setDividerHeight(0);
@@ -178,7 +191,6 @@ public class FragmentSettings extends PreferenceFragmentCompat {
         prefs.registerOnSharedPreferenceChangeListener(prefListener);
         //Log.w("myApp", "[#] FragmentSettings.java - onResume");
         SetupPreferences();
-        super.onResume();
     }
 
     @Override
@@ -265,6 +277,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
 
     // ----------------------------------------------------------------.----- EGM96 - Download file
 
+
     // usually, subclasses of AsyncTask are declared inside the activity class.
     // that way, you can easily modify the UI thread from here
     private class DownloadTask extends AsyncTask<String, Integer, String> {
@@ -276,45 +289,96 @@ public class FragmentSettings extends PreferenceFragmentCompat {
             this.context = context;
         }
 
+        // Disables the SSL certificate checking for new instances of {@link HttpsURLConnection} This has been created to
+        // usually aid testing on a local box, not for use on production. On this case it is OK
+        // Code found on https://gist.github.com/tobiasrohloff/72e32bc4e215522c4bcc
+
+        private void disableSSLCertificateChecking() {
+            TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                @Override
+                public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                    // Not implemented
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                    // Not implemented
+                }
+            } };
+
+            try {
+                SSLContext sc = SSLContext.getInstance("TLS");
+
+                sc.init(null, trustAllCerts, new java.security.SecureRandom());
+
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            } catch (KeyManagementException e) {
+                e.printStackTrace();
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+        }
+
+
         @Override
         protected String doInBackground(String... sUrl) {
+            boolean redirect = false;
+            String HTTPSUrl = "";
             InputStream input = null;
             OutputStream output = null;
             HttpURLConnection connection = null;
             try {
                 URL url = new URL(sUrl[0]);
                 connection = (HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(true);
                 connection.connect();
 
                 // expect HTTP 200 OK, so we don't mistakenly save error report
                 // instead of the file
                 if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                    return "Server returned HTTP " + connection.getResponseCode()
+                    if ((connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP)
+                            || (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM)
+                            || (connection.getResponseCode() == HttpURLConnection.HTTP_SEE_OTHER)) {
+                        // REDIRECTED !!
+                        HTTPSUrl = connection.getHeaderField("Location");
+                        connection.disconnect();
+                        if (HTTPSUrl.startsWith("https")) {
+                            redirect = true;
+                            Log.w("myApp", "[#] FragmentSettings.java - Download of EGM Grid redirected to " + HTTPSUrl) ;
+                        }
+                    }
+                    else return "Server returned HTTP " + connection.getResponseCode()
                             + " " + connection.getResponseMessage();
                 }
 
-                // this will be useful to display download percentage
-                // might be -1: server did not report the length
-                int fileLength = connection.getContentLength();
+                if (!redirect) {
+                    // this will be useful to display download percentage
+                    // might be -1: server did not report the length
+                    int fileLength = connection.getContentLength();
 
-                // download the file
-                input = connection.getInputStream();
-                output = new FileOutputStream(getActivity().getApplicationContext().getFilesDir() + "/WW15MGH.DAC");
+                    // download the file
+                    input = connection.getInputStream();
+                    output = new FileOutputStream(getActivity().getApplicationContext().getFilesDir() + "/WW15MGH.DAC");
 
-                byte data[] = new byte[4096];
-                long total = 0;
-                int count;
-                while ((count = input.read(data)) != -1) {
-                    // allow canceling with back button
-                    if (isCancelled()) {
-                        input.close();
-                        return null;
+                    byte data[] = new byte[4096];
+                    long total = 0;
+                    int count;
+                    while ((count = input.read(data)) != -1) {
+                        // allow canceling with back button
+                        if (isCancelled()) {
+                            input.close();
+                            return null;
+                        }
+                        total += count;
+                        // publishing the progress....
+                        if (fileLength > 0) // only if total length is known
+                            publishProgress((int) (total * 2028 / fileLength));
+                        output.write(data, 0, count);
                     }
-                    total += count;
-                    // publishing the progress....
-                    if (fileLength > 0) // only if total length is known
-                        publishProgress((int) (total * 2028 / fileLength));
-                    output.write(data, 0, count);
                 }
             } catch (Exception e) {
                 return e.toString();
@@ -330,7 +394,67 @@ public class FragmentSettings extends PreferenceFragmentCompat {
                 if (connection != null)
                     connection.disconnect();
             }
-            return null;
+            if (!redirect) return null;
+            else {
+                // REDIRECTION. Try with HTTPS:
+                HttpsURLConnection connection_https = null;
+                try {
+                    URL url = new URL(HTTPSUrl);
+
+                    connection_https = (HttpsURLConnection) url.openConnection();
+                    connection_https.setInstanceFollowRedirects(true);
+
+                    disableSSLCertificateChecking();
+
+                    connection_https = (HttpsURLConnection) url.openConnection();
+                    connection_https.connect();
+
+                    // expect HTTP 200 OK, so we don't mistakenly save error report
+                    // instead of the file
+                    if (connection_https.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                        return "Server returned HTTP " + connection_https.getResponseCode()
+                                + " " + connection_https.getResponseMessage();
+                    }
+
+                    // this will be useful to display download percentage
+                    // might be -1: server did not report the length
+                    int fileLength = connection_https.getContentLength();
+
+                    // download the file
+                    input = connection_https.getInputStream();
+                    output = new FileOutputStream(getActivity().getApplicationContext().getFilesDir() + "/WW15MGH.DAC");
+
+                    byte data[] = new byte[4096];
+                    long total = 0;
+                    int count;
+                    while ((count = input.read(data)) != -1) {
+                        // allow canceling with back button
+                        if (isCancelled()) {
+                            input.close();
+                            return null;
+                        }
+                        total += count;
+                        // publishing the progress....
+                        if (fileLength > 0) // only if total length is known
+                            publishProgress((int) (total * 2028 / fileLength));
+                        output.write(data, 0, count);
+                    }
+                } catch (Exception e) {
+                    return e.toString();
+                } finally {
+                    try {
+                        if (output != null)
+                            output.close();
+                        if (input != null)
+                            input.close();
+                    } catch (IOException ignored) {
+                    }
+
+                    if (connection_https != null)
+                        connection_https.disconnect();
+                }
+                return null;
+            }
         }
 
         @Override
@@ -370,6 +494,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
                         PrefEGM96SetToTrue();
 
                         // Ask to switch to Absolute Altitude Mode if not already active.
+                        /*
                         ListPreference pKMLAltitudeMode = (ListPreference) findPreference("prefKMLAltitudeMode");
                         if (!(pKMLAltitudeMode.getValue().equals("0"))) {
                             AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(getContext(), R.style.StyledDialog));
@@ -394,6 +519,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
                             AlertDialog dialog = builder.create();
                             dialog.show();
                         }
+                        */
 
                     } else {
                         Toast.makeText(context, getString(R.string.toast_download_failed), Toast.LENGTH_SHORT).show();

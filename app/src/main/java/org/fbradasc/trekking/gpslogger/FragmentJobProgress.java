@@ -51,9 +51,17 @@ public class FragmentJobProgress extends Fragment {
 
     @Override
     public void onResume() {
+        super.onResume();
+
+        // Workaround for Nokia Devices, Android 9
+        // https://github.com/BasicAirData/GPSLogger/issues/77
+        if (EventBus.getDefault().isRegistered(this)) {
+            //Log.w("myApp", "[#] FragmentJobProgress.java - EventBus: FragmentJobProgress already registered");
+            EventBus.getDefault().unregister(this);
+        }
+
         EventBus.getDefault().register(this);
         Update();
-        super.onResume();
     }
 
     @Override
@@ -71,7 +79,7 @@ public class FragmentJobProgress extends Fragment {
 
     public void Update() {
         if (isAdded()) {
-            progressBar.setProgress((GPSApplication.getInstance().getJobProgress() == 100) || (GPSApplication.getInstance().getJobsPending() == 0 ) ? 0 : GPSApplication.getInstance().getJobProgress());
+            progressBar.setProgress((GPSApplication.getInstance().getJobProgress() == 1000) || (GPSApplication.getInstance().getJobsPending() == 0 ) ? 0 : GPSApplication.getInstance().getJobProgress());
         }
     }
 }

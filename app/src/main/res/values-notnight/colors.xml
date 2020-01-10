@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ colors.xml (notnight)
+  ~ Created by G.Capelli (BasicAirData) on 5/1/2020
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+
+    <!-- ======[ LIGHT THEME ]================================================================= -->
+
+    <color name="colorPrimary">#000088</color>
+    <color name="colorPrimaryDark">#000055</color>
+    <color name="colorPrimaryLight">#1111b5</color>
+    <color name="textColorPrimary">#111111</color>
+    <color name="textColorCardTitle">#272727</color>
+    <color name="textColorSecondary">#888888</color>
+    <color name="colorBackground">#e8e8e8</color>
+
+    <color name="colorRecControlBackground">#666666</color>
+    <color name="textColorRecControlPrimary">#ffffff</color>
+    <color name="textColorRecControlSecondary">#cccccc</color>
+
+    <color name="colorRoundedCornerDarkBottom">#eeeeee</color>
+    <color name="colorRoundedCornerDarktop">#ffffff</color>
+    <color name="colorRoundedCornerDarkBorder">#cccccc</color>
+
+    <color name="colorCardBackground_Title">#12000000</color>
+    <color name="colorCardBackground_Line">#4f000000</color>
+    <color name="colorCardBackground_Data">#07000000</color>
+    <color name="colorCardBackground">#ffffff</color>
+    <color name="colorCardBackground_Selected">#42ff2f2f</color>
+
+    <color name="colorAccent">#ffffff</color>
+    <color name="preference_accent">#000088</color>
+    <color name="preference_fallback_accent_color">#2222ca</color>
+
+</resources>

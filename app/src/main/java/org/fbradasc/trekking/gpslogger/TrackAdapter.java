@@ -20,10 +20,14 @@ package org.fbradasc.trekking.gpslogger;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ColorMatrixColorFilter;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -37,10 +41,20 @@ import java.util.List;
 
 class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
 
+    private static final float[] NEGATIVE = {
+            -1.0f,      0,      0,     0,  240, // red
+                0,  -1.0f,      0,     0,  240, // green
+                0,      0,  -1.0f,     0,  240, // blue
+                0,      0,      0, 1.00f,    0  // alpha
+    };
+    private ColorMatrixColorFilter colorMatrixColorFilter = new ColorMatrixColorFilter(NEGATIVE);
+
     private final static int NOT_AVAILABLE = -100000;
     private final static int CARDTYPE_CURRENTTRACK = 0;
     private final static int CARDTYPE_TRACK = 1;
     private final static int CARDTYPE_SELECTEDTRACK = 2;
+
+    boolean isLightTheme = false;
 
     private List<Track> dataSet;
 
@@ -54,11 +68,11 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             BitmapFactory.decodeResource(GPSApplication.getInstance().getResources(), R.mipmap.ic_flight_white_24dp)
     };
 
-    private static final Bitmap bmpCurrentTrackRecording = BitmapFactory.decodeResource(GPSApplication.getInstance().getResources(), R.mipmap.ic_forward_white_48dp);
+    private static final Bitmap bmpCurrentTrackRecording = BitmapFactory.decodeResource(GPSApplication.getInstance().getResources(), R.mipmap.ic_recording_48dp);
     private static final Bitmap bmpCurrentTrackPaused = BitmapFactory.decodeResource(GPSApplication.getInstance().getResources(), R.mipmap.ic_paused_white_48dp);
 
-
-
+    private long StartAnimationTime = 0;
+    private long PointsCount = GPSApplication.getInstance().getCurrentTrack().getNumberOfLocations() + GPSApplication.getInstance().getCurrentTrack().getNumberOfPlacemarks();
 
     class TrackHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
@@ -67,17 +81,23 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
         private Track track;
         private int TT;
 
+        private final CardView card;
         private final TextView textViewTrackName;
         private final TextView textViewTrackDescription;
         private final TextView textViewTrackLength;
         private final TextView textViewTrackDuration;
         private final TextView textViewTrackAltitudeGap;
+        private final TextView textViewTrackAltitudeMin;
+        private final TextView textViewTrackAltitudeMax;
+        private final TextView textViewTrackAltitudeUp;
+        private final TextView textViewTrackAltitudeDown;
         private final TextView textViewTrackMaxSpeed;
         private final TextView textViewTrackAverageSpeed;
         private final TextView textViewTrackGeopoints;
         private final TextView textViewTrackSteps;
         private final TextView textViewTrackPlacemarks;
         private final ImageView imageViewThumbnail;
+        private final ImageView imageViewPulse;
         private final ImageView imageViewIcon;
 
 
@@ -85,8 +105,9 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
         public void onClick(View v) {
             if (GPSApplication.getInstance().getJobsPending() == 0) {
                 track.setSelected(!track.isSelected());
-                EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TRACKLIST_SELECTION, track.getId()));
-                //Log.w("myApp", "[#] TrackAdapter.java - Selected track id = " + id);
+                card.setSelected(track.isSelected());
+                EventBus.getDefault().post(new EventBusMSGNormal(track.isSelected() ? EventBusMSG.TRACKLIST_SELECT : EventBusMSG.TRACKLIST_DESELECT, track.getId()));
+                //Log.w("myApp", "[#] TrackAdapter.java - Selected track id = " + track.getId());
             }
         }
 
@@ -96,24 +117,41 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
 
             itemView.setOnClickListener(this);
 
-            textViewTrackName           = (TextView) itemView.findViewById(R.id.id_textView_card_TrackName);
-            textViewTrackDescription    = (TextView) itemView.findViewById(R.id.id_textView_card_TrackDesc);
-            textViewTrackLength         = (TextView) itemView.findViewById(R.id.id_textView_card_length);
-            textViewTrackDuration       = (TextView) itemView.findViewById(R.id.id_textView_card_duration);
-            textViewTrackAltitudeGap    = (TextView) itemView.findViewById(R.id.id_textView_card_altitudegap);
-            textViewTrackMaxSpeed       = (TextView) itemView.findViewById(R.id.id_textView_card_maxspeed);
-            textViewTrackAverageSpeed   = (TextView) itemView.findViewById(R.id.id_textView_card_averagespeed);
-            textViewTrackGeopoints      = (TextView) itemView.findViewById(R.id.id_textView_card_geopoints);
-            textViewTrackSteps          = (TextView) itemView.findViewById(R.id.id_textView_card_steps);
-            textViewTrackPlacemarks     = (TextView) itemView.findViewById(R.id.id_textView_card_placemarks);
-            imageViewThumbnail          = (ImageView) itemView.findViewById(R.id.id_imageView_card_minimap);
-            imageViewIcon               = (ImageView) itemView.findViewById(R.id.id_imageView_card_tracktype);
+            // CardView
+            card                        = itemView.findViewById(R.id.card_view);
+
+            // TextViews
+            textViewTrackName           = itemView.findViewById(R.id.id_textView_card_TrackName);
+            textViewTrackDescription    = itemView.findViewById(R.id.id_textView_card_TrackDesc);
+            textViewTrackLength         = itemView.findViewById(R.id.id_textView_card_length);
+            textViewTrackDuration       = itemView.findViewById(R.id.id_textView_card_duration);
+            textViewTrackAltitudeGap    = itemView.findViewById(R.id.id_textView_card_altitudegap);
+            textViewTrackAltitudeMin    = itemView.findViewById(R.id.id_textView_card_altitudemin);
+            textViewTrackAltitudeMax    = itemView.findViewById(R.id.id_textView_card_altitudemax);
+            textViewTrackAltitudeUp     = itemView.findViewById(R.id.id_textView_card_altitudeup);
+            textViewTrackAltitudeDown   = itemView.findViewById(R.id.id_textView_card_altitudedown);
+            textViewTrackMaxSpeed       = itemView.findViewById(R.id.id_textView_card_maxspeed);
+            textViewTrackAverageSpeed   = itemView.findViewById(R.id.id_textView_card_averagespeed);
+            textViewTrackGeopoints      = itemView.findViewById(R.id.id_textView_card_geopoints);
+            textViewTrackSteps          = itemView.findViewById(R.id.id_textView_card_steps);
+            textViewTrackPlacemarks     = itemView.findViewById(R.id.id_textView_card_placemarks);
+
+            // ImageViews
+            imageViewThumbnail          = itemView.findViewById(R.id.id_imageView_card_minimap);
+            imageViewPulse              = itemView.findViewById(R.id.id_imageView_card_pulse);
+            imageViewIcon               = itemView.findViewById(R.id.id_imageView_card_tracktype);
+
+            if (isLightTheme) {
+                imageViewThumbnail.setColorFilter(colorMatrixColorFilter);
+                imageViewPulse.setColorFilter(colorMatrixColorFilter);
+                imageViewIcon.setColorFilter(colorMatrixColorFilter);
+            }
         }
 
 
         void UpdateTrackStats(Track trk) {
-            textViewTrackName.setText(trk.getName());
-            //textViewTrackName.setText(track.getId() + " - " + track.getName());
+            //textViewTrackName.setText(trk.getName());
+
             if (trk.getNumberOfLocations() + trk.getNumberOfSteps() > 1) {
                 phd = phdformatter.format(trk.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 textViewTrackLength.setText(phd.Value + " " + phd.UM);
@@ -121,6 +159,14 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
                 textViewTrackDuration.setText(phd.Value);
                 phd = phdformatter.format(trk.getEstimatedAltitudeGap(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
                 textViewTrackAltitudeGap.setText(phd.Value + " " + phd.UM);
+                phd = phdformatter.format(trk.getEstimatedAltitudeMin(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
+                textViewTrackAltitudeMin.setText(phd.Value + " " + phd.UM);
+                phd = phdformatter.format(trk.getEstimatedAltitudeMax(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
+                textViewTrackAltitudeMax.setText(phd.Value + " " + phd.UM);
+                phd = phdformatter.format(trk.getEstimatedAltitudeUp(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
+                textViewTrackAltitudeUp.setText(phd.Value + " " + phd.UM);
+                phd = phdformatter.format(trk.getEstimatedAltitudeDown(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
+                textViewTrackAltitudeDown.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(trk.getSpeedMax(),PhysicalDataFormatter.FORMAT_SPEED);
                 textViewTrackMaxSpeed.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(trk.getPrefSpeedAverage(),PhysicalDataFormatter.FORMAT_SPEED_AVG);
@@ -129,6 +175,10 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
                 textViewTrackLength.setText("");
                 textViewTrackDuration.setText("");
                 textViewTrackAltitudeGap.setText("");
+                textViewTrackAltitudeMin.setText("");
+                textViewTrackAltitudeMax.setText("");
+                textViewTrackAltitudeUp.setText("");
+                textViewTrackAltitudeDown.setText("");
                 textViewTrackMaxSpeed.setText("");
                 textViewTrackAverageSpeed.setText("");
             }
@@ -140,15 +190,31 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             if (TT != NOT_AVAILABLE) imageViewIcon.setImageBitmap(bmpTrackType[TT]);
             else imageViewIcon.setImageBitmap(null);
 
-            imageViewThumbnail.setImageBitmap (GPSApplication.getInstance().getRecording() ? bmpCurrentTrackRecording : bmpCurrentTrackPaused);
+            if (GPSApplication.getInstance().getRecording()) {
+                imageViewThumbnail.setImageBitmap(bmpCurrentTrackRecording);
+                imageViewPulse.setVisibility(View.VISIBLE);
+                if ((PointsCount != trk.getNumberOfLocations()+trk.getNumberOfPlacemarks()) && (System.currentTimeMillis() - StartAnimationTime >= 700L)) {
+                    PointsCount = trk.getNumberOfLocations()+trk.getNumberOfPlacemarks();
+                    Animation sunRise = AnimationUtils.loadAnimation(GPSApplication.getInstance().getApplicationContext(), R.anim.record_pulse);
+                    imageViewPulse.startAnimation(sunRise);
+                    StartAnimationTime = System.currentTimeMillis();
+                }
+            } else {
+                imageViewPulse.setVisibility(View.INVISIBLE);
+                imageViewThumbnail.setImageBitmap(bmpCurrentTrackPaused);
+            }
         }
 
 
         void BindTrack(Track trk) {
             track = trk;
+
+            card.setSelected(track.isSelected());
+
+            imageViewPulse.setVisibility(View.INVISIBLE);
             textViewTrackName.setText(track.getName());
-            textViewTrackDescription.setText(GPSApplication.getInstance().getString(R.string.track_id) + " " + trk.getId());
-            //textViewTrackName.setText(track.getId() + " - " + track.getName());
+            textViewTrackDescription.setText(GPSApplication.getInstance().getString(R.string.track_id) + " " + track.getId());
+
             if (trk.getNumberOfLocations() + trk.getNumberOfSteps() > 1) {
                 phd = phdformatter.format(track.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 textViewTrackLength.setText(phd.Value + " " + phd.UM);
@@ -156,6 +222,14 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
                 textViewTrackDuration.setText(phd.Value);
                 phd = phdformatter.format(track.getEstimatedAltitudeGap(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
                 textViewTrackAltitudeGap.setText(phd.Value + " " + phd.UM);
+                phd = phdformatter.format(track.getEstimatedAltitudeMin(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
+                textViewTrackAltitudeMin.setText(phd.Value + " " + phd.UM);
+                phd = phdformatter.format(track.getEstimatedAltitudeMax(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
+                textViewTrackAltitudeMax.setText(phd.Value + " " + phd.UM);
+                phd = phdformatter.format(track.getEstimatedAltitudeUp(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
+                textViewTrackAltitudeUp.setText(phd.Value + " " + phd.UM);
+                phd = phdformatter.format(track.getEstimatedAltitudeDown(GPSApplication.getInstance().getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
+                textViewTrackAltitudeDown.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(track.getSpeedMax(),PhysicalDataFormatter.FORMAT_SPEED);
                 textViewTrackMaxSpeed.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(track.getPrefSpeedAverage(),PhysicalDataFormatter.FORMAT_SPEED_AVG);
@@ -164,6 +238,10 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
                 textViewTrackLength.setText("");
                 textViewTrackDuration.setText("");
                 textViewTrackAltitudeGap.setText("");
+                textViewTrackAltitudeMin.setText("");
+                textViewTrackAltitudeMax.setText("");
+                textViewTrackAltitudeUp.setText("");
+                textViewTrackAltitudeDown.setText("");
                 textViewTrackMaxSpeed.setText("");
                 textViewTrackAverageSpeed.setText("");
             }
@@ -171,10 +249,11 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             textViewTrackSteps.setText(String.valueOf(track.getNumberOfSteps()));
             textViewTrackPlacemarks.setText(String.valueOf(track.getNumberOfPlacemarks()));
 
-            if (track.getTrackType() != NOT_AVAILABLE) imageViewIcon.setImageBitmap(bmpTrackType[track.getTrackType()]);
+            TT = trk.getTrackType();
+            if (TT != NOT_AVAILABLE) imageViewIcon.setImageBitmap(bmpTrackType[TT]);
             else imageViewIcon.setImageBitmap(null);
 
-            if (GPSApplication.getInstance().getCurrentTrack().getId() == trk.getId()) {
+            if (GPSApplication.getInstance().getCurrentTrack().getId() == track.getId()) {
                 imageViewThumbnail.setImageBitmap (GPSApplication.getInstance().getRecording() ? bmpCurrentTrackRecording : bmpCurrentTrackPaused);
             }
             else {
@@ -193,6 +272,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
 
 
     TrackAdapter(List<Track> data) {
+
         synchronized(data) {
             this.dataSet = data;
         }
@@ -216,17 +296,6 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
         holder.BindTrack(dataSet.get(listPosition));
     }
 
-/*
-    @Override
-    public void onBindViewHolder(TrackHolder holder, int listPosition, List<Object> payloads) {
-        if(!payloads.isEmpty()) {
-            //if (payloads.get(0) instanceof Integer) {
-                // Update progressbar:
-                holder.progressBar.setProgress((Integer) payloads.get(0));
-            //}
-        } else super.onBindViewHolder(holder, listPosition, payloads);
-    }
-*/
 
     @Override
     public int getItemCount() {

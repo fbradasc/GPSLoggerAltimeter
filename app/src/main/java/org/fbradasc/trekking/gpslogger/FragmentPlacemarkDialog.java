@@ -22,11 +22,13 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -85,9 +87,28 @@ public class FragmentPlacemarkDialog extends DialogFragment implements View.OnCl
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder createPlacemarkAlert = new AlertDialog.Builder(getActivity(), R.style.StyledDialog);
-
         createPlacemarkAlert.setTitle(R.string.dlg_add_placemark);
-        createPlacemarkAlert.setIcon(R.mipmap.ic_add_location_white_24dp);
+        Drawable icon = getResources().getDrawable(R.mipmap.ic_add_location_white_24dp);
+
+        // Set the right icon color, basing on the day/night theme active
+        switch (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) {
+            case Configuration.UI_MODE_NIGHT_NO:
+                // Night mode is not active, we're in day time
+                final float[] NEGATIVE = {
+                        -1.0f,      0,      0,     0,  255, // red
+                            0,  -1.0f,      0,     0,  255, // green
+                            0,      0,  -1.0f,     0,  255, // blue
+                            0,      0,      0, 1.00f,    0  // alpha
+                };
+                icon.setColorFilter(new ColorMatrixColorFilter(NEGATIVE));
+                break;
+            case Configuration.UI_MODE_NIGHT_YES:
+                // Night mode is active, we're at night!
+            case Configuration.UI_MODE_NIGHT_UNDEFINED:
+                // We don't know what mode we're in, assume notnight
+                break;
+        }
+        createPlacemarkAlert.setIcon(icon);
 
         LayoutInflater inflater = getActivity().getLayoutInflater();
         final View view = (View) inflater.inflate(R.layout.fragment_placemark_dialog, null);
@@ -169,8 +190,6 @@ public class FragmentPlacemarkDialog extends DialogFragment implements View.OnCl
         }, 200);
 
         createPlacemarkAlert.setView(view)
-
-                //.setPositiveButton(R.string.conti_nue, new DialogInterface.OnClickListener() {
                 .setPositiveButton(R.string.dlg_button_add, new DialogInterface.OnClickListener() {
 
                     @Override
@@ -217,12 +236,9 @@ public class FragmentPlacemarkDialog extends DialogFragment implements View.OnCl
                         }
                     }
                 })
-                //.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                 .setNegativeButton(R.string.dlg_button_cancel, new DialogInterface.OnClickListener() {
-
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
-
                     }
                 });
         return createPlacemarkAlert.create();
@@ -231,23 +247,6 @@ public class FragmentPlacemarkDialog extends DialogFragment implements View.OnCl
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        getDialog().getWindow().setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-    }
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-    }
-
-    // TODO: to remove ?
-    @Override
-    public void onDestroyView() {
-        Dialog dialog = getDialog();
-        // handles https://code.google.com/p/android/issues/detail?id=17423
-        if (dialog != null && getRetainInstance()) {
-            dialog.setDismissMessage(null);
-        }
-        super.onDestroyView();
+        getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
     }
 }

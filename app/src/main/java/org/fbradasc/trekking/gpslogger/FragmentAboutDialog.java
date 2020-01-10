@@ -39,6 +39,7 @@ public class FragmentAboutDialog extends DialogFragment {
     //@SuppressLint("InflateParams")
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+
         AlertDialog.Builder createAboutAlert = new AlertDialog.Builder(getActivity(), R.style.MyMaterialThemeAbout);
 
         LayoutInflater inflater = getActivity().getLayoutInflater();

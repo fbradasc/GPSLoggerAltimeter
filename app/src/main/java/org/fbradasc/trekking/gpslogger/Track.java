@@ -85,6 +85,8 @@ public class Track {
     private double  Altitude_Up                 = NOT_AVAILABLE;    // Saved in DB
     private double  Altitude_Down               = NOT_AVAILABLE;    // Saved in DB
     private double  Altitude_InProgress         = NOT_AVAILABLE;    // Saved in DB
+    private double  Altitude_Min                = NOT_AVAILABLE;    // Saved in DB
+    private double  Altitude_Max                = NOT_AVAILABLE;    // Saved in DB
 
     private float   SpeedMax                    = NOT_AVAILABLE;    // Saved in DB
     private float   SpeedAverage                = NOT_AVAILABLE;    // Saved in DB
@@ -259,15 +261,23 @@ public class Track {
                 Altitude_InProgress = 0;
             }
 
+            if ((Altitude_Min == NOT_AVAILABLE) || (Altitude_Min > End_Altitude)) {
+                Altitude_Min = End_Altitude;
+            }
+
+            if ((Altitude_Max == NOT_AVAILABLE) || (Altitude_Max < End_Altitude)) {
+                Altitude_Max = End_Altitude;
+            }
         }
+
 
         setNumberOfSteps(location.getNumberOfSteps());
 
         // --------------------------------------------------------------------------------- Speeds
 
         if ((End_Speed != NOT_AVAILABLE) && (End_Speed > SpeedMax)) SpeedMax = End_Speed;
-        if (Duration > 0) SpeedAverage = Distance / ((float) Duration / 1000);
-        if (Duration_Moving > 0) SpeedAverageMoving = Distance / ((float) (Duration_Moving / 1000));
+        if (Duration > 0) SpeedAverage = (Distance + DistanceInProgress) / (((float) Duration) / 1000f);
+        if (Duration_Moving > 0) SpeedAverageMoving = (Distance + DistanceInProgress) / (((float) Duration_Moving) / 1000f);
         NumberOfLocations++;
     }
 
@@ -290,8 +300,9 @@ public class Track {
                        double Min_Latitude, double Min_Longitude,
                        double Max_Latitude, double Max_Longitude,
                        long Duration, long Duration_Moving, float Distance, float DistanceInProgress,
-                       long DistanceLastAltitude, double Altitude_Up, double Altitude_Down,
-                       double Altitude_InProgress, float SpeedMax, float   SpeedAverage,
+                       long DistanceLastAltitude, double Altitude_Up, double Altitude_Down, double Altitude_InProgress,
+                       double Altitude_Min, double Altitude_Max,
+                       float SpeedMax, float   SpeedAverage,
                        float SpeedAverageMoving, long NumberOfLocations, long NumberOfPlacemarks, long NumberOfSteps,
                        int ValidMap, int Type) {
         this.id = id;
@@ -336,6 +347,8 @@ public class Track {
         this.Altitude_Up = Altitude_Up;
         this.Altitude_Down = Altitude_Down;
         this.Altitude_InProgress = Altitude_InProgress;
+        this.Altitude_Min = Altitude_Min;
+        this.Altitude_Max = Altitude_Max;
 
         this.SpeedMax = SpeedMax;
         this.SpeedAverage = SpeedAverage;
@@ -519,6 +532,14 @@ public class Track {
         return Altitude_Down;
     }
 
+    public double getAltitude_Min() {
+        return Altitude_Min;
+    }
+
+    public double getAltitude_Max() {
+        return Altitude_Max;
+    }
+
     public double getAltitude_InProgress() {
         return Altitude_InProgress;
     }
@@ -609,7 +630,7 @@ public class Track {
     }
 
 
-    public double getEstimatedAltitudeUp(boolean EGMCorrection){
+    private double getEGMCorrection(boolean EGMCorrection){
         // Retrieve EGM Corrections if available
         if ((Start_EGMAltitudeCorrection == NOT_AVAILABLE) || (End_EGMAltitudeCorrection == NOT_AVAILABLE)) {
             EGM96 egm96 = EGM96.getInstance();
@@ -620,10 +641,19 @@ public class Track {
                 }
             }
         }
+
         double egmcorr = 0;
+
         if ((EGMCorrection) && ((Start_EGMAltitudeCorrection != NOT_AVAILABLE) && (End_EGMAltitudeCorrection != NOT_AVAILABLE))) {
             egmcorr = Start_EGMAltitudeCorrection - End_EGMAltitudeCorrection;
         }
+
+        return egmcorr;
+    }
+
+    public double getEstimatedAltitudeUp(boolean EGMCorrection){
+        // Retrieve EGM Corrections if available
+        double egmcorr = getEGMCorrection(EGMCorrection);
         double dresultUp = Altitude_InProgress > 0 ? Altitude_Up + Altitude_InProgress : Altitude_Up;
         dresultUp -= egmcorr < 0 ? egmcorr : 0;
         double dresultDown = Altitude_InProgress < 0 ? Altitude_Down - Altitude_InProgress : Altitude_Down;
@@ -643,19 +673,7 @@ public class Track {
 
     public double getEstimatedAltitudeDown(boolean EGMCorrection){
         // Retrieve EGM Corrections if available
-        if ((Start_EGMAltitudeCorrection == NOT_AVAILABLE) || (End_EGMAltitudeCorrection == NOT_AVAILABLE)) {
-            EGM96 egm96 = EGM96.getInstance();
-            if (egm96 != null) {
-                if (egm96.isEGMGridLoaded()) {
-                    if (Start_Latitude != NOT_AVAILABLE) Start_EGMAltitudeCorrection = egm96.getEGMCorrection(Start_Latitude, Start_Longitude);
-                    if (End_Latitude != NOT_AVAILABLE) End_EGMAltitudeCorrection = egm96.getEGMCorrection(End_Latitude, End_Longitude);
-                }
-            }
-        }
-        double egmcorr = 0;
-        if ((EGMCorrection) && ((Start_EGMAltitudeCorrection != NOT_AVAILABLE) && (End_EGMAltitudeCorrection != NOT_AVAILABLE))) {
-            egmcorr = Start_EGMAltitudeCorrection - End_EGMAltitudeCorrection;
-        }
+        double egmcorr = getEGMCorrection(EGMCorrection);
         double dresultUp = Altitude_InProgress > 0 ? Altitude_Up + Altitude_InProgress : Altitude_Up;
         dresultUp -= egmcorr < 0 ? egmcorr : 0;
         double dresultDown = Altitude_InProgress < 0 ? Altitude_Down - Altitude_InProgress : Altitude_Down;
@@ -674,6 +692,18 @@ public class Track {
 
     public double getEstimatedAltitudeGap(boolean EGMCorrection){
         return getEstimatedAltitudeUp(EGMCorrection) - getEstimatedAltitudeDown(EGMCorrection);
+    }
+
+    public double getEstimatedAltitudeMin(boolean EGMCorrection){
+        // Retrieve EGM Corrections if available
+        double egmcorr = getEGMCorrection(EGMCorrection);
+        return Altitude_Min - (egmcorr > 0 ? egmcorr : 0);
+    }
+
+    public double getEstimatedAltitudeMax(boolean EGMCorrection){
+        // Retrieve EGM Corrections if available
+        double egmcorr = getEGMCorrection(EGMCorrection);
+        return Altitude_Max - (egmcorr < 0 ? egmcorr : 0);
     }
 
 

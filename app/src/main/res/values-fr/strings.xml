@@ -30,10 +30,24 @@
   <string name="speed">Vitesse</string>
   <string name="direction">Direction</string>
   <string name="accuracy">Exactitude</string>
+    <string name="time">Heure</string>
+    <string name="satellites">Satellites</string>
   <string name="north">N</string>
+    <string name="north_northeast">NNE</string>
+    <string name="northeast">NE</string>
+    <string name="east_northeast">ENE</string>
+    <string name="east">E</string>
+    <string name="east_southeast">ESE</string>
+    <string name="southeast">SE</string>
+    <string name="south_southeast">SSE</string>
   <string name="south">S</string>
-  <string name="east">E</string>
+    <string name="south_southwest">SSO</string>
+    <string name="southwest">SO</string>
+    <string name="west_southwest">OSO</string>
   <string name="west">O</string>
+    <string name="west_northwest">ONO</string>
+    <string name="northwest">NO</string>
+    <string name="north_northwest">NNO</string>
   <!-- GPS Status messages -->
   <string name="gps_disabled">GPS désactivé</string>
   <string name="gps_disabled_with_hint">GPS désactivé\n\nEn double-cliquant ici,\nvous pouvez activer le Service de Localisation\net définir une Méthode de Localisation\nqui utilise le signal GPS</string>
@@ -56,10 +70,10 @@
   <string name="trackpoints">Points de tracé</string>
   <!-- Main menu -->
   <string name="menu_settings">Paramètres</string>
-  <string name="menu_track_finished">Tracé terminé</string>
-  <string name="toast_track_finished_click_again">Double-cliquer pour terminer ce tracé</string>
+    <string name="menu_track_finished">Tracé finalisé</string>
+    <string name="toast_track_finished_click_again">Double-cliquer pour finaliser ce tracé</string>
   <string name="toast_track_saved_into_tracklist">Tracé archivé</string>
-  <string name="toast_track_exported">Tracé exporté dans le dossier /GPSLogger</string>
+    <string name="toast_track_exported">Tracés exportés dans le dossier /GPSLogger</string>
   <string name="menu_about">À propos</string>
   <string name="menu_shutdown">Éteindre</string>
   <!-- Placemark Creation dialog -->
@@ -84,12 +98,17 @@
   <string name="card_menu_share">Partager avec ...</string>
   <string name="card_menu_placemarks">Repères</string>
   <!-- Tracklist toasts and messagebox -->
-  <string name="card_message_delete_also_exported">Voulez-vous également supprimer tous les fichiers exportés de ce tracé?</string>
-  <string name="card_message_delete_confirmation">Voulez-vous vraiment supprimer ce tracé?</string>
+    <string name="card_message_delete_also_exported">Voulez-vous également supprimer tous les fichiers exportés des tracés sélectionnés ?</string>
+    <string name="card_message_delete_confirmation">Voulez-vous vraiment supprimer les tracés sélectionnés ?</string>
   <string name="yes">Oui</string>
   <string name="no">Non</string>
   <string name="cancel">Annuler</string>
   <string name="export_unable_to_write_file">Impossible d\'écrire le fichier</string>
+    <string name="please_grant_storage_permission">Veuillez accorder l’autorisation de stockage pour activer cette fonctionnalité</string>
+    <!-- Notification App killed messagebox -->
+    <string name="dlg_app_killed">L\'application a été tuée pendant l\'enregistrement en arrière-plan.</string>
+    <string name="dlg_app_killed_description">Veuillez vérifier dans les paramètres Android que l\'application n\'est pas Optimisée pour la batterie ni Restreinte en arrière-plan.</string>
+    <string name="open_android_app_settings">Ouvrir paramètres</string>
   <!-- Preferences -->
   <string name="pref_category_interface">INTERFACE</string>
   <string name="pref_keep_screen_on">Maintenir l’écran allumé</string>
@@ -121,6 +140,7 @@
   <string name="pref_GPS_distance_33ft">33 pieds</string>
   <string name="pref_GPS_distance_66ft">66 pieds</string>
   <string name="pref_GPS_update_frequency">Intervalle de mise à jour du GPS</string>
+    <string name="pref_GPS_update_frequency_max">Le plus court disponible</string>
   <string name="pref_GPS_update_frequency_1s">1 seconde (meilleure précision)</string>
   <string name="pref_GPS_update_frequency_2s">2 secondes</string>
   <string name="pref_GPS_update_frequency_3s">3 secondes (précision moindre)</string>
@@ -139,7 +159,7 @@
   <string name="pref_TXT_system_of_measurement">Unités de mesure pour le format TXT</string>
   <string name="pref_TXT_system_of_measurement_follows_app_settings">Suivre les paramètres de l’interface</string>
   <string name="pref_export_KML">Exporter les Tracés en KML</string>
-  <string name="pref_export_KML_summary">Google Keyhole Markup Language (v.2.2)</string>
+    <string name="pref_export_KML_summary">Keyhole Markup Language (v.2.2)</string>
   <string name="pref_export_GPX">Exporter les Tracés en GPX</string>
   <string name="pref_export_GPX_summary">Format GPS eXchange standard</string>
   <string name="pref_GPX_version">Version du standard GPX</string>
@@ -151,22 +171,22 @@
   <string name="pref_track_stats">Stats de parcours basées sur</string>
   <string name="pref_track_stats_totaltime">Temps total</string>
   <string name="pref_track_stats_movingtime">Temps en mouvement</string>
-  <!-- Preferences messages -->
-  <string name="pref_message_switch_to_absolute_altitude_mode">Nous vous suggérons de passer en Mode Altitude Absolue, pour visualiser vos parcours en 3D dans Google Earth. \n\nVous pouvez basculer à n\'importe quel moment entre l\'altitude Absolue et celle Projetée au sol dans la section Exportation des Paramètres.</string>
   <!-- Preferences toasts -->
   <string name="toast_download_error">Erreur de téléchargement</string>
   <string name="toast_download_completed">Téléchargement terminé</string>
   <string name="toast_download_failed">Échec du téléchargement. Veuillez réessayer plus tard</string>
+    <string name="toast_active_track_not_empty">Le tracé actif n\'est pas vide</string>
   <!-- About Dialog -->
   <string name="about_version">ver.</string>
-  <string name="about_description">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger enregistre vos parcours en utilisant le GPS. Vous pouvez les afficher dans votre visualiseur préféré, les partager et les exporter dans le dossier GPSLogger de votre appareil au format KML, GPX et TXT.\n\nCe programme est un logiciel libre, publié sous les termes de la GNU General Public License.\nPour plus de détails, voir : http://www.gnu.org/licenses/gpl.txt\n\nPour la mise en garde sur les fichiers EGM96 geoid, voir : http://earth-info.nga.mil/GandG/disclaim.html\n\nSi vous aimez cette application, vous pouvez prendre un instant pour noter GPS Logger sur le Google Play Store.</string>
+    <string name="about_description">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger enregistre vos parcours en utilisant le GPS. Vous pouvez les afficher dans votre visualiseur préféré, les partager et les exporter dans le dossier GPSLogger de votre appareil au format KML, GPX et TXT.\n\nCe programme est un logiciel libre, publié sous les termes de la GNU General Public License.\nPour plus de détails, voir : http://www.gnu.org/licenses/gpl.txt\n\nPour la mise en garde sur les fichiers EGM96 geoid, voir : http://earth-info.nga.mil/GandG/disclaim.html</string>
+    <string name="about_description_googleplaystore">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger enregistre vos parcours en utilisant le GPS. Vous pouvez les afficher dans votre visualiseur préféré, les partager et les exporter dans le dossier GPSLogger de votre appareil au format KML, GPX et TXT.\n\nCe programme est un logiciel libre, publié sous les termes de la GNU General Public License.\nPour plus de détails, voir : http://www.gnu.org/licenses/gpl.txt\n\nPour la mise en garde sur les fichiers EGM96 geoid, voir : http://earth-info.nga.mil/GandG/disclaim.html\n\nSi vous aimez cette application, vous pouvez prendre un instant pour noter GPS Logger sur le Google Play Store.</string>
   <string name="about_ok">Fermer</string>
   <string name="about_rate_this_app">Noter l\'Appli</string>
-  <string name="about_unable_to_rate">Impossible d\'ouvrir le Google Store</string>
+    <string name="about_unable_to_rate">Impossible d\'accéder au Store</string>
   <!-- Notification icon -->
   <string name="notification_contenttext">est actif</string>
   <!-- Exit confirmation -->
-  <string name="message_exit_confirmation">Voulez-vous vraiment finir ce tracé et fermer l\'application?</string>
+    <string name="message_exit_finalizing">Vous fermez l\'application.\nVoulez-vous finaliser le tracé en cours ?</string>
   <!-- Units of Measurement -->
   <string name="UM_m">m</string>
   <string name="UM_km">km</string>
