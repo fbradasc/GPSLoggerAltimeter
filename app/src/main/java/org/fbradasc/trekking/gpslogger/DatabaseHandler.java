@@ -38,7 +38,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
     // All Static variables
     // Database Version
-    private static final int DATABASE_VERSION = 4;          // Updated to 2 in v2.1.3 (code 14)
+    private static final int DATABASE_VERSION = 5;          // Updated to 2 in v2.1.3 (code 14)
     private static final int LOCATION_TYPE_LOCATION = 1;
     private static final int LOCATION_TYPE_PLACEMARK = 2;
 
@@ -110,6 +110,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_TRACK_DURATION_MOVING = "duration_moving";
 
     private static final String KEY_TRACK_DISTANCE = "distance";
+    private static final String KEY_TRACK_DISTANCE_MOVING = "distance_moving";
     private static final String KEY_TRACK_DISTANCE_INPROGRESS = "distance_in_progress";
     private static final String KEY_TRACK_DISTANCE_LASTALTITUDE = "distance_last_altitude";
 
@@ -131,6 +132,51 @@ class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_TRACK_VALIDMAP = "validmap";
 
 
+    private static final int I_ID = 0;
+    private static final int I_TRACK_NAME = 1;
+    private static final int I_TRACK_FROM = 2;
+    private static final int I_TRACK_TO = 3;
+    private static final int I_TRACK_START_LATITUDE = 4;
+    private static final int I_TRACK_START_LONGITUDE = 5;
+    private static final int I_TRACK_START_ALTITUDE = 6;
+    private static final int I_TRACK_START_ACCURACY = 7;
+    private static final int I_TRACK_START_SPEED = 8;
+    private static final int I_TRACK_START_TIME = 9;
+    private static final int I_TRACK_LASTFIX_TIME = 10;
+    private static final int I_TRACK_END_LATITUDE = 11;
+    private static final int I_TRACK_END_LONGITUDE = 12;
+    private static final int I_TRACK_END_ALTITUDE = 13;
+    private static final int I_TRACK_END_ACCURACY = 14;
+    private static final int I_TRACK_END_SPEED = 15;
+    private static final int I_TRACK_END_TIME = 16;
+    private static final int I_TRACK_LASTSTEPDST_LATITUDE = 17;
+    private static final int I_TRACK_LASTSTEPDST_LONGITUDE = 18;
+    private static final int I_TRACK_LASTSTEPDST_ACCURACY = 19;
+    private static final int I_TRACK_LASTSTEPALT_ALTITUDE = 20;
+    private static final int I_TRACK_LASTSTEPALT_ACCURACY = 21;
+    private static final int I_TRACK_MIN_LATITUDE = 22;
+    private static final int I_TRACK_MIN_LONGITUDE = 23;
+    private static final int I_TRACK_MAX_LATITUDE = 24;
+    private static final int I_TRACK_MAX_LONGITUDE = 25;
+    private static final int I_TRACK_DURATION = 26;
+    private static final int I_TRACK_DURATION_MOVING = 27;
+    private static final int I_TRACK_DISTANCE = 28;
+    private static final int I_TRACK_DISTANCE_INPROGRESS = 29;
+    private static final int I_TRACK_DISTANCE_LASTALTITUDE = 30;
+    private static final int I_TRACK_ALTITUDE_UP = 31;
+    private static final int I_TRACK_ALTITUDE_DOWN = 32;
+    private static final int I_TRACK_ALTITUDE_INPROGRESS = 33;
+    private static final int I_TRACK_SPEED_MAX = 34;
+    private static final int I_TRACK_SPEED_AVERAGE = 35;
+    private static final int I_TRACK_SPEED_AVERAGEMOVING = 36;
+    private static final int I_TRACK_NUMBEROFLOCATIONS = 37;
+    private static final int I_TRACK_NUMBEROFPLACEMARKS = 38;
+    private static final int I_TRACK_VALIDMAP = 39;
+    private static final int I_TRACK_TYPE = 40;
+    private static final int I_TRACK_NUMBEROFSTEPS = 41;
+    private static final int I_TRACK_ALTITUDE_MIN = 42;
+    private static final int I_TRACK_ALTITUDE_MAX = 43;
+    private static final int I_TRACK_DISTANCE_MOVING = 44;
 
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -183,7 +229,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
                 + KEY_TRACK_TYPE + " INTEGER,"                      // 40
                 + KEY_TRACK_NUMBEROFSTEPS + " INTEGER,"             // 41
                 + KEY_TRACK_ALTITUDE_MIN + " REAL,"                 // 42
-                + KEY_TRACK_ALTITUDE_MAX + " REAL " + ")";          // 43
+                + KEY_TRACK_ALTITUDE_MAX + " REAL,"                 // 43
+                + KEY_TRACK_DISTANCE_MOVING + " REAL " + ")";       // 44
         db.execSQL(CREATE_TRACKS_TABLE);
 
         String CREATE_LOCATIONS_TABLE = "CREATE TABLE " + TABLE_LOCATIONS + "("
@@ -240,6 +287,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
             + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_ALTITUDE_MIN + " REAL DEFAULT " +  NOT_AVAILABLE + ";";
     private static final String DATABASE_ALTER_TABLE_TRACKS_2_TO_V4 = "ALTER TABLE "
             + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_ALTITUDE_MAX + " REAL DEFAULT " +  NOT_AVAILABLE + ";";
+    private static final String DATABASE_ALTER_TABLE_TRACKS_TO_V5 = "ALTER TABLE "
+            + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_DISTANCE_MOVING + " REAL DEFAULT " +  NOT_AVAILABLE + ";";
     // Upgrading database
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -270,6 +319,9 @@ class DatabaseHandler extends SQLiteOpenHelper {
                 //upgrade from version 3 to 4
                 db.execSQL(DATABASE_ALTER_TABLE_TRACKS_1_TO_V4);
                 db.execSQL(DATABASE_ALTER_TABLE_TRACKS_2_TO_V4);
+            case 4:
+                //upgrade from version 4 to 5
+                db.execSQL(DATABASE_ALTER_TABLE_TRACKS_TO_V5);
 
                 //and so on.. do not add breaks so that switch will
                 //start at oldVersion, and run straight through to the latest
@@ -338,6 +390,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         trkvalues.put(KEY_TRACK_DURATION_MOVING, track.getDuration_Moving());
 
         trkvalues.put(KEY_TRACK_DISTANCE, track.getDistance());
+        trkvalues.put(KEY_TRACK_DISTANCE_MOVING, track.getDistanceMoving());
         trkvalues.put(KEY_TRACK_DISTANCE_INPROGRESS, track.getDistanceInProgress());
         trkvalues.put(KEY_TRACK_DISTANCE_LASTALTITUDE, track.getDistanceLastAltitude());
 
@@ -429,6 +482,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         trkvalues.put(KEY_TRACK_DURATION_MOVING, track.getDuration_Moving());
 
         trkvalues.put(KEY_TRACK_DISTANCE, track.getDistance());
+        trkvalues.put(KEY_TRACK_DISTANCE_MOVING, track.getDistanceMoving());
         trkvalues.put(KEY_TRACK_DISTANCE_INPROGRESS, track.getDistanceInProgress());
         trkvalues.put(KEY_TRACK_DISTANCE_LASTALTITUDE, track.getDistanceLastAltitude());
 
@@ -776,6 +830,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         trkvalues.put(KEY_TRACK_DURATION_MOVING, track.getDuration_Moving());
 
         trkvalues.put(KEY_TRACK_DISTANCE, track.getDistance());
+        trkvalues.put(KEY_TRACK_DISTANCE_MOVING, track.getDistanceMoving());
         trkvalues.put(KEY_TRACK_DISTANCE_INPROGRESS, track.getDistanceInProgress());
         trkvalues.put(KEY_TRACK_DISTANCE_LASTALTITUDE, track.getDistanceLastAltitude());
 
@@ -805,6 +860,71 @@ class DatabaseHandler extends SQLiteOpenHelper {
         return TrackID; // Insert this in the track ID !!!
     }
 
+    private Track loadTrack(Cursor cursor) {
+        Track track = new Track();
+        track.FromDB (
+            cursor.getLong(I_ID),
+            cursor.getString(I_TRACK_NAME),
+            cursor.getString(I_TRACK_FROM),
+            cursor.getString(I_TRACK_TO),
+
+            cursor.getDouble(I_TRACK_START_LATITUDE),
+            cursor.getDouble(I_TRACK_START_LONGITUDE),
+            cursor.getDouble(I_TRACK_START_ALTITUDE),
+            cursor.getFloat(I_TRACK_START_ACCURACY),
+            cursor.getFloat(I_TRACK_START_SPEED),
+            cursor.getLong(I_TRACK_START_TIME),
+
+            cursor.getLong(I_TRACK_LASTFIX_TIME),
+
+            cursor.getDouble(I_TRACK_END_LATITUDE),
+            cursor.getDouble(I_TRACK_END_LONGITUDE),
+            cursor.getDouble(I_TRACK_END_ALTITUDE),
+            cursor.getFloat(I_TRACK_END_ACCURACY),
+            cursor.getFloat(I_TRACK_END_SPEED),
+            cursor.getLong(I_TRACK_END_TIME),
+
+            cursor.getDouble(I_TRACK_LASTSTEPDST_LATITUDE),
+            cursor.getDouble(I_TRACK_LASTSTEPDST_LONGITUDE),
+            cursor.getFloat(I_TRACK_LASTSTEPDST_ACCURACY),
+
+            cursor.getDouble(I_TRACK_LASTSTEPALT_ALTITUDE),
+            cursor.getFloat(I_TRACK_LASTSTEPALT_ACCURACY),
+
+            cursor.getDouble(I_TRACK_MIN_LATITUDE),
+            cursor.getDouble(I_TRACK_MIN_LONGITUDE),
+            cursor.getDouble(I_TRACK_MAX_LATITUDE),
+            cursor.getDouble(I_TRACK_MAX_LONGITUDE),
+
+            cursor.getLong(I_TRACK_DURATION),
+            cursor.getLong(I_TRACK_DURATION_MOVING),
+
+            cursor.getFloat(I_TRACK_DISTANCE),
+            cursor.getFloat(I_TRACK_DISTANCE_MOVING),
+            cursor.getFloat(I_TRACK_DISTANCE_INPROGRESS),
+            cursor.getLong(I_TRACK_DISTANCE_LASTALTITUDE),
+
+            cursor.getDouble(I_TRACK_ALTITUDE_UP),
+            cursor.getDouble(I_TRACK_ALTITUDE_DOWN),
+            cursor.getDouble(I_TRACK_ALTITUDE_INPROGRESS),
+
+            cursor.getDouble(I_TRACK_ALTITUDE_MIN),
+            cursor.getDouble(I_TRACK_ALTITUDE_MAX),
+
+            cursor.getFloat(I_TRACK_SPEED_MAX),
+            cursor.getFloat(I_TRACK_SPEED_AVERAGE),
+            cursor.getFloat(I_TRACK_SPEED_AVERAGEMOVING),
+
+            cursor.getLong(I_TRACK_NUMBEROFLOCATIONS),
+            cursor.getLong(I_TRACK_NUMBEROFPLACEMARKS),
+            cursor.getLong(I_TRACK_NUMBEROFSTEPS),
+
+            cursor.getInt(I_TRACK_VALIDMAP),
+            cursor.getInt(I_TRACK_TYPE)
+        );
+
+        return track;
+    }
 
     // Get Track
     public Track getTrack(long TrackID) {
@@ -823,64 +943,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                track = new Track();
-                track.FromDB(cursor.getLong(0),
-                        cursor.getString(1),
-                        cursor.getString(2),
-                        cursor.getString(3),
-
-                        cursor.getDouble(4),
-                        cursor.getDouble(5),
-                        cursor.getDouble(6),
-                        cursor.getFloat(7),
-                        cursor.getFloat(8),
-                        cursor.getLong(9),
-
-                        cursor.getLong(10),
-
-                        cursor.getDouble(11),
-                        cursor.getDouble(12),
-                        cursor.getDouble(13),
-                        cursor.getFloat(14),
-                        cursor.getFloat(15),
-                        cursor.getLong(16),
-
-                        cursor.getDouble(17),
-                        cursor.getDouble(18),
-                        cursor.getFloat(19),
-
-                        cursor.getDouble(20),
-                        cursor.getFloat(21),
-
-                        cursor.getDouble(22),
-                        cursor.getDouble(23),
-                        cursor.getDouble(24),
-                        cursor.getDouble(25),
-
-                        cursor.getLong(26),
-                        cursor.getLong(27),
-
-                        cursor.getFloat(28),
-                        cursor.getFloat(29),
-                        cursor.getLong(30),
-
-                        cursor.getDouble(31),
-                        cursor.getDouble(32),
-                        cursor.getDouble(33),
-
-                        cursor.getDouble(42),
-                        cursor.getDouble(43),
-
-                        cursor.getFloat(34),
-                        cursor.getFloat(35),
-                        cursor.getFloat(36),
-
-                        cursor.getLong(37),
-                        cursor.getLong(38),
-                        cursor.getLong(41),
-
-                        cursor.getInt(39),
-                        cursor.getInt(40));
+                track = loadTrack(cursor);
             }
             cursor.close();
         }
@@ -937,66 +1000,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
             // looping through all rows and adding to list
             if (cursor.moveToFirst()) {
                 do {
-                    Track trk = new Track();
-                    trk.FromDB(cursor.getLong(0),
-                            cursor.getString(1),
-                            cursor.getString(2),
-                            cursor.getString(3),
-
-                            cursor.getDouble(4),
-                            cursor.getDouble(5),
-                            cursor.getDouble(6),
-                            cursor.getFloat(7),
-                            cursor.getFloat(8),
-                            cursor.getLong(9),
-
-                            cursor.getLong(10),
-
-                            cursor.getDouble(11),
-                            cursor.getDouble(12),
-                            cursor.getDouble(13),
-                            cursor.getFloat(14),
-                            cursor.getFloat(15),
-                            cursor.getLong(16),
-
-                            cursor.getDouble(17),
-                            cursor.getDouble(18),
-                            cursor.getFloat(19),
-
-                            cursor.getDouble(20),
-                            cursor.getFloat(21),
-
-                            cursor.getDouble(22),
-                            cursor.getDouble(23),
-                            cursor.getDouble(24),
-                            cursor.getDouble(25),
-
-                            cursor.getLong(26),
-                            cursor.getLong(27),
-
-                            cursor.getFloat(28),
-                            cursor.getFloat(29),
-                            cursor.getLong(30),
-
-                            cursor.getDouble(31),
-                            cursor.getDouble(32),
-                            cursor.getDouble(33),
-
-                            cursor.getDouble(42),
-                            cursor.getDouble(43),
-
-                            cursor.getFloat(34),
-                            cursor.getFloat(35),
-                            cursor.getFloat(36),
-
-                            cursor.getLong(37),
-                            cursor.getLong(38),
-                            cursor.getLong(41),
-
-                            cursor.getInt(39),
-                            cursor.getInt(40));
-
-                    trackList.add(trk);             // Add Track to list
+                    trackList.add(loadTrack(cursor));             // Add Track to list
                 } while (cursor.moveToNext());
             }
             cursor.close();
@@ -1086,62 +1090,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
             // looping through all rows and adding to list
             if (cursor.moveToFirst()) {
                 do {
-                    Track trk = new Track();
-                    trk.FromDB(cursor.getLong(0),
-                            cursor.getString(1),
-                            cursor.getString(2),
-                            cursor.getString(3),
-
-                            cursor.getDouble(4),
-                            cursor.getDouble(5),
-                            cursor.getDouble(6),
-                            cursor.getFloat(7),
-                            cursor.getFloat(8),
-                            cursor.getLong(9),
-
-                            cursor.getLong(10),
-
-                            cursor.getDouble(11),
-                            cursor.getDouble(12),
-                            cursor.getDouble(13),
-                            cursor.getFloat(14),
-                            cursor.getFloat(15),
-                            cursor.getLong(16),
-
-                            cursor.getDouble(17),
-                            cursor.getDouble(18),
-                            cursor.getFloat(19),
-
-                            cursor.getDouble(20),
-                            cursor.getFloat(21),
-
-                            cursor.getDouble(22),
-                            cursor.getDouble(23),
-                            cursor.getDouble(24),
-                            cursor.getDouble(25),
-
-                            cursor.getLong(26),
-                            cursor.getLong(27),
-
-                            cursor.getFloat(28),
-                            cursor.getFloat(29),
-                            cursor.getLong(30),
-
-                            cursor.getDouble(31),
-                            cursor.getDouble(32),
-                            cursor.getDouble(33),
-
-                            cursor.getFloat(34),
-                            cursor.getFloat(35),
-                            cursor.getFloat(36),
-
-                            cursor.getLong(37),
-                            cursor.getLong(38),
-                            cursor.getLong(41),
-
-                            cursor.getInt(39),
-                            cursor.getInt(40));
-                    trackList.add(trk);             // Add Track to list
+                    trackList.add(loadTrack(cursor));             // Add Track to list
                 } while (cursor.moveToNext());
             }
             cursor.close();

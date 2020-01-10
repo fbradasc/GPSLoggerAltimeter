@@ -183,7 +183,7 @@ public class FragmentTrack extends Fragment {
                 phdDuration = phdformatter.format(track.getPrefTime(),PhysicalDataFormatter.FORMAT_DURATION);
                 phdSpeedMax = phdformatter.format(track.getSpeedMax(),PhysicalDataFormatter.FORMAT_SPEED);
                 phdSpeedAvg = phdformatter.format(track.getPrefSpeedAverage(),PhysicalDataFormatter.FORMAT_SPEED_AVG);
-                phdDistance = phdformatter.format(track.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
+                phdDistance = phdformatter.format(track.getPrefEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 phdAltitudeGap = phdformatter.format(track.getEstimatedAltitudeGap(EGMAltitudeCorrection),PhysicalDataFormatter.FORMAT_ALTITUDE);
                 phdAltitudeMin = phdformatter.format(track.getEstimatedAltitudeMin(EGMAltitudeCorrection),PhysicalDataFormatter.FORMAT_ALTITUDE);
                 phdAltitudeMax = phdformatter.format(track.getEstimatedAltitudeMax(EGMAltitudeCorrection),PhysicalDataFormatter.FORMAT_ALTITUDE);

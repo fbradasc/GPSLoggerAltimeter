@@ -153,7 +153,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             //textViewTrackName.setText(trk.getName());
 
             if (trk.getNumberOfLocations() + trk.getNumberOfSteps() > 1) {
-                phd = phdformatter.format(trk.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
+                phd = phdformatter.format(trk.getPrefEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 textViewTrackLength.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(trk.getPrefTime(),PhysicalDataFormatter.FORMAT_DURATION);
                 textViewTrackDuration.setText(phd.Value);
@@ -216,7 +216,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             textViewTrackDescription.setText(GPSApplication.getInstance().getString(R.string.track_id) + " " + track.getId());
 
             if (trk.getNumberOfLocations() + trk.getNumberOfSteps() > 1) {
-                phd = phdformatter.format(track.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
+                phd = phdformatter.format(track.getPrefEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 textViewTrackLength.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(track.getPrefTime(),PhysicalDataFormatter.FORMAT_DURATION);
                 textViewTrackDuration.setText(phd.Value);

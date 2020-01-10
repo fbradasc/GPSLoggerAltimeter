@@ -79,6 +79,7 @@ public class Track {
     private long    Duration_Moving             = NOT_AVAILABLE;    // Saved in DB
 
     private float   Distance                    = NOT_AVAILABLE;    // Saved in DB
+    private float   Distance_Moving             = NOT_AVAILABLE;    // Saved in DB
     private float   DistanceInProgress          = NOT_AVAILABLE;    // Saved in DB
     private long    DistanceLastAltitude        = NOT_AVAILABLE;    // Saved in DB
 
@@ -150,6 +151,8 @@ public class Track {
 
             Duration_Moving = 0;
             Duration = 0;
+
+            Distance_Moving = 0;
             Distance = 0;
         }
 
@@ -215,6 +218,7 @@ public class Track {
         if (DistanceInProgress > End_Accuracy + LastStepDistance_Accuracy) {
             Distance += DistanceInProgress;
             if (DistanceLastAltitude != NOT_AVAILABLE) DistanceLastAltitude += DistanceInProgress;
+            if (End_Speed >= MOVEMENT_SPEED_THRESHOLD) Distance_Moving += DistanceInProgress;
             DistanceInProgress = 0;
 
             LastStepDistance_Latitude = End_Latitude;
@@ -277,7 +281,7 @@ public class Track {
 
         if ((End_Speed != NOT_AVAILABLE) && (End_Speed > SpeedMax)) SpeedMax = End_Speed;
         if (Duration > 0) SpeedAverage = (Distance + DistanceInProgress) / (((float) Duration) / 1000f);
-        if (Duration_Moving > 0) SpeedAverageMoving = (Distance + DistanceInProgress) / (((float) Duration_Moving) / 1000f);
+        if (Duration_Moving > 0) SpeedAverageMoving = (Distance_Moving + DistanceInProgress) / (((float) Duration_Moving) / 1000f);
         NumberOfLocations++;
     }
 
@@ -299,7 +303,7 @@ public class Track {
                        double LastStepAltitude_Altitude, float LastStepAltitude_Accuracy,
                        double Min_Latitude, double Min_Longitude,
                        double Max_Latitude, double Max_Longitude,
-                       long Duration, long Duration_Moving, float Distance, float DistanceInProgress,
+                       long Duration, long Duration_Moving, float Distance, float Distance_Moving, float DistanceInProgress,
                        long DistanceLastAltitude, double Altitude_Up, double Altitude_Down, double Altitude_InProgress,
                        double Altitude_Min, double Altitude_Max,
                        float SpeedMax, float   SpeedAverage,
@@ -341,6 +345,7 @@ public class Track {
         this.Duration_Moving = Duration_Moving;
 
         this.Distance = Distance;
+        this.Distance_Moving = Distance_Moving;
         this.DistanceInProgress = DistanceInProgress;
         this.DistanceLastAltitude = DistanceLastAltitude;
 
@@ -516,6 +521,10 @@ public class Track {
         return Distance;
     }
 
+    public float getDistanceMoving() {
+        return Distance_Moving;
+    }
+
     public float getDistanceInProgress() {
         return DistanceInProgress;
     }
@@ -629,6 +638,12 @@ public class Track {
         return Distance + DistanceInProgress;
     }
 
+    public float getEstimatedDistanceMoving(){
+        if (NumberOfLocations == 0) return NOT_AVAILABLE;
+        if (NumberOfLocations == 1) return 0;
+        return Distance_Moving + DistanceInProgress;
+    }
+
 
     private double getEGMCorrection(boolean EGMCorrection){
         // Retrieve EGM Corrections if available
@@ -724,6 +739,36 @@ public class Track {
         return NOT_AVAILABLE;
     }
 
+    // Returns the estimated distance, based on preferences (Total or Moving)
+    public float getPrefEstimatedDistance() {
+        if (NumberOfLocations == 0) return NOT_AVAILABLE;
+        if (NumberOfLocations == 1) return 0;
+
+        GPSApplication gpsApplication = GPSApplication.getInstance();
+        int pTime = gpsApplication.getPrefShowTrackStatsType();
+        switch (pTime) {
+            case 0:         // Total based
+                return Distance + DistanceInProgress;
+            case 1:         // Moving based
+                return Distance_Moving + DistanceInProgress;
+            default:
+                return Distance + DistanceInProgress;
+        }
+    }
+
+    // Returns the distance, based on preferences (Total or Moving)
+    public float getPrefDistance() {
+        GPSApplication gpsApplication = GPSApplication.getInstance();
+        int pTime = gpsApplication.getPrefShowTrackStatsType();
+        switch (pTime) {
+            case 0:         // Total based
+                return Distance;
+            case 1:         // Moving based
+                return Distance_Moving;
+            default:
+                return Distance;
+        }
+    }
 
     // Returns the time, based on preferences (Total or Moving)
     public long getPrefTime() {
