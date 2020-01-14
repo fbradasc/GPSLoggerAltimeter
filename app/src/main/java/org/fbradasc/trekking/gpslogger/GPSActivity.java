@@ -200,9 +200,7 @@ public class GPSActivity extends AppCompatActivity {
             dialog.show();
         }
 
-        if (GPSApp.isJustStarted() && (GPSApp.getCurrentTrack().getNumberOfLocations() +
-                                       GPSApp.getCurrentTrack().getNumberOfPlacemarks() +
-                                       GPSApp.getCurrentTrack().getNumberOfSteps()> 0)) {
+        if (GPSApp.isJustStarted() && (GPSApp.getCurrentTrack().getNumberOfItems() > 0)) {
             Toast.makeText(this.context, getString(R.string.toast_active_track_not_empty), Toast.LENGTH_LONG).show();
             GPSApp.setJustStarted(false);
         } else GPSApp.setJustStarted(false);
@@ -406,9 +404,7 @@ public class GPSActivity extends AppCompatActivity {
 
     private void ShutdownApp()
     {
-        if ((GPSApplication.getInstance().getCurrentTrack().getNumberOfLocations() > 0)
-                || (GPSApplication.getInstance().getCurrentTrack().getNumberOfSteps() > 0)
-                || (GPSApplication.getInstance().getCurrentTrack().getNumberOfPlacemarks() > 0)
+        if ((GPSApplication.getInstance().getCurrentTrack().getNumberOfItems() > 0)
                 || (GPSApplication.getInstance().getRecording())
                 || (GPSApplication.getInstance().getPlacemarkRequest())) {
 

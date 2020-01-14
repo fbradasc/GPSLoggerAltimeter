@@ -38,7 +38,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
     // All Static variables
     // Database Version
-    private static final int DATABASE_VERSION = 5;          // Updated to 2 in v2.1.3 (code 14)
+    private static final int DATABASE_VERSION = 6;          // Updated to 2 in v2.1.3 (code 14)
     private static final int LOCATION_TYPE_LOCATION = 1;
     private static final int LOCATION_TYPE_PLACEMARK = 2;
 
@@ -67,6 +67,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_LOCATION_TYPE = "type";
     private static final String KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX = "number_of_satellites_used_in_fix";
     private static final String KEY_LOCATION_NUMBEROFSTEPS = "number_of_steps";
+    private static final String KEY_LOCATION_ISNEWPATHSTART = "is_new_path_start";
 
     // ---------------------------------------------------------------------------- Placemarks adds
     private static final String KEY_LOCATION_NAME = "name";
@@ -178,6 +179,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
     private static final int I_TRACK_ALTITUDE_MAX = 43;
     private static final int I_TRACK_DISTANCE_MOVING = 44;
 
+    private boolean isLatLongListNewPathReached = false;
+
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -247,7 +250,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
                 + KEY_LOCATION_NUMBEROFSATELLITES + " INTEGER,"                 // 10
                 + KEY_LOCATION_TYPE + " INTEGER,"                               // 11
                 + KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX + " INTEGER,"        // 12
-                + KEY_LOCATION_NUMBEROFSTEPS + " INTEGER " + ")";               // 13
+                + KEY_LOCATION_NUMBEROFSTEPS + " INTEGER,"                      // 13
+                + KEY_LOCATION_ISNEWPATHSTART + " INTEGER " + ")";              // 14
         db.execSQL(CREATE_LOCATIONS_TABLE);
 
         String CREATE_PLACEMARKS_TABLE = "CREATE TABLE " + TABLE_PLACEMARKS + "("
@@ -289,6 +293,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
             + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_ALTITUDE_MAX + " REAL DEFAULT " +  NOT_AVAILABLE + ";";
     private static final String DATABASE_ALTER_TABLE_TRACKS_TO_V5 = "ALTER TABLE "
             + TABLE_TRACKS + " ADD COLUMN " + KEY_TRACK_DISTANCE_MOVING + " REAL DEFAULT " +  NOT_AVAILABLE + ";";
+    private static final String DATABASE_ALTER_TABLE_LOCATIONS_TO_V6 = "ALTER TABLE "
+            + TABLE_LOCATIONS + " ADD COLUMN " + KEY_LOCATION_ISNEWPATHSTART + " INTEGER DEFAULT 0;";
     // Upgrading database
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -322,6 +328,9 @@ class DatabaseHandler extends SQLiteOpenHelper {
             case 4:
                 //upgrade from version 4 to 5
                 db.execSQL(DATABASE_ALTER_TABLE_TRACKS_TO_V5);
+            case 5:
+                //upgrade from version 5 to 6
+                db.execSQL(DATABASE_ALTER_TABLE_LOCATIONS_TO_V6);
 
                 //and so on.. do not add breaks so that switch will
                 //start at oldVersion, and run straight through to the latest
@@ -351,6 +360,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         locvalues.put(KEY_LOCATION_TYPE, LOCATION_TYPE_LOCATION);
         locvalues.put(KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX, location.getNumberOfSatellitesUsedInFix());
         locvalues.put(KEY_LOCATION_NUMBEROFSTEPS, location.getNumberOfSteps());
+        locvalues.put(KEY_LOCATION_ISNEWPATHSTART, location.isNewPathStart() ?  1 : 0);
 
         ContentValues trkvalues = new ContentValues();
         trkvalues.put(KEY_TRACK_NAME, track.getName());
@@ -529,7 +539,8 @@ class DatabaseHandler extends SQLiteOpenHelper {
                         KEY_LOCATION_TIME,
                         KEY_LOCATION_NUMBEROFSATELLITES,
                         KEY_LOCATION_NUMBEROFSATELLITESUSEDINFIX,
-                        KEY_LOCATION_NUMBEROFSTEPS,}, KEY_ID + "=?",
+                        KEY_LOCATION_NUMBEROFSTEPS,
+                        KEY_LOCATION_ISNEWPATHSTART,}, KEY_ID + "=?",
                 new String[] { String.valueOf(id) }, null, null, null, null);
         if (cursor != null) {
             cursor.moveToFirst();
@@ -561,6 +572,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
             extdloc.setNumberOfSatellites(cursor.getInt(8));
             extdloc.setNumberOfSatellitesUsedInFix(cursor.getInt(9));
             extdloc.setNumberOfSteps(cursor.getInt(10));
+            extdloc.isNewPathStart(( cursor.getInt(11) == 1 ) ? true : false );
 
             cursor.close();
         }
@@ -684,6 +696,9 @@ class DatabaseHandler extends SQLiteOpenHelper {
         return placemarkList;
     }
 
+    public boolean isLatLongListNewPathReached() {
+        return isLatLongListNewPathReached;
+    }
 
     // Getting a list of Locations associated to a specified track, with number between startNumber and endNumber
     // Please note that limits both are inclusive!
@@ -691,7 +706,11 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
         List<LatLng> latlngList = new ArrayList<>();
 
-        String selectQuery = "SELECT " + KEY_TRACK_ID + "," + KEY_LOCATION_LATITUDE + "," + KEY_LOCATION_LONGITUDE + "," + KEY_LOCATION_NUMBER
+        String selectQuery = "SELECT " + KEY_TRACK_ID + ","
+                                       + KEY_LOCATION_LATITUDE + ","
+                                       + KEY_LOCATION_LONGITUDE + ","
+                                       + KEY_LOCATION_ISNEWPATHSTART + ","
+                                       + KEY_LOCATION_NUMBER
                 + " FROM " + TABLE_LOCATIONS + " WHERE "
                 + KEY_TRACK_ID + " = " + TrackID + " AND "
                 + KEY_LOCATION_NUMBER + " BETWEEN " + startNumber + " AND " + endNumber
@@ -702,6 +721,10 @@ class DatabaseHandler extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
 
+        isLatLongListNewPathReached = false;
+
+        boolean can_break = false;
+
         if (cursor != null) {
             // looping through all rows and adding to list
             if (cursor.moveToFirst()) {
@@ -711,6 +734,12 @@ class DatabaseHandler extends SQLiteOpenHelper {
                     latlng.Longitude = cursor.getDouble(2);
 
                     latlngList.add(latlng); // Add Location to list
+
+                    if (can_break && (cursor.getInt(3) == 1)) {
+                        isLatLongListNewPathReached = true;
+                        break;
+                    }
+                    can_break = true;
                 } while (cursor.moveToNext());
             }
             cursor.close();

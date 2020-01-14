@@ -176,7 +176,7 @@ public class FragmentTrack extends Fragment {
         EGMAltitudeCorrection = gpsApplication.getPrefEGM96AltitudeCorrection();
 
         if (isAdded()) {
-            if ((track != null) && (track.getNumberOfLocations() + track.getNumberOfPlacemarks() + track.getNumberOfSteps() > 0)) {
+            if ((track != null) && (track.getNumberOfItems() > 0)) {
 
                 FTrackID = getString(R.string.track_id) + " " + String.valueOf(track.getId());
                 FTrackName = track.getName();

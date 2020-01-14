@@ -72,7 +72,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
     private static final Bitmap bmpCurrentTrackPaused = BitmapFactory.decodeResource(GPSApplication.getInstance().getResources(), R.mipmap.ic_paused_white_48dp);
 
     private long StartAnimationTime = 0;
-    private long PointsCount = GPSApplication.getInstance().getCurrentTrack().getNumberOfLocations() + GPSApplication.getInstance().getCurrentTrack().getNumberOfPlacemarks();
+    private long PointsCount = GPSApplication.getInstance().getCurrentTrack().getNumberOfPoints();
 
     class TrackHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
@@ -152,7 +152,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
         void UpdateTrackStats(Track trk) {
             //textViewTrackName.setText(trk.getName());
 
-            if (trk.getNumberOfLocations() + trk.getNumberOfSteps() > 1) {
+            if (trk.getNumberOfMovingPoints() > 1) {
                 phd = phdformatter.format(trk.getPrefEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 textViewTrackLength.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(trk.getPrefTime(),PhysicalDataFormatter.FORMAT_DURATION);
@@ -193,8 +193,8 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             if (GPSApplication.getInstance().getRecording()) {
                 imageViewThumbnail.setImageBitmap(bmpCurrentTrackRecording);
                 imageViewPulse.setVisibility(View.VISIBLE);
-                if ((PointsCount != trk.getNumberOfLocations()+trk.getNumberOfPlacemarks()) && (System.currentTimeMillis() - StartAnimationTime >= 700L)) {
-                    PointsCount = trk.getNumberOfLocations()+trk.getNumberOfPlacemarks();
+                if ((PointsCount != trk.getNumberOfPoints()) && (System.currentTimeMillis() - StartAnimationTime >= 700L)) {
+                    PointsCount = trk.getNumberOfPoints();
                     Animation sunRise = AnimationUtils.loadAnimation(GPSApplication.getInstance().getApplicationContext(), R.anim.record_pulse);
                     imageViewPulse.startAnimation(sunRise);
                     StartAnimationTime = System.currentTimeMillis();
@@ -215,7 +215,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             textViewTrackName.setText(track.getName());
             textViewTrackDescription.setText(GPSApplication.getInstance().getString(R.string.track_id) + " " + track.getId());
 
-            if (trk.getNumberOfLocations() + trk.getNumberOfSteps() > 1) {
+            if (trk.getNumberOfMovingPoints() > 1) {
                 phd = phdformatter.format(track.getPrefEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                 textViewTrackLength.setText(phd.Value + " " + phd.UM);
                 phd = phdformatter.format(track.getPrefTime(),PhysicalDataFormatter.FORMAT_DURATION);

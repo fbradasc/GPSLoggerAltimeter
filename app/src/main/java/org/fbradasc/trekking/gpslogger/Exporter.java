@@ -101,7 +101,7 @@ class Exporter extends Thread {
         GPSApplication GPSApp = GPSApplication.getInstance();
         if (GPSApp == null) return;
 
-        elements_total = track.getNumberOfLocations() + track.getNumberOfPlacemarks();
+        elements_total = track.getNumberOfPoints();
         long start_Time = System.currentTimeMillis();
 
         // ------------------------------------------------- Create the Directory tree if not exist
@@ -120,7 +120,7 @@ class Exporter extends Thread {
             exportingTask.setStatus(ExportingTask.STATUS_ENDED_FAILED);
             return;
         }
-        if (track.getNumberOfLocations() + track.getNumberOfSteps() + track.getNumberOfPlacemarks() == 0) {
+        if (track.getNumberOfItems() == 0) {
             exportingTask.setStatus(ExportingTask.STATUS_ENDED_FAILED);
             //EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TOAST_UNABLE_TO_WRITE_THE_FILE, track.getId()));
             return;
@@ -509,7 +509,7 @@ class Exporter extends Thread {
                     phdSpeedMax = phdformatter.format(track.getSpeedMax(),PhysicalDataFormatter.FORMAT_SPEED);
                     phdSpeedAvg = phdformatter.format(track.getSpeedAverage(),PhysicalDataFormatter.FORMAT_SPEED_AVG);
                     phdSpeedAvgMoving = phdformatter.format(track.getSpeedAverageMoving(),PhysicalDataFormatter.FORMAT_SPEED_AVG);
-                    phdDistance = phdformatter.format(track.getEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
+                    phdDistance = phdformatter.format(track.getPrefEstimatedDistance(),PhysicalDataFormatter.FORMAT_DISTANCE);
                     phdAltitudeGap = phdformatter.format(track.getEstimatedAltitudeGap(GPSApp.getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
                     phdAltitudeMin = phdformatter.format(track.getEstimatedAltitudeMin(GPSApp.getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
                     phdAltitudeMax = phdformatter.format(track.getEstimatedAltitudeMax(GPSApp.getPrefEGM96AltitudeCorrection()),PhysicalDataFormatter.FORMAT_ALTITUDE);
@@ -529,24 +529,61 @@ class Exporter extends Thread {
                     KMLbw.write("   <name>" + GPSApp.getApplicationContext().getString(R.string.tab_track) + " " + track.getName() + "</name>" + newLine);
                     KMLbw.write("   <description><![CDATA[" + TrackDesc + "]]></description>" + newLine);
                     KMLbw.write("   <styleUrl>#TrackStyle</styleUrl>" + newLine);
+/*
                     KMLbw.write("   <LineString>" + newLine);
                     KMLbw.write("    <extrude>0</extrude>" + newLine);
                     KMLbw.write("    <tessellate>0</tessellate>" + newLine);
                     KMLbw.write("    <altitudeMode>" + (getPrefKMLAltitudeMode == 1 ? "clampToGround" : "absolute") + "</altitudeMode>" + newLine);
                     KMLbw.write("    <coordinates>" + newLine);
+*/
                 }
+/*
                 if (ExportGPX) {
                     GPXbw.write("<trk>" + newLine);
                     GPXbw.write(" <name>" + GPSApp.getApplicationContext().getString(R.string.tab_track) + " " + track.getName() + "</name>" + newLine);
                     GPXbw.write(" <trkseg>" + newLine);
                 }
-
+*/
                 LocationExtended loc;
+
+                boolean openTrack = true;
+                boolean closeTrack = false;
+                int tracksCount = 0;
 
                 for (int i = 0; i < track.getNumberOfLocations(); i++) {
 
                     loc = ArrayGeopoints.take();
 
+                    if (loc.isNewPathStart()) {
+                        openTrack = true;
+                    }
+
+                    if (ExportKML && openTrack) {
+                        if (closeTrack) {
+                            KMLbw.write("    </coordinates>" + newLine);
+                            KMLbw.write("   </LineString>" + newLine);
+                        }
+                        KMLbw.write("   <LineString id=\"" + track.getName() + " " + tracksCount + "\">" + newLine);
+                        KMLbw.write("    <extrude>0</extrude>" + newLine);
+                        KMLbw.write("    <tessellate>0</tessellate>" + newLine);
+                        KMLbw.write("    <altitudeMode>" + (getPrefKMLAltitudeMode == 1 ? "clampToGround" : "absolute") + "</altitudeMode>" + newLine);
+                        KMLbw.write("    <coordinates>" + newLine);
+                    }
+
+                    if (ExportGPX && openTrack) {
+                        if (closeTrack) {
+                            GPXbw.write(" </trkseg>" + newLine);
+                            GPXbw.write("</trk>" + newLine + newLine);
+                        }
+                        GPXbw.write("<trk>" + newLine);
+                        GPXbw.write(" <name>" + GPSApp.getApplicationContext().getString(R.string.tab_track) + " " + track.getName() + " " + tracksCount + "</name>" + newLine);
+                        GPXbw.write(" <trkseg>" + newLine);
+                    }
+
+                    if (openTrack)
+                    {
+                        closeTrack = true;
+                    }
                                         // Create formatted strings
                     formattedLatitude = String.format(Locale.US, "%.8f", loc.getLocation().getLatitude());
                     formattedLongitude = String.format(Locale.US, "%.8f", loc.getLocation().getLongitude());
@@ -638,15 +675,17 @@ class Exporter extends Thread {
                     exportingTask.setNumberOfPoints_Processed(exportingTask.getNumberOfPoints_Processed() + 1);
                 }
 
-                exportingTask.setNumberOfPoints_Processed(track.getNumberOfPlacemarks() + track.getNumberOfLocations());
+                exportingTask.setNumberOfPoints_Processed(track.getNumberOfPoints());
                 ArrayGeopoints.clear();
 
                 if (ExportKML) {
-                    KMLbw.write("    </coordinates>" + newLine);
-                    KMLbw.write("   </LineString>" + newLine);
+                    if (closeTrack) {
+                        KMLbw.write("    </coordinates>" + newLine);
+                        KMLbw.write("   </LineString>" + newLine);
+                    }
                     KMLbw.write("  </Placemark>" + newLine + newLine);
                 }
-                if (ExportGPX) {
+                if (ExportGPX && closeTrack) {
                     GPXbw.write(" </trkseg>" + newLine);
                     GPXbw.write("</trk>" + newLine + newLine);
                 }

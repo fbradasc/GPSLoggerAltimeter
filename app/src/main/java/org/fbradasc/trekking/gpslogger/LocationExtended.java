@@ -31,6 +31,7 @@ public class LocationExtended {
     private int _NumberOfSatellites = NOT_AVAILABLE;
     private int _NumberOfSatellitesUsedInFix = NOT_AVAILABLE;
     private int _NumberOfSteps = NONE;
+    private boolean _IsNewPathStart = false;
 
 
     // Constructor
@@ -86,6 +87,16 @@ public class LocationExtended {
 
     public int getNumberOfSteps() {
         return _NumberOfSteps;
+    }
+
+    public void isNewPathStart(boolean value)
+    {
+        _IsNewPathStart = value;
+    }
+
+    public boolean isNewPathStart()
+    {
+        return _IsNewPathStart;
     }
 
     public double getAltitudeEGM96Correction(){
