@@ -20,9 +20,8 @@ package org.fbradasc.trekking.gpslogger;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.ColorMatrixColorFilter;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.RecyclerView;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,22 +40,14 @@ import java.util.List;
 
 class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
 
-    private static final float[] NEGATIVE = {
-            -1.0f,      0,      0,     0,  240, // red
-                0,  -1.0f,      0,     0,  240, // green
-                0,      0,  -1.0f,     0,  240, // blue
-                0,      0,      0, 1.00f,    0  // alpha
-    };
-    private ColorMatrixColorFilter colorMatrixColorFilter = new ColorMatrixColorFilter(NEGATIVE);
-
-    private final static int NOT_AVAILABLE = -100000;
-    private final static int CARDTYPE_CURRENTTRACK = 0;
-    private final static int CARDTYPE_TRACK = 1;
-    private final static int CARDTYPE_SELECTEDTRACK = 2;
+    private static final int NOT_AVAILABLE = -100000;
+    private static final int CARDTYPE_CURRENTTRACK = 0;
+    private static final int CARDTYPE_TRACK = 1;
+    private static final int CARDTYPE_SELECTEDTRACK = 2;
 
     boolean isLightTheme = false;
 
-    private List<Track> dataSet;
+    private final List<Track> dataSet;
 
     private static final Bitmap[] bmpTrackType = {
             BitmapFactory.decodeResource(GPSApplication.getInstance().getResources(), R.mipmap.ic_place_white_24dp),
@@ -74,7 +65,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
     private long StartAnimationTime = 0;
     private long PointsCount = GPSApplication.getInstance().getCurrentTrack().getNumberOfPoints();
 
-    class TrackHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    class TrackHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
         private final PhysicalDataFormatter phdformatter = new PhysicalDataFormatter();
         private PhysicalData phd;
@@ -106,9 +97,26 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             if (GPSApplication.getInstance().getJobsPending() == 0) {
                 track.setSelected(!track.isSelected());
                 card.setSelected(track.isSelected());
+
+                GPSApplication.getInstance().setLastClickId(track.getId());
+                GPSApplication.getInstance().setLastClickState(track.isSelected());
+                //Log.w("myApp", "[#] TrackAdapter.java - " + (track.isSelected() ? "Selected" : "Deselected") + " id = " + GPSApplication.getInstance().getLastClickId());
+
                 EventBus.getDefault().post(new EventBusMSGNormal(track.isSelected() ? EventBusMSG.TRACKLIST_SELECT : EventBusMSG.TRACKLIST_DESELECT, track.getId()));
                 //Log.w("myApp", "[#] TrackAdapter.java - Selected track id = " + track.getId());
             }
+        }
+
+
+        @Override
+        public boolean onLongClick(View view) {
+            if ((GPSApplication.getInstance().getJobsPending() == 0)
+                    && (GPSApplication.getInstance().getLastClickId() != track.getId())
+                    && (GPSApplication.getInstance().getNumberOfSelectedTracks() > 0)) {
+                //Log.w("myApp", "[#] TrackAdapter.java - onLongClick");
+                EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TRACKLIST_RANGE_SELECTION, track.getId()));
+            }
+            return false;
         }
 
 
@@ -116,6 +124,7 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             super(itemView);
 
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
 
             // CardView
             card                        = itemView.findViewById(R.id.card_view);
@@ -142,9 +151,9 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
             imageViewIcon               = itemView.findViewById(R.id.id_imageView_card_tracktype);
 
             if (isLightTheme) {
-                imageViewThumbnail.setColorFilter(colorMatrixColorFilter);
-                imageViewPulse.setColorFilter(colorMatrixColorFilter);
-                imageViewIcon.setColorFilter(colorMatrixColorFilter);
+                imageViewThumbnail.setColorFilter(GPSApplication.colorMatrixColorFilter);
+                imageViewPulse.setColorFilter(GPSApplication.colorMatrixColorFilter);
+                imageViewIcon.setColorFilter(GPSApplication.colorMatrixColorFilter);
             }
         }
 

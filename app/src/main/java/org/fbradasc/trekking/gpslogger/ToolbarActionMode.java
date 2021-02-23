@@ -1,7 +1,7 @@
 package org.fbradasc.trekking.gpslogger;
 
 import android.os.Handler;
-import android.support.v7.view.ActionMode;
+import androidx.appcompat.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -91,7 +91,10 @@ public class ToolbarActionMode implements ActionMode.Callback {
     @Override
     public void onDestroyActionMode(ActionMode mode) {
         EventBus.getDefault().unregister(this);
-        if ((gpsApplication.getNumberOfSelectedTracks() > 0) && gpsApplication.getGPSActivity_activeTab() == 2) GPSApplication.getInstance().DeselectAllTracks();
+        if ((gpsApplication.getNumberOfSelectedTracks() > 0) && gpsApplication.getGPSActivity_activeTab() == 2) {
+            GPSApplication.getInstance().DeselectAllTracks();
+            GPSApplication.getInstance().setLastClickId(GPSApplication.NOT_AVAILABLE);
+        }
     }
 
     @Subscribe (threadMode = ThreadMode.MAIN)
@@ -119,10 +122,18 @@ public class ToolbarActionMode implements ActionMode.Callback {
             actionmenu.findItem(R.id.cardmenu_export).setVisible(gpsApplication.getPrefExportGPX() || gpsApplication.getPrefExportKML() || gpsApplication.getPrefExportTXT());
             actionmenu.findItem(R.id.cardmenu_delete).setVisible(!gpsApplication.getSelectedTracks().contains(gpsApplication.getCurrentTrack()));
             actionmenu.findItem(R.id.cardmenu_placemarks).setVisible(gpsApplication.isContextMenuShareVisible());
-            if (!gpsApplication.getViewInApp().equals(""))
-                actionmenu.findItem(R.id.cardmenu_view).setTitle(gpsApplication.getString(R.string.card_menu_view, gpsApplication.getViewInApp()));
-            else
-                actionmenu.findItem(R.id.cardmenu_view).setTitle(gpsApplication.getString(R.string.card_menu_view_selector));
+
+            if (actionmenu.findItem(R.id.cardmenu_view).isVisible()) {
+                if (!gpsApplication.getViewInApp().equals("")) {
+                    actionmenu.findItem(R.id.cardmenu_view).setTitle(gpsApplication.getString(R.string.card_menu_view, gpsApplication.getViewInApp()));
+                    if (gpsApplication.getViewInAppIcon() != null)
+                        actionmenu.findItem(R.id.cardmenu_view).setIcon(gpsApplication.getViewInAppIcon());
+                    else
+                        actionmenu.findItem(R.id.cardmenu_view).setIcon(R.mipmap.ic_visibility_white_24dp);
+                } else {
+                    actionmenu.findItem(R.id.cardmenu_view).setTitle(gpsApplication.getString(R.string.card_menu_view_selector)).setIcon(R.mipmap.ic_visibility_white_24dp);
+                }
+            }
         }
     }
 }

@@ -22,7 +22,7 @@ package org.fbradasc.trekking.gpslogger;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +47,8 @@ public class FragmentRecordingControls extends Fragment{
     private TextView TVGeoPoints;
     private TextView TVSteps;
     private TextView TVPlacemarks;
+    private TextView TVGeoPointsLabel;
+    private TextView TVPlacemarksLabel;
     private ImageView IVDetectedActivity;
 
     final GPSApplication gpsApplication = GPSApplication.getInstance();
@@ -89,6 +91,8 @@ public class FragmentRecordingControls extends Fragment{
         TVGeoPoints = (TextView) view.findViewById(R.id.id_textView_GeoPoints);
         TVSteps = (TextView) view.findViewById(R.id.id_textView_Steps);
         TVPlacemarks = (TextView) view.findViewById(R.id.id_textView_Placemarks);
+        TVGeoPointsLabel = (TextView) view.findViewById(R.id.id_textView_GeoPointsLabel);
+        TVPlacemarksLabel = (TextView) view.findViewById(R.id.id_textView_PlacemarksLabel);
         IVDetectedActivity = (ImageView) view.findViewById(R.id.id_imageView_DetectedActivity);
 
         return view;
@@ -121,20 +125,15 @@ public class FragmentRecordingControls extends Fragment{
             boolean newRecordingState = !grs;
             gpsApplication.setRecording(newRecordingState);
             EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
-            tableLayoutGeoPoints.setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorRecControlBackground));
-            tableLayoutSteps    .setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorRecControlBackground));
+            tableLayoutGeoPoints.setBackgroundColor(getResources().getColor(newRecordingState ? R.color.colorPrimary                        : R.color.colorRecControlBackground   ));
+            tableLayoutSteps    .setBackgroundColor(getResources().getColor(newRecordingState ? R.color.colorPrimary                        : R.color.colorRecControlBackground   ));
+            TVGeoPoints         .setTextColor      (getResources().getColor(newRecordingState ? R.color.textColorRecControlPrimary_Active   : R.color.textColorRecControlPrimary  ));
+            TVGeoPointsLabel    .setTextColor      (getResources().getColor(newRecordingState ? R.color.textColorRecControlSecondary_Active : R.color.textColorRecControlSecondary));
         }
     }
 
     public void ontoggleRecordSteps(View view) {
-        if (isAdded()) {
-            final Boolean grs = gpsApplication.getRecording();
-            boolean newRecordingState = !grs;
-            gpsApplication.setRecording(newRecordingState);
-            EventBus.getDefault().post(EventBusMSG.UPDATE_TRACK);
-            tableLayoutSteps    .setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorRecControlBackground));
-            tableLayoutGeoPoints.setBackgroundColor(newRecordingState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorRecControlBackground));
-        }
+        ontoggleRecordGeoPoint(view);
     }
 
     public void onPlacemarkRequest(View view) {
@@ -142,7 +141,9 @@ public class FragmentRecordingControls extends Fragment{
             final Boolean pr = gpsApplication.getPlacemarkRequest();
             boolean newPlacemarkRequestState = !pr;
             gpsApplication.setPlacemarkRequest(newPlacemarkRequestState);
-            tableLayoutPlacemarks.setBackgroundColor(newPlacemarkRequestState ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorRecControlBackground));
+            tableLayoutPlacemarks.setBackgroundColor(getResources().getColor(newPlacemarkRequestState ? R.color.colorPrimary                        : R.color.colorRecControlBackground   ));
+            TVPlacemarks         .setTextColor      (getResources().getColor(newPlacemarkRequestState ? R.color.textColorRecControlPrimary_Active   : R.color.textColorRecControlPrimary  ));
+            TVPlacemarksLabel    .setTextColor      (getResources().getColor(newPlacemarkRequestState ? R.color.textColorRecControlSecondary_Active : R.color.textColorRecControlSecondary));
         }
     }
 
@@ -160,20 +161,17 @@ public class FragmentRecordingControls extends Fragment{
             final Boolean pr    = gpsApplication.getPlacemarkRequest();
             final int     da    = gpsApplication.getDetectedActivity();
             if (track != null) {
-                if (TVGeoPoints != null)
-                    TVGeoPoints.setText(String.valueOf(track.getNumberOfLocations()));
-                if (TVSteps != null)
-                    TVSteps.setText(String.valueOf(track.getNumberOfSteps()));
-                if (TVPlacemarks != null)
-                    TVPlacemarks.setText(String.valueOf(track.getNumberOfPlacemarks()));
-                if (tableLayoutGeoPoints != null)
-                    tableLayoutGeoPoints.setBackgroundColor(grs ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorRecControlBackground));
-                if (tableLayoutSteps != null)
-                    tableLayoutSteps.setBackgroundColor(grs ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorRecControlBackground));
-                if (tableLayoutPlacemarks != null)
-                    tableLayoutPlacemarks.setBackgroundColor(pr ? getResources().getColor(R.color.colorPrimary) : getResources().getColor(R.color.colorRecControlBackground));
-                if (IVDetectedActivity != null)
-                    IVDetectedActivity.setImageLevel(da);
+                if (TVGeoPoints           != null) TVGeoPoints          .setText           (String.valueOf(track.getNumberOfLocations ()));
+                if (TVPlacemarks          != null) TVPlacemarks         .setText           (String.valueOf(track.getNumberOfPlacemarks()));
+                if (TVSteps               != null) TVSteps              .setText           (String.valueOf(track.getNumberOfSteps     ()));
+                if (IVDetectedActivity    != null) IVDetectedActivity   .setImageLevel     (da);
+                if (tableLayoutGeoPoints  != null) tableLayoutGeoPoints .setBackgroundColor(getResources().getColor(grs ? R.color.colorPrimary                        : R.color.colorRecControlBackground   ));
+                if (tableLayoutPlacemarks != null) tableLayoutPlacemarks.setBackgroundColor(getResources().getColor(pr  ? R.color.colorPrimary                        : R.color.colorRecControlBackground   ));
+                if (tableLayoutSteps      != null) tableLayoutSteps     .setBackgroundColor(getResources().getColor(grs ? R.color.colorPrimary                        : R.color.colorRecControlBackground   ));
+                if (TVPlacemarks          != null) TVPlacemarks         .setTextColor      (getResources().getColor(pr  ? R.color.textColorRecControlPrimary_Active   : R.color.textColorRecControlPrimary  ));
+                if (TVPlacemarksLabel     != null) TVPlacemarksLabel    .setTextColor      (getResources().getColor(pr  ? R.color.textColorRecControlSecondary_Active : R.color.textColorRecControlSecondary));
+                if (TVGeoPoints           != null) TVGeoPoints          .setTextColor      (getResources().getColor(grs ? R.color.textColorRecControlPrimary_Active   : R.color.textColorRecControlPrimary  ));
+                if (TVGeoPointsLabel      != null) TVGeoPointsLabel     .setTextColor      (getResources().getColor(grs ? R.color.textColorRecControlSecondary_Active : R.color.textColorRecControlSecondary));
             }
         }
     }

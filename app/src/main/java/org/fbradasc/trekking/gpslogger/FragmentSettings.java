@@ -16,8 +16,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.fbradasc.trekking.gpslogger;
+package eu.basicairdata.graziano.gpslogger;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -27,13 +28,19 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v7.app.AppCompatDelegate;
-import android.support.v7.preference.EditTextPreference;
-import android.support.v7.preference.ListPreference;
-import android.support.v7.preference.PreferenceFragmentCompat;
-import android.support.v7.preference.PreferenceManager;
-import android.support.v7.preference.SwitchPreferenceCompat;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
+import androidx.preference.SwitchPreferenceCompat;
 import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
@@ -49,6 +56,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -111,6 +119,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
 
         prefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                Log.w("myApp", "[#] FragmentSettings.java - SharedPreferences.OnSharedPreferenceChangeListener, key = " + key);
                 if (key.equals("prefUM")) {
                     altcorm = Double.valueOf(prefs.getString("prefAltitudeCorrection", "0"));
                     altcor = prefs.getString("prefUM", "0").equals("0") ? altcorm : altcorm * M_TO_FT;
@@ -158,22 +167,15 @@ public class FragmentSettings extends PreferenceFragmentCompat {
                     }
                 }
 
-                if (key.equals("prefLightColorTheme")) {
+                if (key.equals("prefColorTheme")) {
                     SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
                     SharedPreferences.Editor editor1 = settings.edit();
-                    editor1.putBoolean("prefLightColorTheme", sharedPreferences.getBoolean(key, false));
+                    editor1.putString(key, sharedPreferences.getString(key, "2"));
                     editor1.commit();
 
-                    if (PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("prefLightColorTheme", false)) {
-                        AppCompatDelegate.setDefaultNightMode(
-                                AppCompatDelegate.MODE_NIGHT_NO);
-                    }
-                    else {
-                        AppCompatDelegate.setDefaultNightMode(
-                                AppCompatDelegate.MODE_NIGHT_YES);
-                    }
-
-                    getActivity().recreate();
+                    getActivity().getWindow().setWindowAnimations(R.style.MyCrossfadeAnimation_Window);
+                    AppCompatDelegate.setDefaultNightMode(Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(getContext()).getString("prefColorTheme", "2")));
+                    //getActivity().recreate();
                 }
 
                 SetupPreferences();
@@ -190,6 +192,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
 
         prefs.registerOnSharedPreferenceChangeListener(prefListener);
         //Log.w("myApp", "[#] FragmentSettings.java - onResume");
+        GPSApplication.getInstance().getExternalViewerChecker().makeAppInfoList();
         SetupPreferences();
     }
 
@@ -217,8 +220,95 @@ public class FragmentSettings extends PreferenceFragmentCompat {
         ListPreference pGPXVersion = (ListPreference) findPreference("prefGPXVersion");
         ListPreference pShowTrackStatsType = (ListPreference) findPreference("prefShowTrackStatsType");
         ListPreference pShowDirections = (ListPreference) findPreference("prefShowDirections");
-        ListPreference pViewTracksWith = (ListPreference) findPreference("prefViewTracksWith");
+        ListPreference pColorTheme = (ListPreference) findPreference("prefColorTheme");
         EditTextPreference pAltitudeCorrection = (EditTextPreference) findPreference("prefAltitudeCorrectionRaw");
+        Preference pTracksViewer = (Preference) findPreference("prefTracksViewer");
+
+        // Keep Screen On Flag
+        if (prefs.getBoolean("prefKeepScreenOn", true)) getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // Track Viewer
+
+        final ArrayList<AppInfo> ail = new ArrayList<>(GPSApplication.getInstance().getExternalViewerChecker().getAppInfoList());
+        switch (GPSApplication.getInstance().getExternalViewerChecker().size()) {
+            case 0:
+                pTracksViewer.setEnabled(false);    // No viewers installed
+                pTracksViewer.setOnPreferenceClickListener(null);
+                break;
+
+            case 1:
+                pTracksViewer.setEnabled(true);     // 1 viewer installed
+                pTracksViewer.setOnPreferenceClickListener(null);
+                break;
+
+            default:
+                pTracksViewer.setEnabled(true);     // 2 or more viewers installed
+                pTracksViewer.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                    public boolean onPreferenceClick(Preference preference) {
+                        //Log.w("myApp", "[#] FragmentSettings.java - prefTracksViewer");
+                        ExternalViewerChecker externalViewerChecker = GPSApplication.getInstance().getExternalViewerChecker();
+                        if (externalViewerChecker.size() >= 1) {
+                            final Dialog dialog = new Dialog(getActivity());
+                            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                            View view = getLayoutInflater().inflate(R.layout.appdialog_list, null);
+                            ListView lv = (ListView) view.findViewById(R.id.id_appdialog_list);
+
+                            final ArrayList<AppInfo> aild = new ArrayList<>();
+
+                            // Add "Select every Time" menu item
+                            AppInfo askai = new AppInfo();
+                            askai.Label = getString(R.string.pref_track_viewer_select_every_time);
+                            if (PreferenceManager.getDefaultSharedPreferences(getContext()).getString("prefColorTheme", "2").equals("1")) {
+                                askai.Icon = getResources().getDrawable(R.mipmap.ic_visibility_black_24dp);
+                                askai.Icon.setAlpha(150);
+                            } else {
+                                askai.Icon = getResources().getDrawable(R.mipmap.ic_visibility_white_24dp);
+                                askai.Icon.setAlpha(255);
+                            }
+                            aild.add(askai);
+                            aild.addAll(ail);
+
+                            AppDialogList clad = new AppDialogList(getActivity(), aild);
+
+                            lv.setAdapter(clad);
+                            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    // TODO: Set Preference
+                                    SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
+                                    SharedPreferences.Editor editor1 = settings.edit();
+                                    editor1.putString("prefTracksViewer", aild.get(position).PackageName);
+                                    editor1.commit();
+                                    SetupPreferences();
+                                    dialog.dismiss();
+                                }
+                            });
+                            dialog.setContentView(view);
+                            dialog.show();
+                        }
+                        return true;
+                    }
+                });
+        }
+        // ------------
+
+        if (ail.isEmpty())
+            pTracksViewer.setSummary(R.string.pref_track_viewer_not_installed);                                        // no Viewers installed
+        else if (ail.size() == 1)
+            pTracksViewer.setSummary(ail.get(0).Label + (ail.get(0).GPX ? " (GPX)" : " (KML)"));                                                                              // 1 Viewer installed
+        else {
+            pTracksViewer.setSummary(R.string.pref_track_viewer_select_every_time);                                       // ask every time
+            String pn = prefs.getString("prefTracksViewer", "");
+            Log.w("myApp", "[#] FragmentSettings.java - prefTracksViewer = " + pn);
+            for (AppInfo ai : ail) {
+                if (ai.PackageName.equals(pn)) {
+                    //Log.w("myApp", "[#] FragmentSettings.java - Found " + ai.Label);
+                    pTracksViewer.setSummary(ai.Label + (ai.GPX ? " (GPX)" : " (KML)"));                                // Default Viewer available!
+                }
+            }
+        }
+
 
         altcorm = Double.valueOf(prefs.getString("prefAltitudeCorrection", "0"));
         altcor = prefs.getString("prefUM", "0").equals("0") ? altcorm : altcorm * M_TO_FT;
@@ -244,6 +334,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
         Log.w("myApp", "[#] FragmentSettings.java - prefAltitudeCorrection = " + prefs.getString("prefAltitudeCorrection", "0")) ;
 
         // Set all summaries
+        pColorTheme.setSummary(pColorTheme.getEntry());
         pUMSpeed.setSummary(pUMSpeed.getEntry());
         pUM.setSummary(pUM.getEntry());
         pGPSDistance.setSummary(pGPSDistance.getEntry());
@@ -252,7 +343,7 @@ public class FragmentSettings extends PreferenceFragmentCompat {
         pGPXVersion.setSummary(pGPXVersion.getEntry());
         pShowTrackStatsType.setSummary(pShowTrackStatsType.getEntry());
         pShowDirections.setSummary(pShowDirections.getEntry());
-        pViewTracksWith.setSummary(pViewTracksWith.getEntry());
+        //pViewTracksWith.setSummary(pViewTracksWith.getEntry());
     }
 
 
@@ -336,6 +427,17 @@ public class FragmentSettings extends PreferenceFragmentCompat {
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setInstanceFollowRedirects(true);
                 connection.connect();
+
+                // Redirection HTTP -> HTTPS is insecure.
+                //
+                // Unfortunately the July 2019 the National Geospatial-Intelligence Agency started to change
+                // its Website in a not predictable Way for Us (the EGM File started to return a HTTP 302) and,
+                // when we patched the Code, We decided to keep opened all the Possibilities in order to restore
+                // the Functionality and minimize the Possibility that the File could become unavailable again.
+                //
+                // We are watching if the remote Situation remains stable:
+                // The Plan is to completely remove the HTTP Request in favor of a direct HTTPS one,
+                // at least for Android 5+ that support TLS Protocol.
 
                 // expect HTTP 200 OK, so we don't mistakenly save error report
                 // instead of the file

@@ -50,6 +50,7 @@ public class EventBusMSG {
 
     static final short SHARE_PLACEMARKS                 =  40;  // Share the track's placemarks (given id)
     static final short INTENT_SEND_PLACEMARKS           =  41;  // Request to
+    static final short TRACKLIST_RANGE_SELECTION        =  42;  // Select/Deselect a range of tracks
 
     static final short ACTION_BULK_DELETE_TRACKS        =  50;  // Delete the selected tracks
     static final short ACTION_BULK_EXPORT_TRACKS        =  51;  // Export the selected tracks

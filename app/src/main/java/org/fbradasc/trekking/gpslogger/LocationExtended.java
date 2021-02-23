@@ -22,8 +22,8 @@ import android.location.Location;
 
 public class LocationExtended {
 
-    private final int NOT_AVAILABLE = -100000;
-    private final int NONE = 0;
+    private static final int NOT_AVAILABLE = -100000;
+    private static final int NONE = 0;
 
     private Location _Location;
     private String _Description = "";

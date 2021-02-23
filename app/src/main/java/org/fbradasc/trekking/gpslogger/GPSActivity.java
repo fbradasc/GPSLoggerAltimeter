@@ -30,22 +30,20 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomSheetBehavior;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.app.AppCompatDelegate;
-import android.support.v7.preference.PreferenceManager;
-import android.support.v7.view.ActionMode;
-import android.support.v7.view.ContextThemeWrapper;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.tabs.TabLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.core.content.ContextCompat;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
+import androidx.appcompat.view.ActionMode;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -77,7 +75,6 @@ public class GPSActivity extends AppCompatActivity {
     private int activeTab = 1;
     final Context context = this;
 
-    private boolean prefKeepScreenOn = true;
     private boolean show_toast_grant_storage_permission = false;
 
     private BottomSheetBehavior mBottomSheetBehavior;
@@ -87,14 +84,11 @@ public class GPSActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.w("myApp", "[#] " + this + " - onCreate()");
+
+        setTheme(R.style.MyMaterialTheme);
 
         super.onCreate(savedInstanceState);
-
-        if (PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean("prefLightColorTheme", false)) {
-            getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-        } else {
-            getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        }
 
         setContentView(R.layout.activity_gps);
         toolbar = findViewById(R.id.id_toolbar);
@@ -132,16 +126,23 @@ public class GPSActivity extends AppCompatActivity {
 
     @Override
     public void onStart() {
+        Log.w("myApp", "[#] " + this + " - onStart()");
         super.onStart();
-
-        //Log.w("myApp", "[#] GPSActivity.java - onStart()");
         activeTab = tabLayout.getSelectedTabPosition();
         GPSApp.setGPSActivity_activeTab(activeTab);
     }
 
 
     @Override
+    public void onStop() {
+        Log.w("myApp", "[#] " + this + " - onStop()");
+        super.onStop();
+    }
+
+
+    @Override
     public void onResume() {
+        Log.w("myApp", "[#] " + this + " - onResume()");
         super.onResume();
 
         // Workaround for Nokia Devices, Android 9
@@ -152,7 +153,6 @@ public class GPSActivity extends AppCompatActivity {
         }
 
         EventBus.getDefault().register(this);
-        Log.w("myApp", "[#] GPSActivity.java - onResume()");
         LoadPreferences();
         EventBus.getDefault().post(EventBusMSG.APP_RESUME);
         if (menutrackfinished != null) menutrackfinished.setVisible(!GPSApp.getCurrentTrack().getName().equals(""));
@@ -165,12 +165,12 @@ public class GPSActivity extends AppCompatActivity {
 
         ActivateActionModeIfNeeded();
 
-        if (GPSApp.FlagExists(GPSApp.FLAG_RECORDING) && !GPSApp.getRecording()) {
+        if (GPSApp.FlagExists(GPSApplication.FLAG_RECORDING) && !GPSApp.getRecording()) {
             // The app is crashed in background
             Log.w("myApp", "[#] GPSActivity.java - THE APP HAS BEEN KILLED IN BACKGROUND DURING A RECORDING !!!");
-            GPSApp.FlagRemove(GPSApp.FLAG_RECORDING);
+            GPSApp.FlagRemove(GPSApplication.FLAG_RECORDING);
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.StyledDialog));
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
             if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 builder.setMessage(getResources().getString(R.string.dlg_app_killed) + "\n\n" + getResources().getString(R.string.dlg_app_killed_description));
                 builder.setNeutralButton(R.string.open_android_app_settings, new DialogInterface.OnClickListener() {
@@ -211,18 +211,21 @@ public class GPSActivity extends AppCompatActivity {
         }
     }
 
+
     @Override
     public void onPause() {
+        Log.w("myApp", "[#] " + this + " - onPause()");
         EventBus.getDefault().post(EventBusMSG.APP_PAUSE);
-        Log.w("myApp", "[#] GPSActivity.java - onPause()");
         EventBus.getDefault().unregister(this);
         super.onPause();
     }
+
 
     @Override
     public void onBackPressed() {
         ShutdownApp();
     }
+
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -230,11 +233,13 @@ public class GPSActivity extends AppCompatActivity {
         updateBottomSheetPosition();
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
     }
+
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
@@ -242,6 +247,7 @@ public class GPSActivity extends AppCompatActivity {
         menutrackfinished.setVisible(!GPSApp.getCurrentTrack().getName().equals(""));
         return true;
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -313,6 +319,7 @@ public class GPSActivity extends AppCompatActivity {
             super(manager);
         }
 
+        @NonNull
         @Override
         public Fragment getItem(int position) {
             return mFragmentList.get(position);
@@ -397,8 +404,7 @@ public class GPSActivity extends AppCompatActivity {
 
     private void LoadPreferences() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        prefKeepScreenOn = preferences.getBoolean("prefKeepScreenOn", true);
-        if (prefKeepScreenOn) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (preferences.getBoolean("prefKeepScreenOn", true)) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
@@ -408,7 +414,7 @@ public class GPSActivity extends AppCompatActivity {
                 || (GPSApplication.getInstance().getRecording())
                 || (GPSApplication.getInstance().getPlacemarkRequest())) {
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.StyledDialog));
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(getResources().getString(R.string.message_exit_finalizing));
             builder.setIcon(android.R.drawable.ic_menu_info_details);
             builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
@@ -470,11 +476,11 @@ public class GPSActivity extends AppCompatActivity {
     }
 
 
-    public boolean CheckLocationPermission() {
+    public void CheckLocationPermission() {
         Log.w("myApp", "[#] GPSActivity.java - Check Location Permission...");
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             Log.w("myApp", "[#] GPSActivity.java - Location Permission granted");
-            return true;    // Permission Granted
+            // Permission Granted
         } else {
             Log.w("myApp", "[#] GPSActivity.java - Location Permission denied");
             boolean showRationale = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION);
@@ -484,13 +490,12 @@ public class GPSActivity extends AppCompatActivity {
                 listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
                 ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]) , REQUEST_ID_MULTIPLE_PERMISSIONS);
             }
-            return false;
         }
     }
 
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case REQUEST_ID_MULTIPLE_PERMISSIONS: {
                 Map<String, Integer> perms = new HashMap<>();

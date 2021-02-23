@@ -54,19 +54,19 @@ class Exporter extends Thread {
     private boolean UnableToWriteFile = false;
     int GroupOfLocations;                           // Reads and writes location grouped by this number;
 
-    private ArrayBlockingQueue<LocationExtended> ArrayGeopoints = new ArrayBlockingQueue<>(3500);
-    private AsyncGeopointsLoader asyncGeopointsLoader = new AsyncGeopointsLoader();
+    private final ArrayBlockingQueue<LocationExtended> ArrayGeopoints = new ArrayBlockingQueue<>(3500);
+    private final AsyncGeopointsLoader asyncGeopointsLoader = new AsyncGeopointsLoader();
 
 
     public Exporter(ExportingTask exportingTask, boolean ExportKML, boolean ExportGPX, boolean ExportTXT, boolean ExportPMK, String SaveIntoFolder) {
         this.exportingTask = exportingTask;
         this.exportingTask.setNumberOfPoints_Processed(0);
         this.exportingTask.setStatus(ExportingTask.STATUS_RUNNING);
-        track = GPSApplication.getInstance().GPSDataBase.getTrack(exportingTask.getId());
-        AltitudeManualCorrection = GPSApplication.getInstance().getPrefAltitudeCorrection();
-        EGMAltitudeCorrection = GPSApplication.getInstance().getPrefEGM96AltitudeCorrection();
-        getPrefKMLAltitudeMode = GPSApplication.getInstance().getPrefKMLAltitudeMode();
-        getPrefGPXVersion = GPSApplication.getInstance().getPrefGPXVersion();
+        this.track = GPSApplication.getInstance().GPSDataBase.getTrack(exportingTask.getId());
+        this.AltitudeManualCorrection = GPSApplication.getInstance().getPrefAltitudeCorrection();
+        this.EGMAltitudeCorrection = GPSApplication.getInstance().getPrefEGM96AltitudeCorrection();
+        this.getPrefKMLAltitudeMode = GPSApplication.getInstance().getPrefKMLAltitudeMode();
+        this.getPrefGPXVersion = GPSApplication.getInstance().getPrefGPXVersion();
 
         this.ExportPMK = ExportPMK;
         this.ExportTXT = ExportTXT;
@@ -107,11 +107,17 @@ class Exporter extends Thread {
         // ------------------------------------------------- Create the Directory tree if not exist
         File sd = new File(Environment.getExternalStorageDirectory() + "/GPSLogger");
         if (!sd.exists()) {
-            sd.mkdir();
+            if (!sd.mkdir()) {
+                exportingTask.setStatus(ExportingTask.STATUS_ENDED_FAILED);
+                return;
+            }
         }
         sd = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData");
         if (!sd.exists()) {
-            sd.mkdir();
+            if (!sd.mkdir()) {
+                exportingTask.setStatus(ExportingTask.STATUS_ENDED_FAILED);
+                return;
+            }
         }
         // ----------------------------------------------------------------------------------------
 
@@ -140,16 +146,17 @@ class Exporter extends Thread {
             }
         }
 
-        SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss");  // date and time formatter for GPX timestamp
-        SimpleDateFormat dfdtPMK = new SimpleDateFormat("yyyy/MM/dd,HH:mm:ss");  // date and time formatter for PMK timestamp
-        SimpleDateFormat dfdtGPX = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");        // date and time formatter for GPX timestamp (with millis)
+        SimpleDateFormat dfdtGPX = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);        // date and time formatter for GPX timestamp (with millis)
         dfdtGPX.setTimeZone(TimeZone.getTimeZone("GMT"));
-        SimpleDateFormat dfdtGPX_NoMillis = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");   // date and time formatter for GPX timestamp (without millis)
+        SimpleDateFormat dfdtGPX_NoMillis = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);   // date and time formatter for GPX timestamp (without millis)
         dfdtGPX_NoMillis.setTimeZone(TimeZone.getTimeZone("GMT"));
-        SimpleDateFormat dfdtTXT = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss.SSS");           // date and time formatter for TXT timestamp (with millis)
+        SimpleDateFormat dfdtTXT = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss.SSS", Locale.US);           // date and time formatter for TXT timestamp (with millis)
         dfdtTXT.setTimeZone(TimeZone.getTimeZone("GMT"));
-        SimpleDateFormat dfdtTXT_NoMillis = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss");      // date and time formatter for TXT timestamp (without millis)
+        SimpleDateFormat dfdtTXT_NoMillis = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss", Locale.US);      // date and time formatter for TXT timestamp (without millis)
         dfdtTXT_NoMillis.setTimeZone(TimeZone.getTimeZone("GMT"));
+        SimpleDateFormat dfdtPMK = new SimpleDateFormat("yyyy/MM/dd,HH:mm:ss", Locale.US);  // date and time formatter for PMK timestamp
+        dfdtPMK.setTimeZone(TimeZone.getTimeZone("GMT"));
+        SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);  // date and time formatter for GPX timestamp
 
         File KMLfile = null;
         File GPXfile = null;
@@ -698,23 +705,29 @@ class Exporter extends Thread {
 
             if (ExportKML) {
                 KMLbw.write(" </Document>" + newLine);
-                KMLbw.write("</kml>");
-
+                KMLbw.write("</kml>" + newLine + " ");
+                KMLbw.flush();
                 KMLbw.close();
+                KMLfw.flush();
                 KMLfw.close();
             }
             if (ExportGPX) {
-                GPXbw.write("</gpx>");
-
+                GPXbw.write("</gpx>" + newLine + " ");
+                GPXbw.flush();
                 GPXbw.close();
+                GPXfw.flush();
                 GPXfw.close();
             }
             if (ExportTXT) {
+                TXTbw.flush();
                 TXTbw.close();
+                TXTfw.flush();
                 TXTfw.close();
             }
             if (ExportPMK) {
+                PMKbw.flush();
                 PMKbw.close();
+                PMKfw.flush();
                 PMKfw.close();
             }
 

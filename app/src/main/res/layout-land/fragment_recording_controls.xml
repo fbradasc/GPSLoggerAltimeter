@@ -24,10 +24,21 @@
     android:layout_height="wrap_content"
     tools:context="org.fbradasc.trekking.gpslogger.FragmentRecordingControls"
     android:id="@+id/id_fragmentrecordingcontrols"
-    android:background="@color/colorRecControlBackground"
-    android:orientation="horizontal"
-    android:weightSum="4"
+    android:orientation="vertical"
     android:baselineAligned="false">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="match_parent"
+        android:background="@drawable/shadow"
+        android:layout_height="6dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorRecControlBackground"
+        android:orientation="horizontal"
+        android:weightSum="4"
+        android:baselineAligned="false">
 
 
     <TableLayout
@@ -140,4 +151,5 @@
             />
 
     </TableLayout>
+    </LinearLayout>
 </LinearLayout>
