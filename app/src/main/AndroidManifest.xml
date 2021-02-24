@@ -19,7 +19,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="eu.basicairdata.graziano.gpslogger">
+    package="org.fbradasc.trekking.gpslogger">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -29,9 +29,6 @@
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION"/>
 
     <uses-feature android:name="android.hardware.location.gps" android:required="true" />
-
-    <uses-sdk xmlns:tools="http://schemas.android.com/tools"
-        tools:overrideLibrary="android.support.v14.preference" />
 
     <application
         android:name=".GPSApplication"
@@ -67,7 +64,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="eu.basicairdata.graziano.gpslogger.fileprovider"
+            android:authorities="org.fbradasc.trekking.gpslogger.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -87,7 +84,7 @@
             android:foregroundServiceType="location"
             android:exported="false">
             <intent-filter>
-                <action android:name="eu.basicairdata.graziano.gpslogger.GPSService" />
+                <action android:name="org.fbradasc.trekking.gpslogger.GPSService" />
             </intent-filter>
         </service>
 

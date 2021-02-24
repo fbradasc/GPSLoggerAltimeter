@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package eu.basicairdata.graziano.gpslogger;
+package org.fbradasc.trekking.gpslogger;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;

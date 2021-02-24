@@ -17,7 +17,7 @@
  *
  */
 
-package eu.basicairdata.graziano.gpslogger;
+package org.fbradasc.trekking.gpslogger;
 
 import android.Manifest;
 import android.content.Intent;

@@ -49,12 +49,15 @@
     <string name="northwest">NO</string>
     <string name="north_northwest">NNO</string>
   <!-- GPS Status messages -->
+    <string name="gps_not_accessible">GPS non accessibile</string>
   <string name="gps_disabled">GPS disabilitato</string>
-  <string name="gps_disabled_with_hint">GPS disabilitato\n\nCliccando 2 volte qui\npuoi abilitare il servizio Posizione\ne impostare un metodo di ricerca\nche utilizza il sensore GPS</string>
   <string name="gps_out_of_service">GPS fuori servizio</string>
   <string name="gps_temporary_unavailable">GPS temporaneamente non disponibile</string>
   <string name="gps_searching">Ricerca del segnale GPS</string>
   <string name="gps_stabilizing">Stabilizzazione del segnale</string>
+    <string name="warning_location_denied">L\'App non può accedere alla Posizione</string>
+    <string name="warning_background_restricted">L\'App non può funzionare in background.\nClicca qui per aprire le impostazioni di sistema dove, nella sezione Batteria, puoi consentirle l\'attività in background</string>
+    <string name="warning_enable_location_service">Il sensore GPS è disattivato.\nClicca qui per aprire le impostazioni di sistema, dove puoi abilitare il servizio di Posizione e impostare un metodo di localizzazione che utilizzi il sensore GPS</string>
   <!-- Track -->
   <string name="track_id">Itinerario</string>
   <string name="duration">Durata</string>
@@ -119,8 +122,13 @@
   <string name="pref_category_interface">INTERFACCIA</string>
   <string name="pref_keep_screen_on">Mantieni lo schermo attivo</string>
   <string name="pref_keep_screen_on_summary">La batteria si scarica più velocemente</string>
+    <string name="pref_color_theme">Tema Colore</string>
+    <string name="pref_color_theme_dark">Scuro</string>
+    <string name="pref_color_theme_light">Chiaro</string>
   <string name="pref_show_decimal_coordinates">Visualizza coordinate decimali</string>
   <string name="pref_show_decimal_coordinates_summary">Frazioni di grado in notazione decimale</string>
+    <string name="pref_show_gps_time_local">Visualizza il tempo GPS nel fuso orario locale</string>
+    <string name="pref_show_gps_time_local_summary">invece del tempo GPS globale</string>
   <string name="pref_show_directions">Visualizzazione direzione come</string>
   <string name="pref_show_directions_angle">Gradi Est riferiti al Nord</string>
   <string name="pref_show_directions_cardinal">Punti Cardinali</string>
@@ -129,9 +137,9 @@
   <string name="pref_unit_of_measurement_imperial">Imperiale</string>
   <string name="pref_unit_of_measurement_aerial_nautical">Aereo / Nautico</string>
   <string name="pref_unit_of_measurement_speed">Visualizza le velocità in</string>
-  <string name="pref_view_tracks_with">Visualizza gli itinerari con</string>
-  <string name="pref_view_tracks_with_KML">Visualizzatore KML</string>
-  <string name="pref_view_tracks_with_GPX">Visualizzatore GPX</string>
+    <string name="pref_track_viewer">Visualizzatore itinerari</string>
+    <string name="pref_track_viewer_not_installed">Nessun visualizzatore GPX/KML installato</string>
+    <string name="pref_track_viewer_select_every_time">Seleziona ogni volta</string>
   <string name="pref_category_tracking">REGISTRAZIONE</string>
   <string name="pref_GPS_distance">Densità registrazione punti</string>
   <string name="pref_GPS_distance_max">Massima</string>
@@ -162,8 +170,6 @@
   <string name="pref_export_TXT_summary">Testo normale, valori separati da virgole</string>
   <string name="pref_export_PMK">Esporta le annotazioni</string>
   <string name="pref_export_PMK_summary">Testo normale, valori separati da virgole</string>
-  <string name="pref_TXT_system_of_measurement">Unità di misura TXT</string>
-  <string name="pref_TXT_system_of_measurement_follows_app_settings">Segue impostazioni interfaccia</string>
   <string name="pref_export_KML">Esporta itinerari in KML</string>
     <string name="pref_export_KML_summary">Keyhole Markup Language (v.2.2)</string>
   <string name="pref_export_GPX">Esporta itinerari in GPX</string>

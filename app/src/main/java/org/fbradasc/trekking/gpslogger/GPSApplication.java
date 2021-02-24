@@ -84,7 +84,7 @@ import android.hardware.SensorManager;
 
 import com.google.android.gms.location.DetectedActivity;
 
-public class GPSApplication extends Application implements GpsStatus.Listener, LocationListener, SensorEventListener
+public class GPSApplication extends Application implements LocationListener, SensorEventListener
 {
     //private static final float M_TO_FT = 3.280839895f;
     public static final int NOT_AVAILABLE = -100000;
@@ -1184,7 +1184,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             // GPX Viewer
             file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", exportingTask.getName() + ".gpx");
             if (TrackViewer.requiresFileProvider) {
-                Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "eu.basicairdata.graziano.gpslogger.fileprovider", file);
+                Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "org.fbradasc.trekking.gpslogger.fileprovider", file);
                 getApplicationContext().grantUriPermission(TrackViewer.PackageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.setDataAndType(uri, "application/gpx+xml");
             } else {
@@ -1194,7 +1194,7 @@ public class GPSApplication extends Application implements GpsStatus.Listener, L
             // KML Viewer
             file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", exportingTask.getName() + ".kml");
             if (TrackViewer.requiresFileProvider) {
-                Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "eu.basicairdata.graziano.gpslogger.fileprovider", file);
+                Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "org.fbradasc.trekking.gpslogger.fileprovider", file);
                 getApplicationContext().grantUriPermission(TrackViewer.PackageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.setDataAndType(uri, "application/vnd.google-earth.kml+xml");
             } else {

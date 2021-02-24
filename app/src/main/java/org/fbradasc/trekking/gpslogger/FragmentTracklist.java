@@ -451,19 +451,19 @@ public class FragmentTracklist extends Fragment {
                     fname = track.getName() + ".kml";
                     file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
                     if (file.exists () && GPSApplication.getInstance().getPrefExportKML()) {
-                    Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "eu.basicairdata.graziano.gpslogger.fileprovider", file);
+                    Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "org.fbradasc.trekking.gpslogger.fileprovider", file);
                         files.add(uri);
                     }
                     fname = track.getName() + ".gpx";
                     file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
                     if (file.exists ()  && GPSApplication.getInstance().getPrefExportGPX()) {
-                    Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "eu.basicairdata.graziano.gpslogger.fileprovider", file);
+                    Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "org.fbradasc.trekking.gpslogger.fileprovider", file);
                         files.add(uri);
                     }
                     fname = track.getName() + ".txt";
                     file = new File(Environment.getExternalStorageDirectory() + "/GPSLogger/AppData/", fname);
                     if (file.exists ()  && GPSApplication.getInstance().getPrefExportTXT()) {
-                    Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "eu.basicairdata.graziano.gpslogger.fileprovider", file);
+                    Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "org.fbradasc.trekking.gpslogger.fileprovider", file);
                         files.add(uri);
                     }
                 }

@@ -48,12 +48,15 @@
     <string name="northwest">西北</string>
     <string name="north_northwest">西北偏北</string>
     <!-- GPS Status messages -->
+    <string name="gps_not_accessible">无法访问 GPS</string>
     <string name="gps_disabled">GPS处于停用状态</string>
-    <string name="gps_disabled_with_hint">GPS处于停用状态。\n\n请双击此处\n启用定位服务\n并选取其中一种\n使用GPS传感器的定位模式。</string>
     <string name="gps_out_of_service">GPS无服务</string>
     <string name="gps_temporary_unavailable">GPS暂时不可用</string>
     <string name="gps_searching">正在寻找GPS</string>
     <string name="gps_stabilizing">正在稳定信号</string>
+    <string name="warning_location_denied">应用无法访问位置信息</string>
+    <string name="warning_background_restricted">应用无法在后台工作。\n请点击这里进入系统设置，在电池栏目中，您可以允许应用在后台活动。</string>
+    <string name="warning_enable_location_service">GPS传感器已禁用。\n点击这里前往系统设置，在那里您可以启用定位服务并设置一个使用GPS传感器的定位方法</string>
     <!-- Track -->
     <string name="track_id">轨迹</string>
     <string name="duration">持续时间</string>
@@ -111,8 +114,13 @@
     <string name="pref_category_interface">界面</string>
     <string name="pref_keep_screen_on">保持屏幕常亮</string>
     <string name="pref_keep_screen_on_summary">电池消耗更快</string>
+    <string name="pref_color_theme">颜色主题</string>
+    <string name="pref_color_theme_dark">暗色主题</string>
+    <string name="pref_color_theme_light">浅色主题</string>
     <string name="pref_show_decimal_coordinates">显示十进制坐标</string>
     <string name="pref_show_decimal_coordinates_summary">以十进制显示小数部分</string>
+    <string name="pref_show_gps_time_local">以本地时区显示GPS时间</string>
+    <string name="pref_show_gps_time_local_summary">而不是全球GPS时间</string>
     <string name="pref_show_directions">如何显示方向</string>
     <string name="pref_show_directions_angle">北偏东的角度</string>
     <string name="pref_show_directions_cardinal">基点</string>
@@ -121,9 +129,9 @@
     <string name="pref_unit_of_measurement_imperial">英制</string>
     <string name="pref_unit_of_measurement_aerial_nautical">空中/航海</string>
     <string name="pref_unit_of_measurement_speed">显示速度单位</string>
-    <string name="pref_view_tracks_with">查看轨迹使用</string>
-    <string name="pref_view_tracks_with_KML">KML查看器</string>
-    <string name="pref_view_tracks_with_GPX">GPX查看器</string>
+    <string name="pref_track_viewer">轨迹查看器</string>
+    <string name="pref_track_viewer_not_installed">未安装 GPX/KML 查看器</string>
+    <string name="pref_track_viewer_select_every_time">每次选择</string>
     <string name="pref_category_tracking">轨迹记录</string>
     <string name="pref_GPS_distance">记录密度</string>
     <string name="pref_GPS_distance_max">最大值</string>
@@ -152,8 +160,6 @@
     <string name="pref_category_exporting">导出设置</string>
     <string name="pref_export_TXT">以TXT格式导出轨迹</string>
     <string name="pref_export_TXT_summary">纯文本, 逗号分隔的值</string>
-    <string name="pref_TXT_system_of_measurement">TXT测量单位</string>
-    <string name="pref_TXT_system_of_measurement_follows_app_settings">按照界面设置</string>
     <string name="pref_export_KML">以KML格式导出轨迹</string>
     <string name="pref_export_KML_summary">Keyhole Markup 语言(v.2.2)</string>
     <string name="pref_export_GPX">以GPX格式导出轨迹</string>
