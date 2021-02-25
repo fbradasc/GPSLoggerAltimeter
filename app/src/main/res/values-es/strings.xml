@@ -18,7 +18,7 @@
   ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
   -->
 <resources>
-  <string name="app_name">Walking Logger</string>
+  <string name="app_name">Walk Logger</string>
   <!-- Tabs -->
   <string name="tab_gpsfix">Pos GPS</string>
   <string name="tab_track">Itinerario</string>
@@ -76,7 +76,7 @@
     <string name="menu_track_finished">Itinerario finalizado</string>
     <string name="toast_track_finished_click_again">Doble click para finalizar este itinerario</string>
   <string name="toast_track_saved_into_tracklist">Itinerario archivado</string>
-    <string name="toast_track_exported">Itinerarios exportados en la carpeta /WalkingLogger</string>
+    <string name="toast_track_exported">Itinerarios exportados en la carpeta /WalkLogger</string>
   <string name="menu_about">Acerca de</string>
     <string name="menu_shutdown">Salir</string>
   <!-- Placemark Creation dialog -->

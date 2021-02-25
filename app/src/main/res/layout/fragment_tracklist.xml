@@ -22,7 +22,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="org.fbradasc.trekking.walkinglogger.FragmentTracklist">
+    tools:context="org.fbradasc.trekking.walklogger.FragmentTracklist">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/my_recycler_view"
@@ -42,7 +42,7 @@
     <fragment
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:name="org.fbradasc.trekking.walkinglogger.FragmentJobProgress"
+        android:name="org.fbradasc.trekking.walklogger.FragmentJobProgress"
         android:id="@+id/fragment_FragmentJobProgress"
         android:layout_gravity="bottom"
         tools:layout="@layout/fragment_job_progress"

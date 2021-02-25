@@ -20,6 +20,6 @@
 
 <paths>
     <external-path
-        name = "walking_logger"
-        path = "WalkingLogger" />
+        name = "walk_logger"
+        path = "WalkLogger" />
 </paths>

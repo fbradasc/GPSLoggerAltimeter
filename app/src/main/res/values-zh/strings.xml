@@ -75,7 +75,7 @@
     <string name="menu_track_finished">已结束轨迹记录</string>
     <string name="toast_track_finished_click_again">双击结束轨迹记录</string>
     <string name="toast_track_saved_into_tracklist">此轨迹已保存至轨迹列表中</string>
-    <string name="toast_track_exported">已把轨迹导出至/WalkingLogger目录</string>
+    <string name="toast_track_exported">已把轨迹导出至/WalkLogger目录</string>
     <string name="menu_about">关于</string>
     <string name="menu_shutdown">关闭</string>
     <!-- Placemark Creation dialog -->
@@ -180,8 +180,8 @@
     <string name="toast_active_track_not_empty">当前活动轨迹非空</string>
     <!-- About Dialog -->
     <string name="about_version">版本</string>
-    <string name="about_description">版权所有(C)2016 BasicAirData \nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger使用GPS记录您的轨迹。您可以在喜欢的查看器中查看它们，并以KML，GPX和TXT格式将它们分享，导出到设备的WalkingLogger文件夹中。\n\n此程序是免费软件，根据GNU通用公共许可证条款发布。\n有关详细信息，请参阅：http://www.gnu.org/licenses/gpl.txt\n\n对于EGM96大地水准面文件免责声明请参阅：http://earth-info.nga.mil/GandG/disclaim.html</string>
-    <string name="about_description_googleplaystore">版权所有(C)2016 BasicAirData \nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger使用GPS记录您的轨迹。您可以在喜欢的查看器中查看它们，并以KML，GPX和TXT格式将它们分享，导出到设备的WalkingLogger文件夹中。\n\n此程序是免费软件，根据GNU通用公共许可证条款发布。\n有关详细信息，请参阅：http://www.gnu.org/licenses/gpl.txt\n\n对于EGM96大地水准面文件免责声明请参阅：http://earth-info.nga.mil/GandG/disclaim.html\n \n如果您喜欢使用此应用程序，请花点时间在Google Store中为GPS Logger评分。</string>
+    <string name="about_description">版权所有(C)2016 BasicAirData \nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger使用GPS记录您的轨迹。您可以在喜欢的查看器中查看它们，并以KML，GPX和TXT格式将它们分享，导出到设备的WalkLogger文件夹中。\n\n此程序是免费软件，根据GNU通用公共许可证条款发布。\n有关详细信息，请参阅：http://www.gnu.org/licenses/gpl.txt\n\n对于EGM96大地水准面文件免责声明请参阅：http://earth-info.nga.mil/GandG/disclaim.html</string>
+    <string name="about_description_googleplaystore">版权所有(C)2016 BasicAirData \nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger使用GPS记录您的轨迹。您可以在喜欢的查看器中查看它们，并以KML，GPX和TXT格式将它们分享，导出到设备的WalkLogger文件夹中。\n\n此程序是免费软件，根据GNU通用公共许可证条款发布。\n有关详细信息，请参阅：http://www.gnu.org/licenses/gpl.txt\n\n对于EGM96大地水准面文件免责声明请参阅：http://earth-info.nga.mil/GandG/disclaim.html\n \n如果您喜欢使用此应用程序，请花点时间在Google Store中为GPS Logger评分。</string>
     <string name="about_ok">关闭</string>
     <string name="about_rate_this_app">评价此应用</string>
     <string name="about_unable_to_rate">无法访问Google应用商店</string>

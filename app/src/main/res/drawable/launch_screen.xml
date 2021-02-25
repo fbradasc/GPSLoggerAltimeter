@@ -24,7 +24,7 @@
   <!-- App Logo -->
   <item>
     <bitmap
-      android:src="@mipmap/walking_logger_big"
+      android:src="@mipmap/walk_logger_big"
       android:gravity="center"/>
   </item>
 </layer-list>

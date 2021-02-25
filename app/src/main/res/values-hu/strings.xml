@@ -75,7 +75,7 @@
     <string name="menu_track_finished">Útvonal rögzítés vége</string>
     <string name="toast_track_finished_click_again">Dupla kattintásra Útvonal rögzítés vége</string>
     <string name="toast_track_saved_into_tracklist">Útvonal mentve az Útvonal listába</string>
-    <string name="toast_track_exported">Útvonal exportálva a /WalkingLogger mappába</string>
+    <string name="toast_track_exported">Útvonal exportálva a /WalkLogger mappába</string>
     <string name="menu_about">Névjegy</string>
     <string name="menu_shutdown">Kikapcsolás</string>
     <!-- Placemark Creation dialog -->
@@ -183,8 +183,8 @@
     <string name="toast_active_track_not_empty">Az aktív útvonal nem üres</string>
     <!-- About Dialog -->
     <string name="about_version">ver.</string>
-    <string name="about_description">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger a GPS segítségével rögzíti az útvonalat. Megtekintheti őket az Ön által preferált viewer programban, megoszthatja és exportálhatja azokat a készülék WalkingLogger mappájából KML, GPX és TXT formátumban.\n\nEz a program szabad felhasználású szoftver, a GNU General Public License feltételei szerint kiadva.\nTovábbi részletek: http://www.gnu.org/licenses/gpl.txt\n\nAz EGM96 geoid fájl felelősség vállalásáért lásd: http://earth-info.nga.mil/GandG/disclaim.html</string>
-    <string name="about_description_googleplaystore">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger a GPS segítségével rögzíti az útvonalat. Megtekintheti őket az Ön által preferált viewer programban, megoszthatja és exportálhatja azokat a készülék WalkingLogger mappájából KML, GPX és TXT formátumban.\n\nEz a program szabad felhasználású szoftver, a GNU General Public License feltételei szerint kiadva.\nTovábbi részletek: http://www.gnu.org/licenses/gpl.txt\n\nAz EGM96 geoid fájl felelősség vállalásáért lásd: http://earth-info.nga.mil/GandG/disclaim.html\n\nHa szereti ezt az alkalmazást, kérjük, szánjon egy pillanatot arra, hogy értékelje a GPS Loggert a Google Áruházban.</string>
+    <string name="about_description">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger a GPS segítségével rögzíti az útvonalat. Megtekintheti őket az Ön által preferált viewer programban, megoszthatja és exportálhatja azokat a készülék WalkLogger mappájából KML, GPX és TXT formátumban.\n\nEz a program szabad felhasználású szoftver, a GNU General Public License feltételei szerint kiadva.\nTovábbi részletek: http://www.gnu.org/licenses/gpl.txt\n\nAz EGM96 geoid fájl felelősség vállalásáért lásd: http://earth-info.nga.mil/GandG/disclaim.html</string>
+    <string name="about_description_googleplaystore">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger a GPS segítségével rögzíti az útvonalat. Megtekintheti őket az Ön által preferált viewer programban, megoszthatja és exportálhatja azokat a készülék WalkLogger mappájából KML, GPX és TXT formátumban.\n\nEz a program szabad felhasználású szoftver, a GNU General Public License feltételei szerint kiadva.\nTovábbi részletek: http://www.gnu.org/licenses/gpl.txt\n\nAz EGM96 geoid fájl felelősség vállalásáért lásd: http://earth-info.nga.mil/GandG/disclaim.html\n\nHa szereti ezt az alkalmazást, kérjük, szánjon egy pillanatot arra, hogy értékelje a GPS Loggert a Google Áruházban.</string>
     <string name="about_ok">Bezárás</string>
     <string name="about_rate_this_app">Értékelés</string>
     <string name="about_unable_to_rate">Nem érhető el a Store</string>
