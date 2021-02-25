@@ -76,7 +76,7 @@
   <string name="menu_track_finished">追跡完了</string>
   <string name="toast_track_finished_click_again">ダブルクリックするとこの追跡を終了します</string>
   <string name="toast_track_saved_into_tracklist">追跡リストに追跡を保存しました</string>
-  <string name="toast_track_exported">/GPSLogger フォルダーに追跡をエクスポートしました</string>
+  <string name="toast_track_exported">/WalkingLogger フォルダーに追跡をエクスポートしました</string>
   <string name="menu_about">アプリについて</string>
   <string name="menu_shutdown">シャットダウン</string>
   <!-- Placemark Creation dialog -->
@@ -184,8 +184,8 @@
     <string name="toast_active_track_not_empty">有効な追跡が空ではありません</string>
   <!-- About Dialog -->
   <string name="about_version">ver.</string>
-    <string name="about_description">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger は、GPS を使用して、追跡を記録します。 それをお好みのビューアで表示したり、KML、GPX、TXT 形式で共有、およびお使いのデバイスの GPSLogger フォルダーにエクスポートすることができます。\n\nこのプログラムは GNU 一般公衆ライセンスの条件の下でリリースされるフリー ソフトウェアです。\n詳細は、こちらを参照してください: http://www.gnu.org/licenses/gpl.txt\n\nEGM96 ジオイド ファイルの免責事項はこちらを参照してください: http://earth-info.nga.mil/GandG/disclaim.html</string>
-    <string name="about_description_googleplaystore">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger は、GPS を使用して、追跡を記録します。 それをお好みのビューアで表示したり、KML、GPX、TXT 形式で共有、およびお使いのデバイスの GPSLogger フォルダーにエクスポートすることができます。\n\nこのプログラムは GNU 一般公衆ライセンスの条件の下でリリースされるフリー ソフトウェアです。\n詳細は、こちらを参照してください: http://www.gnu.org/licenses/gpl.txt\n\nEGM96 ジオイド ファイルの免責事項はこちらを参照してください: http://earth-info.nga.mil/GandG/disclaim.html\n\nこのアプリを使って楽しんでいただけたら、少し時間をいただき Google ストアで GPS Logger を評価してください。</string>
+    <string name="about_description">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger は、GPS を使用して、追跡を記録します。 それをお好みのビューアで表示したり、KML、GPX、TXT 形式で共有、およびお使いのデバイスの WalkingLogger フォルダーにエクスポートすることができます。\n\nこのプログラムは GNU 一般公衆ライセンスの条件の下でリリースされるフリー ソフトウェアです。\n詳細は、こちらを参照してください: http://www.gnu.org/licenses/gpl.txt\n\nEGM96 ジオイド ファイルの免責事項はこちらを参照してください: http://earth-info.nga.mil/GandG/disclaim.html</string>
+    <string name="about_description_googleplaystore">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger は、GPS を使用して、追跡を記録します。 それをお好みのビューアで表示したり、KML、GPX、TXT 形式で共有、およびお使いのデバイスの WalkingLogger フォルダーにエクスポートすることができます。\n\nこのプログラムは GNU 一般公衆ライセンスの条件の下でリリースされるフリー ソフトウェアです。\n詳細は、こちらを参照してください: http://www.gnu.org/licenses/gpl.txt\n\nEGM96 ジオイド ファイルの免責事項はこちらを参照してください: http://earth-info.nga.mil/GandG/disclaim.html\n\nこのアプリを使って楽しんでいただけたら、少し時間をいただき Google ストアで GPS Logger を評価してください。</string>
   <string name="about_ok">閉じる</string>
   <string name="about_rate_this_app">このアプリを評価</string>
     <string name="about_unable_to_rate">ストアにアクセスできません</string>

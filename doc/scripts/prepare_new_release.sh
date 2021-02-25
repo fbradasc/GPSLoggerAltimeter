@@ -7,23 +7,23 @@
 # It performs the following tasks:
 
 # 1) it brings the signed app-release.apk and copy it into apk folder with the right name
-# 2) it substitutes the GPSLogger-latest.apk with the new one
+# 2) it substitutes the WalkingLogger-latest.apk with the new one
 # 3) it zips the source code and places the archive into the sourcecode folder
 
 # This script is made to be executed after the building of the signed apk file,
-# and must be executed from inside the GPSLogger project Folder.
+# and must be executed from inside the WalkingLogger project Folder.
 
 
 currentpath=$(pwd)
-if [[ ${currentpath} != *"GPSLogger"* ]];then
-	# currentpath does not contain "GPSLogger"
-	echo GPSLogger Project Folder not found, exiting...
+if [[ ${currentpath} != *"WalkingLogger"* ]];then
+	# currentpath does not contain "WalkingLogger"
+	echo WalkingLogger Project Folder not found, exiting...
 	exit 1
 fi
 
-gpsloggerpath="${currentpath%GPSLogger*}GPSLogger/"
-echo "Project Folder: ${gpsloggerpath}"
-cd ${gpsloggerpath}
+walkingloggerpath="${currentpath%WalkingLogger*}WalkingLogger/"
+echo "Project Folder: ${walkingloggerpath}"
+cd ${walkingloggerpath}
 
 
 
@@ -35,11 +35,11 @@ if [ -z "$ver" ]; then
 	echo Version number not found, exiting...
 	exit 1
 fi
-echo "Preparing GPSLogger v${ver}:"
+echo "Preparing WalkingLogger v${ver}:"
 
-apkrelease="apk/GPSLogger-${ver}.apk"
-apklatest="apk/GPSLogger-latest.apk"
-zipsource="sourcecode/GPSLogger-${ver} - Source.zip"
+apkrelease="apk/WalkingLogger-${ver}.apk"
+apklatest="apk/WalkingLogger-latest.apk"
+zipsource="sourcecode/WalkingLogger-${ver} - Source.zip"
 
 
 

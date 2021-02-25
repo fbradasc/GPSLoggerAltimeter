@@ -75,7 +75,7 @@
     <string name="menu_track_finished">Trajeto finalizado</string>
     <string name="toast_track_finished_click_again">Clique duas vezes para terminar este trajeto</string>
     <string name="toast_track_saved_into_tracklist">Trajeto salvo no Arquivo</string>
-    <string name="toast_track_exported">Trajetos exportados na pasta /GPSLogger</string>
+    <string name="toast_track_exported">Trajetos exportados na pasta /WalkingLogger</string>
     <string name="menu_about">Sobre</string>
     <string name="menu_shutdown">Desligar</string>
     <!-- Placemark Creation dialog -->
@@ -180,8 +180,8 @@
     <string name="toast_active_track_not_empty">O trajeto ativo não está vazio</string>
     <!-- About Dialog -->
     <string name="about_version">ver.</string>
-    <string name="about_description">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger grava seus percursos utilizando o GPS. Você pode visualizar eles no seu visualizador preferido, compartilhar e exportar eles na pasta GPSLogger do seu dispositivo nos formatos KML, GPX e TXT.\n\nEste programa é um software livre, publicado sob os termos da GNU General Public License.\nPara mais detalhes ver: http://www.gnu.org/licenses/gpl.txt\n\nPara o arquivo de contrato do EGM96 geoid ver: http://earth-info.nga.mil/GandG/disclaim.html</string>
-    <string name="about_description_googleplaystore">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger grava seus percursos utilizando o GPS. Você pode visualizar eles no seu visualizador preferido, compartilhar e exportar eles na pasta GPSLogger do seu dispositivo nos formatos KML, GPX e TXT.\n\nEste programa é um software livre, publicado sob os termos da GNU General Public License.\nPara mais detalhes ver: http://www.gnu.org/licenses/gpl.txt\n\nPara o arquivo de contrato do EGM96 geoid ver: http://earth-info.nga.mil/GandG/disclaim.html\n\nSe gostar de usar este app, por favor, dedique um momento para avaliar o GPS Logger na Google Store.</string>
+    <string name="about_description">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger grava seus percursos utilizando o GPS. Você pode visualizar eles no seu visualizador preferido, compartilhar e exportar eles na pasta WalkingLogger do seu dispositivo nos formatos KML, GPX e TXT.\n\nEste programa é um software livre, publicado sob os termos da GNU General Public License.\nPara mais detalhes ver: http://www.gnu.org/licenses/gpl.txt\n\nPara o arquivo de contrato do EGM96 geoid ver: http://earth-info.nga.mil/GandG/disclaim.html</string>
+    <string name="about_description_googleplaystore">Copyright (C) 2016 BasicAirData\nhttp://www.basicairdata.eu\n\nBasicAirData GPS Logger grava seus percursos utilizando o GPS. Você pode visualizar eles no seu visualizador preferido, compartilhar e exportar eles na pasta WalkingLogger do seu dispositivo nos formatos KML, GPX e TXT.\n\nEste programa é um software livre, publicado sob os termos da GNU General Public License.\nPara mais detalhes ver: http://www.gnu.org/licenses/gpl.txt\n\nPara o arquivo de contrato do EGM96 geoid ver: http://earth-info.nga.mil/GandG/disclaim.html\n\nSe gostar de usar este app, por favor, dedique um momento para avaliar o GPS Logger na Google Store.</string>
     <string name="about_ok">Fechar</string>
     <string name="about_rate_this_app">Avalia este App</string>
     <string name="about_unable_to_rate">Incapaz de acessar a Loja</string>

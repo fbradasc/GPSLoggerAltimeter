@@ -22,7 +22,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:context="org.fbradasc.trekking.gpslogger.FragmentRecordingControls"
+    tools:context="org.fbradasc.trekking.walkinglogger.FragmentRecordingControls"
     android:id="@+id/id_fragmentrecordingcontrols"
     android:orientation="vertical"
     android:baselineAligned="false">

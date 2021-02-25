@@ -76,7 +76,7 @@
     <string name="menu_track_finished">Itinerario finalizado</string>
     <string name="toast_track_finished_click_again">Doble click para finalizar este itinerario</string>
   <string name="toast_track_saved_into_tracklist">Itinerario archivado</string>
-    <string name="toast_track_exported">Itinerarios exportados en la carpeta /GPSLogger</string>
+    <string name="toast_track_exported">Itinerarios exportados en la carpeta /WalkingLogger</string>
   <string name="menu_about">Acerca de</string>
     <string name="menu_shutdown">Salir</string>
   <!-- Placemark Creation dialog -->

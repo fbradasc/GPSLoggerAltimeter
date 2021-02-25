@@ -35,7 +35,7 @@ android {
 //    }
 
     defaultConfig {
-        applicationId "org.fbradasc.trekking.gpslogger"
+        applicationId "org.fbradasc.trekking.walkinglogger"
         minSdkVersion 14
         targetSdkVersion 29
 
@@ -47,7 +47,7 @@ android {
 
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments = [ eventBusIndex : 'org.fbradasc.trekking.gpslogger.EventBusIndex' ]
+                arguments = [ eventBusIndex : 'org.fbradasc.trekking.walkinglogger.EventBusIndex' ]
             }
         }
     }

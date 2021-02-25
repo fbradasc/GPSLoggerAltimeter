@@ -12,7 +12,7 @@
         android:id="@+id/id_appdialog_row_imageView_icon"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        app:srcCompat="@mipmap/gps_logger" />
+        app:srcCompat="@mipmap/walking_logger" />
 
     <TextView
         android:id="@+id/id_appdialog_row_textView_description"
