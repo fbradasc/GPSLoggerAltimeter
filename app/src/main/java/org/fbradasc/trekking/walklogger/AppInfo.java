@@ -21,10 +21,10 @@ package org.fbradasc.trekking.walklogger;
 import android.graphics.drawable.Drawable;
 
 public class AppInfo {
-    String Label = "";
-    String PackageName = "";
-    boolean KML = false;
-    boolean GPX = false;
+    String label = "";
+    String packageName = "";
+    String mimeType = "";
+    String fileType = "";
     boolean requiresFileProvider = false;
-    Drawable Icon = null;
+    Drawable icon = null;
 }

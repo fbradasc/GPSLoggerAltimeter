@@ -24,9 +24,10 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 
-class PhysicalDataFormatter {
+import static org.fbradasc.trekking.walklogger.GPSApplication.NOT_AVAILABLE;
 
-    private static final int NOT_AVAILABLE = -100000;
+
+class PhysicalDataFormatter {
 
     private static final int UM_METRIC_MS       = 0;
     private static final int UM_METRIC_KMH      = 1;

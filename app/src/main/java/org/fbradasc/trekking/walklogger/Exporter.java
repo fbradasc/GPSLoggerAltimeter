@@ -34,9 +34,9 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.ArrayBlockingQueue;
 
-class Exporter extends Thread {
+import static org.fbradasc.trekking.walklogger.GPSApplication.NOT_AVAILABLE;
 
-    private static final int NOT_AVAILABLE = -100000;
+class Exporter extends Thread {
 
     private Track track;
     private ExportingTask exportingTask;

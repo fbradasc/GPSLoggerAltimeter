@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import static org.fbradasc.trekking.walklogger.GPSApplication.NOT_AVAILABLE;
+
 
 class DatabaseHandler extends SQLiteOpenHelper {
 
@@ -307,7 +309,6 @@ class DatabaseHandler extends SQLiteOpenHelper {
     }
 
 
-    private static final int NOT_AVAILABLE = -100000;
     private static final int NONE = 0;
 
     private static final String DATABASE_ALTER_TABLE_LOCATIONS_TO_V2 = "ALTER TABLE "

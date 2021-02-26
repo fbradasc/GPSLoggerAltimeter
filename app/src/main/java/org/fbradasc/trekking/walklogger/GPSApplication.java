@@ -116,6 +116,8 @@ public class GPSApplication extends Application implements LocationListener, Sen
     public static final int JOB_TYPE_SHARE_PLACEMARKS = 5;      // Bulk Share placemark only
 
     public static final String FLAG_RECORDING = "flagRecording";    // The persistent Flag is set when the app is recording, in order to detect Background Crashes
+    public static final String FILETYPE_KML     = ".kml";
+    public static final String FILETYPE_GPX     = ".gpx";
 
     private static final float[] NEGATIVE = {
             -1.0f,      0,      0,     0,  248,     // red
@@ -817,6 +819,7 @@ public class GPSApplication extends Application implements LocationListener, Sen
     public void onCreate() {
 
         AppCompatDelegate.setDefaultNightMode(Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("prefColorTheme", "2")));
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
 
         super.onCreate();
 
@@ -1145,32 +1148,21 @@ public class GPSApplication extends Application implements LocationListener, Sen
     private void ViewTrack(ExportingTask exportingTask) {
         File file;
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setPackage(TrackViewer.PackageName);
-        Log.w("myApp", "[#] GPSApplication.java - ViewTrack with " + TrackViewer.PackageName);
+        intent.setPackage(TrackViewer.packageName);
+        Log.w("myApp", "[#] GPSApplication.java - ViewTrack with " + TrackViewer.packageName);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (TrackViewer.GPX) {
-            // GPX Viewer
-            file = new File(Environment.getExternalStorageDirectory() + "/WalkLogger/AppData/", exportingTask.getName() + ".gpx");
+
+        if (!TrackViewer.fileType.isEmpty()) {
+            file = new File(Environment.getExternalStorageDirectory() + "/WalkLogger/AppData/", exportingTask.getName() + TrackViewer.fileType);
             if (TrackViewer.requiresFileProvider) {
                 Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "org.fbradasc.trekking.walklogger.fileprovider", file);
-                getApplicationContext().grantUriPermission(TrackViewer.PackageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                intent.setDataAndType(uri, "application/gpx+xml");
+                getApplicationContext().grantUriPermission(TrackViewer.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.setDataAndType(uri, TrackViewer.mimeType);
             } else {
-                intent.setDataAndType(Uri.fromFile(file), "application/gpx+xml");
+                intent.setDataAndType(Uri.fromFile(file), TrackViewer.mimeType);
             }
-        } else if (TrackViewer.KML) {
-            // KML Viewer
-            file = new File(Environment.getExternalStorageDirectory() + "/WalkLogger/AppData/", exportingTask.getName() + ".kml");
-            if (TrackViewer.requiresFileProvider) {
-                Uri uri = FileProvider.getUriForFile(GPSApplication.getInstance(), "org.fbradasc.trekking.walklogger.fileprovider", file);
-                getApplicationContext().grantUriPermission(TrackViewer.PackageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                intent.setDataAndType(uri, "application/vnd.google-earth.kml+xml");
-            } else {
-            intent.setDataAndType(Uri.fromFile(file), "application/vnd.google-earth.kml+xml");
-            }
-            }
-        if (TrackViewer.KML || TrackViewer.GPX) {
+
             try {
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 startActivity(intent);
@@ -1251,8 +1243,8 @@ public class GPSApplication extends Application implements LocationListener, Sen
                 Ex.start();
                 break;
             case JOB_TYPE_VIEW:
-                if (TrackViewer.GPX) Ex = new Exporter(exportingTask, true, false, false, false, Environment.getExternalStorageDirectory() + "/WalkLogger/AppData");
-                else if (TrackViewer.KML) Ex = new Exporter(exportingTask, false, true, false, false, Environment.getExternalStorageDirectory() + "/WalkLogger/AppData");
+                if (TrackViewer.fileType.equals(FILETYPE_GPX)) Ex = new Exporter(exportingTask, false, true, false, false, Environment.getExternalStorageDirectory() + "/WalkLogger/AppData");
+                if (TrackViewer.fileType.equals(FILETYPE_KML)) Ex = new Exporter(exportingTask, true, false, false, false, Environment.getExternalStorageDirectory() + "/WalkLogger/AppData");
                 Ex.start();
                 break;
             case JOB_TYPE_SHARE:
@@ -1352,15 +1344,15 @@ public class GPSApplication extends Application implements LocationListener, Sen
             if (!externalViewerChecker.isEmpty()) {
                 isContextMenuViewVisible = true;
                 for (AppInfo ai : externalViewerChecker.getAppInfoList()) {
-                    if ((ai.PackageName.equals(pn)) || (externalViewerChecker.size() == 1)) {
-                        ViewInApp = ai.Label + (ai.GPX ? " (GPX)" : " (KML)");
+                    if ((ai.packageName.equals(pn)) || (externalViewerChecker.size() == 1)) {
+                        ViewInApp = ai.label + (ai.fileType.equals(FILETYPE_GPX) ? " (GPX)" : " (KML)");
 
                         // Set View Icon
                         Bitmap bitmap;
                         if (Build.VERSION.SDK_INT >= 26) {
-                            bitmap = getBitmap(ai.Icon);
+                            bitmap = getBitmap(ai.icon);
                         } else {
-                            bitmap = ((BitmapDrawable) ai.Icon).getBitmap();
+                            bitmap = ((BitmapDrawable) ai.icon).getBitmap();
                         }
                         ViewInAppIcon = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap,
                                 (int) (24 * getResources().getDisplayMetrics().density),
@@ -1958,7 +1950,6 @@ public class GPSApplication extends Application implements LocationListener, Sen
                     Bitmap ThumbBitmap = null;
                     Canvas ThumbCanvas = null;
                     int points = 0;
-                    boolean has_points = false;
 
                     do {
                         int GroupOfLocations = 200;
@@ -1996,13 +1987,12 @@ public class GPSApplication extends Application implements LocationListener, Sen
                             ThumbCanvas.drawPoint( (float) (Lon_Offset + Margin + Size_Minus_Margins * ( (latlngList.get(latlngList.size() - 1).Longitude - MinLongitude) * Distance_Proportion / DrawScale ) ),
                                                    (float) (-Lat_Offset + Size - (Margin + Size_Minus_Margins * ( (latlngList.get(latlngList.size() - 1).Latitude - MinLatitude) / DrawScale ) ) ), EndDotdrawPaint );
                         }
-                    } while (has_points);
+                    } while (points < NumberOfLocations);
 
-                    has_points = false;
+                    points = 0;
 
                     do {
                         int GroupOfLocations = 200;
-                        Path path = new Path();
                         List<LatLng> latlngList = new ArrayList<>();
 
                         //Log.w("myApp", "[#] GPSApplication.java - Thumbnailer Thread started");
@@ -2024,10 +2014,9 @@ public class GPSApplication extends Application implements LocationListener, Sen
                                         (float) (-Lat_Offset + Size - (Margin + Size_Minus_Margins * ( (latlngList.get(i).Latitude - MinLatitude) / DrawScale ) ) ), MarkDotdrawPaint );
                             }
                         }
-                    } while (has_points);
+                    } while (points < NumberOfPlacemarks);
 
-                    if (ThumbBitmap != null)
-                    {
+                    if (ThumbBitmap != null) {
                         try {
                             FileOutputStream out = new FileOutputStream(file);
                             //Log.w("myApp", "[#] GPSApplication.java - FileOutputStream out = new FileOutputStream(file)");

@@ -20,9 +20,11 @@ package org.fbradasc.trekking.walklogger;
 
 import android.location.Location;
 
+import static org.fbradasc.trekking.walklogger.GPSApplication.NOT_AVAILABLE;
+
+
 public class LocationExtended {
 
-    private static final int NOT_AVAILABLE = -100000;
     private static final int NONE = 0;
 
     private Location _Location;

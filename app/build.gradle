@@ -31,6 +31,7 @@ android {
     }
 
 //    aaptOptions {
+//        // Disable PNG Crunching
 //        cruncherEnabled = false
 //    }
 
@@ -41,9 +42,11 @@ android {
 
         // -----------------------------------------------------------------------------------------
         // We use the Semantic Versioning (https://semver.org/):
-        versionName '2.3.1'
+        versionName '2.3.2'
         versionCode 36
         // -----------------------------------------------------------------------------------------
+
+        vectorDrawables.useSupportLibrary = true
 
         javaCompileOptions {
             annotationProcessorOptions {

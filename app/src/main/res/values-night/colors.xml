@@ -46,4 +46,8 @@
     <color name="preference_accent">#2222ca</color>
     <color name="preference_fallback_accent_color" tools:override="true">#2222ca</color>
 
+    <color name="colorRoundedCornerBottom">#161616</color>
+    <color name="colorRoundedCornerTop">#202020</color>
+    <color name="colorRoundedCornerBorder">#707070</color>
+
 </resources>
