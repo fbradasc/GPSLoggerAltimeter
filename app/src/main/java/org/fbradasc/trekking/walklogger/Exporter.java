@@ -590,6 +590,7 @@ class Exporter extends Thread {
                         }
                         closeTrack = true;
                         openTrack  = false;
+                        tracksCount++;
                     }
                                         // Create formatted strings
                     formattedLatitude = String.format(Locale.US, "%.8f", loc.getLocation().getLatitude());

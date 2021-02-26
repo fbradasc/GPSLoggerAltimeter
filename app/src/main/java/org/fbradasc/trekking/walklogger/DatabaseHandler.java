@@ -180,6 +180,38 @@ class DatabaseHandler extends SQLiteOpenHelper {
     private static final int I_TRACK_ALTITUDE_MAX = 43;
     private static final int I_TRACK_DISTANCE_MOVING = 44;
 
+    private static final int I_LOCATION_ID = 0;
+    private static final int I_LOCATION_TRACK_ID = 1;
+    private static final int I_LOCATION_NUMBER = 2;
+    private static final int I_LOCATION_LATITUDE = 3;
+    private static final int I_LOCATION_LONGITUDE = 4;
+    private static final int I_LOCATION_ALTITUDE = 5;
+    private static final int I_LOCATION_SPEED = 6;
+    private static final int I_LOCATION_ACCURACY = 7;
+    private static final int I_LOCATION_BEARING = 8;
+    private static final int I_LOCATION_TIME = 9;
+    private static final int I_LOCATION_NUMBEROFSATELLITES = 10;
+    private static final int I_LOCATION_TYPE = 11;
+    private static final int I_LOCATION_NUMBEROFSATELLITESUSEDINFIX = 12;
+    private static final int I_LOCATION_NUMBEROFSTEPS = 13;
+    private static final int I_LOCATION_ISNEWPATHSTART = 14;
+
+    private static final int I_PLACEMARK_ID = 0;
+    private static final int I_PLACEMARK_TRACK_ID = 1;
+    private static final int I_PLACEMARK_NUMBER = 2;
+    private static final int I_PLACEMARK_LATITUDE = 3;
+    private static final int I_PLACEMARK_LONGITUDE = 4;
+    private static final int I_PLACEMARK_ALTITUDE = 5;
+    private static final int I_PLACEMARK_SPEED = 6;
+    private static final int I_PLACEMARK_ACCURACY = 7;
+    private static final int I_PLACEMARK_BEARING = 8;
+    private static final int I_PLACEMARK_TIME = 9;
+    private static final int I_PLACEMARK_NUMBEROFSATELLITES = 10;
+    private static final int I_PLACEMARK_TYPE = 11;
+    private static final int I_PLACEMARK_NAME = 12;
+    private static final int I_PLACEMARK_NUMBEROFSATELLITESUSEDINFIX = 13;
+    private static final int I_PLACEMARK_NUMBEROFSTEPS = 14;
+
     private boolean isLatLongListNewPathReached = false;
 
     public DatabaseHandler(Context context) {
@@ -608,31 +640,32 @@ class DatabaseHandler extends SQLiteOpenHelper {
             if (cursor.moveToFirst()) {
                 do {
                     Location lc = new Location("DB");
-                    lc.setLatitude(cursor.getDouble(3));
-                    lc.setLongitude(cursor.getDouble(4));
+                    lc.setLatitude(cursor.getDouble(I_LOCATION_LATITUDE));
+                    lc.setLongitude(cursor.getDouble(I_LOCATION_LONGITUDE));
 
-                    lcdata_double = cursor.getDouble(5);
+                    lcdata_double = cursor.getDouble(I_LOCATION_ALTITUDE);
                     if (lcdata_double != NOT_AVAILABLE) lc.setAltitude(lcdata_double);
                     //else lc.removeAltitude();
 
-                    lcdata_float = cursor.getFloat(6);
+                    lcdata_float = cursor.getFloat(I_LOCATION_SPEED);
                     if (lcdata_float != NOT_AVAILABLE) lc.setSpeed(lcdata_float);
                     //else lc.removeSpeed();
 
-                    lcdata_float = cursor.getFloat(7);
+                    lcdata_float = cursor.getFloat(I_LOCATION_ACCURACY);
                     if (lcdata_float != NOT_AVAILABLE) lc.setAccuracy(lcdata_float);
                     //else lc.removeAccuracy();
 
-                    lcdata_float = cursor.getFloat(8);
+                    lcdata_float = cursor.getFloat(I_LOCATION_BEARING);
                     if (lcdata_float != NOT_AVAILABLE) lc.setBearing(lcdata_float);
                     //else lc.removeBearing();
 
-                    lc.setTime(cursor.getLong(9));
+                    lc.setTime(cursor.getLong(I_LOCATION_TIME));
 
                     LocationExtended extdloc = new LocationExtended(lc);
-                    extdloc.setNumberOfSatellites(cursor.getInt(10));
-                    extdloc.setNumberOfSatellitesUsedInFix(cursor.getInt(12));
-                    extdloc.setNumberOfSteps(cursor.getInt(13));
+                    extdloc.setNumberOfSatellites(cursor.getInt(I_LOCATION_NUMBEROFSATELLITES));
+                    extdloc.setNumberOfSatellitesUsedInFix(cursor.getInt(I_LOCATION_NUMBEROFSATELLITESUSEDINFIX));
+                    extdloc.setNumberOfSteps(cursor.getInt(I_LOCATION_NUMBEROFSTEPS));
+                    extdloc.isNewPathStart(cursor.getInt(I_LOCATION_ISNEWPATHSTART)==1);
 
                     locationList.add(extdloc); // Add Location to list
                 } while (cursor.moveToNext());
@@ -665,32 +698,32 @@ class DatabaseHandler extends SQLiteOpenHelper {
             if (cursor.moveToFirst()) {
                 do {
                     Location lc = new Location("DB");
-                    lc.setLatitude(cursor.getDouble(3));
-                    lc.setLongitude(cursor.getDouble(4));
+                    lc.setLatitude(cursor.getDouble(I_PLACEMARK_LATITUDE));
+                    lc.setLongitude(cursor.getDouble(I_PLACEMARK_LONGITUDE));
 
-                    lcdata_double = cursor.getDouble(5);
+                    lcdata_double = cursor.getDouble(I_PLACEMARK_ALTITUDE);
                     if (lcdata_double != NOT_AVAILABLE) lc.setAltitude(lcdata_double);
                     //else lc.removeAltitude();
 
-                    lcdata_float = cursor.getFloat(6);
+                    lcdata_float = cursor.getFloat(I_PLACEMARK_SPEED);
                     if (lcdata_float != NOT_AVAILABLE) lc.setSpeed(lcdata_float);
                     //else lc.removeSpeed();
 
-                    lcdata_float = cursor.getFloat(7);
+                    lcdata_float = cursor.getFloat(I_PLACEMARK_ACCURACY);
                     if (lcdata_float != NOT_AVAILABLE) lc.setAccuracy(lcdata_float);
                     //else lc.removeAccuracy();
 
-                    lcdata_float = cursor.getFloat(8);
+                    lcdata_float = cursor.getFloat(I_PLACEMARK_BEARING);
                     if (lcdata_float != NOT_AVAILABLE) lc.setBearing(lcdata_float);
                     //else lc.removeBearing();
 
-                    lc.setTime(cursor.getLong(9));
+                    lc.setTime(cursor.getLong(I_PLACEMARK_TIME));
 
                     LocationExtended extdloc = new LocationExtended(lc);
-                    extdloc.setNumberOfSatellites(cursor.getInt(10));
-                    extdloc.setNumberOfSatellitesUsedInFix(cursor.getInt(13));
-                    extdloc.setNumberOfSteps(cursor.getInt(14));
-                    extdloc.setDescription(cursor.getString(12));
+                    extdloc.setNumberOfSatellites(cursor.getInt(I_PLACEMARK_NUMBEROFSATELLITES));
+                    extdloc.setNumberOfSatellitesUsedInFix(cursor.getInt(I_PLACEMARK_NUMBEROFSATELLITESUSEDINFIX));
+                    extdloc.setNumberOfSteps(cursor.getInt(I_PLACEMARK_NUMBEROFSTEPS));
+                    extdloc.setDescription(cursor.getString(I_PLACEMARK_NAME));
 
                     placemarkList.add(extdloc); // Add Location to list
                 } while (cursor.moveToNext());
@@ -698,6 +731,42 @@ class DatabaseHandler extends SQLiteOpenHelper {
             cursor.close();
         }
         return placemarkList;
+    }
+
+    // Getting a list of Locations associated to a specified track, with number between startNumber and endNumber
+    // Please note that limits both are inclusive!
+    public List<LatLng> getPlacemarksLatLngList(long TrackID, long startNumber, long endNumber) {
+
+        List<LatLng> latlngList = new ArrayList<>();
+
+        String selectQuery = "SELECT " + KEY_TRACK_ID + ","
+                + KEY_LOCATION_LATITUDE + ","
+                + KEY_LOCATION_LONGITUDE + ","
+                + KEY_LOCATION_NUMBER
+                + " FROM " + TABLE_PLACEMARKS + " WHERE "
+                + KEY_TRACK_ID + " = " + TrackID + " AND "
+                + KEY_LOCATION_NUMBER + " BETWEEN " + startNumber + " AND " + endNumber
+                + " ORDER BY " + KEY_LOCATION_NUMBER;
+
+        //Log.w("myApp", "[#] DatabaseHandler.java - getLocationList(" + TrackID + ", " + startNumber + ", " +endNumber + ") ==> " + selectQuery);
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        if (cursor != null) {
+            // looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    LatLng latlng = new LatLng();
+                    latlng.Latitude = cursor.getDouble(1);
+                    latlng.Longitude = cursor.getDouble(2);
+
+                    latlngList.add(latlng); // Add Location to list
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        }
+        return latlngList;
     }
 
     public boolean isLatLongListNewPathReached() {

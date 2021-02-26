@@ -35,6 +35,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.File;
 import java.util.List;
 
 
@@ -111,10 +112,17 @@ class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackHolder> {
         @Override
         public boolean onLongClick(View view) {
             if ((GPSApplication.getInstance().getJobsPending() == 0)
-                    && (GPSApplication.getInstance().getLastClickId() != track.getId())
+                    // && (GPSApplication.getInstance().getLastClickId() != track.getId())
                     && (GPSApplication.getInstance().getNumberOfSelectedTracks() > 0)) {
-                //Log.w("myApp", "[#] TrackAdapter.java - onLongClick");
-                EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TRACKLIST_RANGE_SELECTION, track.getId()));
+                if (GPSApplication.getInstance().getLastClickId() != track.getId()) {
+                    //Log.w("myApp", "[#] TrackAdapter.java - onLongClick");
+                    EventBus.getDefault().post(new EventBusMSGNormal(EventBusMSG.TRACKLIST_RANGE_SELECTION, track.getId()));
+/* FIXME: DEBUG_ONLY - START */
+                } else {
+                    File file = new File(GPSApplication.getInstance().getApplicationContext().getFilesDir() + "/Thumbnails/",  track.getId() + ".png");
+                    if (file.exists ()) file.delete ();
+/* FIXME: DEBUG_ONLY - END */
+                }
             }
             return false;
         }

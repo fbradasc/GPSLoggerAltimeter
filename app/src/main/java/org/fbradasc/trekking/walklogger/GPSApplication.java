@@ -1048,6 +1048,12 @@ public class GPSApplication extends Application implements LocationListener, Sen
 
     public void onScreenOff() {
         isScreenOn = false;
+/* FIXME: DEBUG_ONLY - START */
+        AsyncTODO ast = new AsyncTODO();
+        ast.TaskType = "TASK_THUMBNAIL";
+        ast.location = null;
+        AsyncTODOQueue.add(ast);
+/* FIXME: DEBUG_ONLY - END */
         Log.w("myApp", "[#] GPSApplication.java - SCREEN_OFF");
     }
 
@@ -1690,6 +1696,20 @@ public class GPSApplication extends Application implements LocationListener, Sen
                     Log.w("myApp", "[#] GPSApplication.java - AsyncUpdateThreadClass: SHUTDOWN EVENT.");
                 }
 
+/* FIXME: DEBUG_ONLY - START */
+                if (asyncTODO.TaskType.equals("TASK_THUMBNAIL")) {
+                    synchronized (_ArrayListTracks) {
+                        for (Track T : _ArrayListTracks) {
+                            if ((T.getId() > 1) && (GPSDataBase.getTrack(T.getId() - 1) != null)) {
+                                String fname = (T.getId() - 1) + ".png";
+                                File file = new File(getApplicationContext().getFilesDir() + "/Thumbnails/", fname);
+                                if (!file.exists()) Th = new Thumbnailer(T.getId() - 1);
+                            }
+                        }
+                    }
+                }
+/* FIXME: DEBUG_ONLY - END */
+
                 // Task: Create new track (if needed)
                 if (asyncTODO.TaskType.equals("TASK_NEWTRACK")) {
                     if (track.getNumberOfItems() != 0) {
@@ -1803,9 +1823,9 @@ public class GPSApplication extends Application implements LocationListener, Sen
                                 JobProgress = (int) Math.round(1000L * TracksDeleted / TracksToBeDeleted);
                                 EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
                                 if (JobsPending > 0) JobsPending--;
-                                }
                             }
                         }
+                    }
                     JobProgress = 0;
                     EventBus.getDefault().post(EventBusMSG.UPDATE_JOB_PROGRESS);
                     EventBus.getDefault().post(EventBusMSG.NOTIFY_TRACKS_DELETED);
@@ -1824,11 +1844,14 @@ public class GPSApplication extends Application implements LocationListener, Sen
 
         long Id;
         long NumberOfLocations;
+        long NumberOfPlacemarks;
 
         private Paint drawPaint = new Paint();
         private Paint BGPaint = new Paint();
         private Paint EndDotdrawPaint = new Paint();
         private Paint EndDotBGPaint = new Paint();
+        private Paint MarkDotBGPaint = new Paint();
+        private Paint MarkDotdrawPaint = new Paint();
         private int Size = (int)(getResources().getDimension(R.dimen.thumbSize) );
 
         private int Margin = (int) Math.ceil(getResources().getDimension(R.dimen.thumbLineWidth) * 3);
@@ -1851,7 +1874,8 @@ public class GPSApplication extends Application implements LocationListener, Sen
 
             if ((track.getNumberOfLocations() > 2) && (track.getDistance() >= 15) && (track.getValidMap() != 0)) {
                 Id = track.getId();
-                NumberOfLocations = track.getNumberOfLocations();
+                NumberOfLocations  = track.getNumberOfLocations();
+                NumberOfPlacemarks = track.getNumberOfPlacemarks();
 
                 // Setup Paints
                 drawPaint.setColor(Color.parseColor("#c9c9c9") );
@@ -1885,6 +1909,21 @@ public class GPSApplication extends Application implements LocationListener, Sen
                 EndDotBGPaint.setStyle(Paint.Style.STROKE);
                 EndDotBGPaint.setStrokeJoin(Paint.Join.ROUND);
                 EndDotBGPaint.setStrokeCap(Paint.Cap.ROUND);
+
+                MarkDotdrawPaint.setColor(Color.parseColor("#9c9c9c") );
+                // TODO: EndDotdrawPaint.setColor(getResources().getColor(R.color.colorThumbnailLineColor));
+                MarkDotdrawPaint.setAntiAlias(true);
+                MarkDotdrawPaint.setStrokeWidth(getResources().getDimension(R.dimen.thumbLineWidth) * 2.5f);
+                MarkDotdrawPaint.setStyle(Paint.Style.STROKE);
+                MarkDotdrawPaint.setStrokeJoin(Paint.Join.ROUND);
+                MarkDotdrawPaint.setStrokeCap(Paint.Cap.ROUND);
+
+                MarkDotBGPaint.setColor(Color.BLACK);
+                MarkDotBGPaint.setAntiAlias(true);
+                MarkDotBGPaint.setStrokeWidth(getResources().getDimension(R.dimen.thumbLineWidth) * 4.5f);
+                MarkDotBGPaint.setStyle(Paint.Style.STROKE);
+                MarkDotBGPaint.setStrokeJoin(Paint.Join.ROUND);
+                MarkDotBGPaint.setStrokeCap(Paint.Cap.ROUND);
 
                 // Calculate the drawing scale
                 double Mid_Latitude = (track.getMax_Latitude() + track.getMin_Latitude() ) / 2;
@@ -1929,8 +1968,10 @@ public class GPSApplication extends Application implements LocationListener, Sen
                         //Log.w("myApp", "[#] GPSApplication.java - Thumbnailer Thread started");
                         for (; points < NumberOfLocations; points += latlngList.size()) {
                             latlngList.addAll(GPSDataBase.getLatLngList(Id, points, points + GroupOfLocations - 1));
-                            if (GPSDataBase.isLatLongListNewPathReached())
+                            if (GPSDataBase.isLatLongListNewPathReached()) {
+                                points += latlngList.size();
                                 break;
+                            }
                         }
 
                         //Log.w("myApp", "[#] GPSApplication.java - Added " + latlngList.size() + " items to Path");
@@ -1955,8 +1996,34 @@ public class GPSApplication extends Application implements LocationListener, Sen
                             ThumbCanvas.drawPoint( (float) (Lon_Offset + Margin + Size_Minus_Margins * ( (latlngList.get(latlngList.size() - 1).Longitude - MinLongitude) * Distance_Proportion / DrawScale ) ),
                                                    (float) (-Lat_Offset + Size - (Margin + Size_Minus_Margins * ( (latlngList.get(latlngList.size() - 1).Latitude - MinLatitude) / DrawScale ) ) ), EndDotdrawPaint );
                         }
+                    } while (has_points);
 
-                        has_points = !latlngList.isEmpty();
+                    has_points = false;
+
+                    do {
+                        int GroupOfLocations = 200;
+                        Path path = new Path();
+                        List<LatLng> latlngList = new ArrayList<>();
+
+                        //Log.w("myApp", "[#] GPSApplication.java - Thumbnailer Thread started");
+                        for (; points < NumberOfPlacemarks; points += latlngList.size()) {
+                            latlngList.addAll(GPSDataBase.getLatLngList(Id, points, points + GroupOfLocations - 1));
+                        }
+
+                        //Log.w("myApp", "[#] GPSApplication.java - Added " + latlngList.size() + " items to Path");
+                        if (!latlngList.isEmpty()) {
+                            if (ThumbBitmap == null) {
+                                ThumbBitmap = Bitmap.createBitmap(Size, Size, Bitmap.Config.ARGB_8888);
+                                ThumbCanvas = new Canvas(ThumbBitmap);
+                            }
+
+                            for (int i = 0; i < latlngList.size(); i++) {
+                                ThumbCanvas.drawPoint( (float) (Lon_Offset + Margin + Size_Minus_Margins * ( (latlngList.get(i).Longitude - MinLongitude) * Distance_Proportion / DrawScale ) ),
+                                        (float) (-Lat_Offset + Size - (Margin + Size_Minus_Margins * ( (latlngList.get(i).Latitude - MinLatitude) / DrawScale ) ) ), MarkDotBGPaint );
+                                ThumbCanvas.drawPoint( (float) (Lon_Offset + Margin + Size_Minus_Margins * ( (latlngList.get(i).Longitude - MinLongitude) * Distance_Proportion / DrawScale ) ),
+                                        (float) (-Lat_Offset + Size - (Margin + Size_Minus_Margins * ( (latlngList.get(i).Latitude - MinLatitude) / DrawScale ) ) ), MarkDotdrawPaint );
+                            }
+                        }
                     } while (has_points);
 
                     if (ThumbBitmap != null)
